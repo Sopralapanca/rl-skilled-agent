@@ -1,0 +1,3 @@
+[submodule "Autoencoders"]
+	path = skills/autoencoders
+	url = https://github.com/AlexPasqua/Autoencoders
