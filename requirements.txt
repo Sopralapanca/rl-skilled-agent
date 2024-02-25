@@ -1,4 +1,5 @@
 wandb
+jupyter
 atariari @ git+https://github.com/mila-iqia/atari-representation-learning.git
 baselines
 kornia==0.7.1
