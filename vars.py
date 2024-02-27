@@ -1,6 +1,6 @@
 from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor
 
-dev = "cuda:2"
+dev = "cuda:0"
 
 config = {
     "game" : "Breakout",

@@ -1,13 +1,13 @@
-import wandb
+# import wandb
 from rl_zoo3.utils import linear_schedule
 from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack
 from stable_baselines3 import PPO
 from vars import config
-from wandb.integration.sb3 import WandbCallback
+# from wandb.integration.sb3 import WandbCallback
 
-run = wandb.init(
+"""run = wandb.init(
     project = "sb3-skillcomp",
     config = config,
     sync_tensorboard = True,  # auto-upload sb3's tensorboard metrics
@@ -15,10 +15,11 @@ run = wandb.init(
     name = f"{config['f_ext_name']}_{config['game']}",
     tags=[config["game"].lower()]
     # save_code = True,  # optional
-)
+)"""
 
 game_id = config["game"] + "NoFrameskip-v4"
-vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
+# vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
+vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
 vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 
 skills = []
@@ -49,7 +50,7 @@ model = PPO("CnnPolicy",
             normalize_advantage=config["normalize"],
             ent_coef=config["ent_coef"],
             vf_coef=config["vf_coef"],
-            tensorboard_log=f"./logs/ppo_{config['f_ext_name']}_{config['game']}",
+            # tensorboard_log=f"./logs/ppo_{config['f_ext_name']}_{config['game']}",
             policy_kwargs=policy_kwargs,
             verbose=1,
             device=config["device"],
@@ -63,9 +64,9 @@ model = PPO("CnnPolicy",
 #     print(s.name, "is training", s.skill_model.training)
 # print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))
 
-# model.learn(config["n_timesteps"])
+model.learn(config["n_timesteps"])
 
-model.learn(
+"""model.learn(
     config["n_timesteps"],
     callback=WandbCallback(
         model_save_path=f"models/{run.id}",
@@ -73,4 +74,4 @@ model.learn(
     )
 )
 
-run.finish()
+run.finish()"""
