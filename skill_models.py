@@ -1,42 +1,42 @@
 # MODEL PATHS
-model_paths = {}
+#model_paths = {}
 # ---------------------------------------------------------------------------------------------------------------
 ## PONG
 
-# ### state
-model_paths["pong_state_rep_uns_path"] = "skills/models/pong-state-rep.pt"
-model_paths["pong_state_ae_path"] = "skills/models/pong-state-rep-ae.pt"
-
-# ### denoise-ae
-model_paths["pong_denoise_ae_path"] = "skills/models/pong-denoise-ae.pt"
-
-# ### object-keypoints
-model_paths["pong_obj_key_path"] = "skills/models/pong-obj-key.pt"
-model_paths["pong_obj_key_adapt_enc_path"] = "skills/models/pong-obj-key-enc-ae.pt"
-model_paths["pong_obj_key_adapt_keynet_path"] = "skills/models/pong-obj-key-keynet-ae.pt"
-
-# ### video-segmentation
-model_paths["pong_vid_obj_seg_path"] = "skills/models/pong-vid-obj-seg.pt"
-model_paths["pong_vid_obj_seg_adapt_path"] = "skills/models/pong-vid-obj-seg-ae.pt"
-
-# ---------------------------------------------------------------------------------------------------------------
-## BREAKOUT
-
-# ### state
-model_paths["breakout_state_rep_uns_path"] = "skills/models/breakout-state-rep.pt"
-model_paths["breakout_state_ae_path"] = "skills/models/breakout-state-rep-ae.pt"
-
-# ### denoise-ae
-model_paths["breakout_denoise_ae_path"] = "skills/models/breakout-denoise-ae.pt"
-
-# ### object-keypoints
-model_paths["breakout_obj_key_path"] = "skills/models/breakout-obj-key.pt"
-model_paths["breakout_obj_key_adapt_enc_path"] = "skills/models/breakout-obj-key-enc-ae.pt"
-model_paths["breakout_obj_key_adapt_keynet_path"] = "skills/models/breakout-obj-key-keynet-ae.pt"
-
-# ### video-segmentation
-model_paths["breakout_vid_obj_seg_path"] = "skills/models/breakout-vid-obj-seg.pt"
-model_paths["breakout_vid_obj_seg_adapt_path"] = "skills/models/breakout-vid-obj-seg-ae.pt"
+# # ### state
+# model_paths["pong_state_rep_uns_path"] = "skills/models/pong-state-rep.pt"
+# model_paths["pong_state_ae_path"] = "skills/models/pong-state-rep-ae.pt"
+#
+# # ### denoise-ae
+# model_paths["pong_denoise_ae_path"] = "skills/models/pong-denoise-ae.pt"
+#
+# # ### object-keypoints
+# model_paths["pong_obj_key_path"] = "skills/models/pong-obj-key.pt"
+# model_paths["pong_obj_key_adapt_enc_path"] = "skills/models/pong-obj-key-enc-ae.pt"
+# model_paths["pong_obj_key_adapt_keynet_path"] = "skills/models/pong-obj-key-keynet-ae.pt"
+#
+# # ### video-segmentation
+# model_paths["pong_vid_obj_seg_path"] = "skills/models/pong-vid-obj-seg.pt"
+# model_paths["pong_vid_obj_seg_adapt_path"] = "skills/models/pong-vid-obj-seg-ae.pt"
+#
+# # ---------------------------------------------------------------------------------------------------------------
+# ## BREAKOUT
+#
+# # ### state
+# model_paths["breakout_state_rep_uns_path"] = "skills/models/breakout-state-rep.pt"
+# model_paths["breakout_state_ae_path"] = "skills/models/breakout-state-rep-ae.pt"
+#
+# # ### denoise-ae
+# model_paths["breakout_denoise_ae_path"] = "skills/models/breakout-denoise-ae.pt"
+#
+# # ### object-keypoints
+# model_paths["breakout_obj_key_path"] = "skills/models/breakout-obj-key.pt"
+# model_paths["breakout_obj_key_adapt_enc_path"] = "skills/models/breakout-obj-key-enc-ae.pt"
+# model_paths["breakout_obj_key_adapt_keynet_path"] = "skills/models/breakout-obj-key-keynet-ae.pt"
+#
+# # ### video-segmentation
+# model_paths["breakout_vid_obj_seg_path"] = "skills/models/breakout-vid-obj-seg.pt"
+# model_paths["breakout_vid_obj_seg_adapt_path"] = "skills/models/breakout-vid-obj-seg-ae.pt"
 
 # ---------------------------------------------------------------------------------------------------------------
 
@@ -67,7 +67,7 @@ def state_rep_input_trans(x: Tensor):
 
 def get_state_rep_uns(game, device):
     input_transformation_function = state_rep_input_trans
-    model_path = model_paths[game.lower() + "_state_rep_uns_path"]
+    model_path = "skills/models/" + game.lower() + "-state-rep.pt"
     # n = Namespace()
     # setattr(n, 'feature_size', 512)
     # setattr(n, 'no_downsample', True)
@@ -85,7 +85,7 @@ def ae_input_trans(x: Tensor):
 
 def get_state_ae(game, device):
     input_transformation_function = ae_input_trans
-    model_path = model_paths[game.lower() + "_state_ae_path"]
+    model_path = "skills/models/" + game.lower() + "-state-rep-ae.pt"
     model = DeepConvAutoencoder(
         inp_side_len=84,
         dims=(4,16,32),
@@ -100,7 +100,7 @@ def get_state_ae(game, device):
 
 def get_denoise_ae(game, device):
     input_transformation_function = ae_input_trans
-    model_path = model_paths[game.lower() + "_denoise_ae_path"]
+    model_path = "skills/models/" + game.lower() + "-denoise-ae.pt"
     model = DeepConvAutoencoder(
         inp_side_len=84,
         dims=(4,16,16),
@@ -120,7 +120,7 @@ def obj_key_input_trans(x: Tensor):
 
 def get_object_keypoints_encoder(game, device, load_only_model=False):
     input_transformation_function = obj_key_input_trans
-    model_path = model_paths[game.lower() + "_obj_key_path"]
+    model_path = "skills/models/" + game.lower() + "-obj-key.pt"
     e = Encoder(1)
     k = KeyNet(1,4)
     r = RefineNet(1)
@@ -130,7 +130,7 @@ def get_object_keypoints_encoder(game, device, load_only_model=False):
     model.to(device)
 
     if not load_only_model:
-        adapter_path = model_paths[game.lower() + "_obj_key_adapt_enc_path"]
+        adapter_path = "skills/models/" + game.lower() + "-obj-key-adapt-enc-ae.pt"
         adapter = DeepConvAutoencoder(
             inp_side_len=21,
             dims=(128,64,64),
@@ -145,7 +145,7 @@ def get_object_keypoints_encoder(game, device, load_only_model=False):
 
 def get_object_keypoints_keynet(game, device, load_only_model=False):
     input_transformation_function = obj_key_input_trans
-    model_path = model_paths[game.lower() + "_obj_key_path"]
+    model_path = "skills/models/" + game.lower() + "-obj-key.pt"
     e = Encoder(1)
     k = KeyNet(1,4)
     r = RefineNet(1)
@@ -155,7 +155,7 @@ def get_object_keypoints_keynet(game, device, load_only_model=False):
     model.to(device)
 
     if not load_only_model:
-        adapter_path = model_paths[game.lower() + "_obj_key_adapt_keynet_path"]
+        adapter_path = "skills/models/" + game.lower() + "-obj-key-keynet-ae.pt"
         adapter = DeepConvAutoencoder(
             inp_side_len=21,
             dims=(4,32,64),
@@ -180,14 +180,14 @@ def vid_obj_seg_input_trans(x: Tensor):
     return norm_s.permute(1, 0, 2, 3)
 
 def get_video_object_segmentation(game, device, load_only_model=False):
-    model_path = model_paths[game.lower() + "_vid_obj_seg_path"]
+    model_path = "skills/models/" + game.lower() + "-vid-obj-seg.pt"
     model = VideoObjectSegmentationModel(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()
     model.to(device)
 
     if not load_only_model:
-        adapter_path = model_paths[game.lower() + "_vid_obj_seg_adapt_path"]
+        adapter_path = "skills/models/" + game.lower() + "-vid-obj-seg-ae.pt"
         adapter = DeepConvAutoencoder(
             inp_side_len=84,
             dims=(20,16,32),

@@ -12,4 +12,6 @@ seaborn==0.13.2
 stable-baselines3[extra]==2.2.1
 torch==1.13.1+cu117
 torchvision==0.14.1+cu117
+tensorboard
 tqdm==4.66.1
+pyyaml

@@ -1,34 +1,34 @@
 from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor
 
-dev = "cuda:0"
+dev = "cuda:1"
 
 config = {
-    "game" : "Breakout",
-    "device" : dev,
+    "game": "Pong",
+    "device": dev,
 
-    "n_envs" : 8,
-    "n_stacks" : 4,
+    "n_envs": 8,
+    "n_stacks": 4,
 
-    "n_steps" : 128,
-    "n_epochs" : 4,
-    "batch_size" : 256,
-    "n_timesteps" : float(1e7),
+    "n_steps": 128,
+    "n_epochs": 4,
+    "batch_size": 256,
+    "n_timesteps": float(1e7),
     "learning_rate": 2.5e-4,
-    "clip_range" : 0.1,
-    "vf_coef" : 0.5,
-    "ent_coef" : 0.01,
+    "clip_range": 0.1,
+    "vf_coef": 0.5,
+    "ent_coef": 0.01,
     "normalize": True,
 
-    "net_arch_pi" : [256],
+    "net_arch_pi": [256],
     "net_arch_vf": [256],
 
-    "f_ext_name" : "lin_concat_ext",
-    "f_ext_class" : LinearConcatExtractor,
-    "f_ext_ft_dim" : 16896,
+    "f_ext_name": "lin_concat_ext",
+    "f_ext_class": LinearConcatExtractor,
+    "f_ext_ft_dim": 16896,
     "f_ext_kwargs": {
-            "features_dim" : 16896,
-            "device" : dev
-        },
+        "features_dim": 16896,
+        "device": dev
+    },
 
     # "f_ext_name" : "cnn_concat_ext",
     # "f_ext_class" : CNNConcatExtractor,
