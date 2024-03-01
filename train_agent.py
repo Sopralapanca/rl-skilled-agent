@@ -13,17 +13,24 @@ import torch
 import yaml
 
 import argparse
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--use-skill", help="if True, use skill agent, otherwise standard agent", type=bool)
-parser.add_argument("--device", help="integer number of a device to use (0, 1, 2,3), otherwise cpu is used",
+parser.add_argument("--use-skill", help="if True, use skill agent, otherwise standard agent",
+                    type=bool, choices=[True, False])
+parser.add_argument("--device", help="integer number of a device to use (0, 1, 2, 3), or cpu",
                     type=str, default="cpu", required=False, choices=["cpu", "0", "1", "2", "3"])
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
                     type=str)
 
+parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
+                    default="lin_concat_ext", required=False,
+                    choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext"])
+
 args = parser.parse_args()
 
+skilled_agent = args.use_skill == True
+tb_log_name = "PPO" if not skilled_agent else "SPPO"
 
-skilled_agent = args.use_skill == "True"
 device = f"cuda:{args.device}" if args.device != "cpu" else "cpu"
 if not torch.cuda.is_available() and device != "cpu":
     print("CUDA not available, using CPU")
@@ -37,8 +44,19 @@ with open(f'configs/{env}.yaml', 'r') as file:
 config["device"] = device
 config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
-config["f_ext_class"] = LinearConcatExtractor
 
+if args.extractor == "lin_concat_ext":
+    config["f_ext_class"] = LinearConcatExtractor
+    tb_log_name += "_lin"
+    feature_dim = 16896
+if args.extractor == "cnn_concat_ext":
+    config["f_ext_class"] = CNNConcatExtractor
+    tb_log_name += "_cnn"
+    feature_dim = 8192
+if args.extractor == "combine_ext":
+    config["f_ext_class"] = CombineExtractor
+    tb_log_name += "_comb"
+    feature_dim = 8704
 
 # run = wandb.init(
 #     project = "sb3-skillcomp",
@@ -72,29 +90,34 @@ skills.append(get_video_object_segmentation(config["game"], config["device"], lo
 
 f_ext_kwargs = config["f_ext_kwargs"]
 f_ext_kwargs["skills"] = skills
-
-policy_kwargs = dict(
-    features_extractor_class=config["f_ext_class"],
-    features_extractor_kwargs=f_ext_kwargs,
-    net_arch={
-        'pi': config["net_arch_pi"],
-        'vf': config["net_arch_vf"]
-    }
-)
+f_ext_kwargs["features_dim"] = feature_dim
+if skilled_agent:
+    policy_kwargs = dict(
+        features_extractor_class=config["f_ext_class"],
+        features_extractor_kwargs=f_ext_kwargs,
+        net_arch={
+            'pi': config["net_arch_pi"],
+            'vf': config["net_arch_vf"]
+        }
+    )
+else:
+    policy_kwargs = None
 
 model = PPO("CnnPolicy",
             vec_env,
             learning_rate=linear_schedule(config["learning_rate"]),
-            n_steps=config["n_steps"],
+
+            n_steps=1, #n_steps=config["n_steps"],
+            n_epochs=1, #n_epochs=config["n_epochs"],
+
             batch_size=config["batch_size"],
-            n_epochs=config["n_epochs"],
             clip_range=linear_schedule(config["clip_range"]),
             normalize_advantage=config["normalize"],
             ent_coef=config["ent_coef"],
             vf_coef=config["vf_coef"],
-            tensorboard_log=gamelogs,
-            policy_kwargs=policy_kwargs if not skilled_agent else None,
-            verbose=1,
+            #tensorboard_log=gamelogs,
+            policy_kwargs=policy_kwargs,
+            verbose=0,
             device=config["device"],
             )
 
@@ -106,7 +129,8 @@ model = PPO("CnnPolicy",
 #     print(s.name, "is training", s.skill_model.training)
 # print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))
 
-model.learn(config["n_timesteps"], tb_log_name="PPO" if not skilled_agent else "SPPO")
+#model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
+model.learn(1)
 
 # model.learn(
 #     config["n_timesteps"],
