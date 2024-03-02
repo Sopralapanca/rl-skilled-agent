@@ -6,7 +6,7 @@ from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack
 from stable_baselines3 import PPO
-from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor
+from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SelfAttentionExtractor
 from wandb.integration.sb3 import WandbCallback
 import os
 import torch
@@ -16,15 +16,15 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--use-skill", help="if True, use skill agent, otherwise standard agent",
-                    type=bool, choices=[True, False])
+                    type=bool, choices=[True, False], required=True)
 parser.add_argument("--device", help="integer number of a device to use (0, 1, 2, 3), or cpu",
                     type=str, default="cpu", required=False, choices=["cpu", "0", "1", "2", "3"])
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
-                    type=str)
+                    type=str, required=True, choices=["Pong", "Breakout"])
 
 parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                     default="lin_concat_ext", required=False,
-                    choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext"])
+                    choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext", "self_attention_ext"])
 
 args = parser.parse_args()
 
@@ -57,6 +57,10 @@ if args.extractor == "combine_ext":
     config["f_ext_class"] = CombineExtractor
     tb_log_name += "_comb"
     feature_dim = 8704
+if args.extractor == "self_attention_ext":
+    config["f_ext_class"] = SelfAttentionExtractor
+    tb_log_name += "_sae"
+    feature_dim = 256 # da cambiare
 
 # run = wandb.init(
 #     project = "sb3-skillcomp",
