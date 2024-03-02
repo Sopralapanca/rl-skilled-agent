@@ -45,6 +45,7 @@ config["device"] = device
 config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
 
+feature_dim = 256
 if args.extractor == "lin_concat_ext":
     config["f_ext_class"] = LinearConcatExtractor
     tb_log_name += "_lin"
@@ -60,7 +61,7 @@ if args.extractor == "combine_ext":
 if args.extractor == "self_attention_ext":
     config["f_ext_class"] = SelfAttentionExtractor
     tb_log_name += "_sae"
-    feature_dim = 256 # da cambiare
+    feature_dim = 1024 # da cambiare
 
 # run = wandb.init(
 #     project = "sb3-skillcomp",
@@ -111,17 +112,17 @@ model = PPO("CnnPolicy",
             vec_env,
             learning_rate=linear_schedule(config["learning_rate"]),
 
-            n_steps=1, #n_steps=config["n_steps"],
-            n_epochs=1, #n_epochs=config["n_epochs"],
+            n_steps=config["n_steps"], #n_steps=1,
+            n_epochs=config["n_epochs"], #n_epochs=1
 
             batch_size=config["batch_size"],
             clip_range=linear_schedule(config["clip_range"]),
             normalize_advantage=config["normalize"],
             ent_coef=config["ent_coef"],
             vf_coef=config["vf_coef"],
-            #tensorboard_log=gamelogs,
+            tensorboard_log=gamelogs,
             policy_kwargs=policy_kwargs,
-            verbose=0,
+            verbose=1,
             device=config["device"],
             )
 
@@ -133,8 +134,8 @@ model = PPO("CnnPolicy",
 #     print(s.name, "is training", s.skill_model.training)
 # print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))
 
-#model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
-model.learn(1)
+model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
+#model.learn(1)
 
 # model.learn(
 #     config["n_timesteps"],

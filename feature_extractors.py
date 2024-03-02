@@ -215,7 +215,8 @@ class SelfAttentionExtractor(FeaturesExtractor):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], n_features), nn.ReLU())
             self.mlp_layers.append(seq_layer)
 
-        self.attention = nn.MultiheadAttention(embed_dim=n_features, num_heads=self.num_heads, batch_first=True)
+
+        self.attention = nn.MultiheadAttention(embed_dim=n_features*len(skill_out), num_heads=self.n_heads, batch_first=False) #batch first was True
 
         # x = th.reshape(x, (x.size(0), -1))
 
@@ -224,18 +225,14 @@ class SelfAttentionExtractor(FeaturesExtractor):
 
         skill_out = self.preprocess_input(observations)
 
-        for seq_layer, x in zip(self.mlp_layers, skill_out):
+        for i in range(len(skill_out)):
+            seq_layer = self.mlp_layers[i]
+            x = skill_out[i]
             x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
-            x = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
-            print("shape", x.shape)
-        exit()
+            skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
 
-        x = th.cat(skill_out, 1)
-        print("concatenaed shape:", x.shape)
-        print()
+        transformed_embeddings = th.cat(skill_out, 1)
 
-        x = th.reshape(x, (x.size(0), -1))
-        print("flattened shape:", x.shape)
-        print()
+        combined_embeddings, combined_weights = self.attention(transformed_embeddings, transformed_embeddings, transformed_embeddings)
 
-        pass
+        return combined_embeddings
