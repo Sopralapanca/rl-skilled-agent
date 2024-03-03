@@ -1,0 +1,90 @@
+# import utils file and load the method custom_atari_wrapper
+#import sys
+#sys.path.append("./utils")
+
+import numpy as np
+import os
+from stable_baselines3.common.env_util import make_atari_env
+from stable_baselines3.common.vec_env import VecFrameStack
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+import gc
+import cv2
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
+                    type=str, required=True)
+
+args = parser.parse_args()
+
+def plot_images(images_array):
+    length = images_array.shape[0]
+    # Extract each image along the first axis
+    image_list = [images_array[i, :, :, :] for i in range(length)]
+
+    # Display the images side by side
+    fig, axes = plt.subplots(1, length, figsize=(15, 3))
+
+    for i, image in enumerate(image_list):
+        axes[i].imshow(image)  # Assuming the images are grayscale cmap='gray', vmin=0, vmax=255
+        axes[i].axis('off')
+
+    plt.show()
+
+
+N_ENVS = 1
+FRAME_STACK = 4
+NUM_EPS = 1000
+FRAME_SIZE = 84
+MAX_EP_LEN = 100
+ENV_NAME = args.env  #"PongNoFrameskip-v4"
+SAVE_DIR = "../data/" + ENV_NAME
+
+
+# Create a directory data with subdirectory "breakout" using os to store the frames
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
+
+# Create the environment
+vec_env = make_atari_env(ENV_NAME, n_envs=1)
+vec_env = VecFrameStack(vec_env, n_stack=4)
+
+obs = vec_env.reset()
+
+
+frame_count = 0
+vec_env.render("rgb_array")
+for i in tqdm(range(1, NUM_EPS+1)):
+    ep_path = SAVE_DIR + f"/{i}"
+    if not os.path.exists(ep_path):
+        os.makedirs(ep_path)
+
+    done = False
+    step = 0
+    while not done:
+        action = vec_env.action_space.sample()
+        new_obs, rewards, dones, infos = vec_env.step([action])  # we need to pass an array of actions in step, one action for each environment
+
+        #obs = obs.reshape(N_ENVS, FRAME_STACK, FRAME_SIZE, FRAME_SIZE, CHANNELS)
+        #new_obs = new_obs.reshape(N_ENVS, FRAME_STACK, FRAME_SIZE, FRAME_SIZE)
+        new_obs = new_obs.transpose(0, 3, 1, 2)
+
+        new_observations = new_obs[0]
+        new_frame = new_observations[-1]
+
+        cv2.imwrite(ep_path+f"/{step}.png", new_frame)
+        step += 1
+        frame_count += 1
+
+        obs = new_obs
+        done = dones[0]
+
+    obs = vec_env.reset()
+
+    #if frame_count >= 1000000:
+    #    print("1M frames reached")
+    #    break
+
+vec_env.close()
+print(f"\n{ENV_NAME} data created - total frames: {frame_count}")

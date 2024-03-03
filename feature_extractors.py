@@ -208,21 +208,21 @@ class SelfAttentionExtractor(FeaturesExtractor):
         skill_out = self.preprocess_input(sample)
 
         for i in range(len(skill_out)):
-            skill_out[i] = th.reshape(skill_out[i], (skill_out[i].size(0), -1)) # flatten skill out to take the dimenion
+            skill_out[i] = th.reshape(skill_out[i],
+                                      (skill_out[i].size(0), -1))  # flatten skill out to take the dimenion
 
         self.mlp_layers = nn.ModuleList()
         for i in range(len(skill_out)):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], n_features), nn.ReLU())
             self.mlp_layers.append(seq_layer)
 
-
-        self.attention = nn.MultiheadAttention(embed_dim=n_features*len(skill_out), num_heads=self.n_heads, batch_first=False) #batch first was True
+        self.attention = nn.MultiheadAttention(embed_dim=n_features, num_heads=self.n_heads,
+                                               batch_first=False)  # batch first was True
 
         # x = th.reshape(x, (x.size(0), -1))
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print(observations.shape)
-
         skill_out = self.preprocess_input(observations)
 
         for i in range(len(skill_out)):
@@ -231,8 +231,15 @@ class SelfAttentionExtractor(FeaturesExtractor):
             x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
             skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
 
-        transformed_embeddings = th.cat(skill_out, 1)
+        transformed_embeddings = th.stack(skill_out,
+                                          0)  # shape num_skills x batch_size (num envs) x n_features (length of the embeddings)
+        #transposed_embeddings = transformed_embeddings.permute(1, 0, 2)  # shape batch_size x num_skills x n_features
 
-        combined_embeddings, combined_weights = self.attention(transformed_embeddings, transformed_embeddings, transformed_embeddings)
+        att_out, att_weights = self.attention(transformed_embeddings, transformed_embeddings,
+                                                               transformed_embeddings)
+
+        att_out = att_out.transpose(0, 1)
+        # flatten the attention output to obtain (8, 1024)
+        combined_embeddings = th.flatten(att_out, start_dim=1)
 
         return combined_embeddings

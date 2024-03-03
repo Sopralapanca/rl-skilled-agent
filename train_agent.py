@@ -16,7 +16,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--use-skill", help="if True, use skill agent, otherwise standard agent",
-                    type=bool, choices=[True, False], required=True)
+                    type=bool, choices=[True, False], required=True) #attenzione, forse per settarlo a false lo devo lanciare senza --use-skill
 parser.add_argument("--device", help="integer number of a device to use (0, 1, 2, 3), or cpu",
                     type=str, default="cpu", required=False, choices=["cpu", "0", "1", "2", "3"])
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
@@ -26,10 +26,13 @@ parser.add_argument("--extractor", help="Which type of feature extractor to use"
                     default="lin_concat_ext", required=False,
                     choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext", "self_attention_ext"])
 
+parser.add_argument("--debug", type=bool, default=False, choices=[True, False])
+
 args = parser.parse_args()
 
 skilled_agent = args.use_skill == True
 tb_log_name = "PPO" if not skilled_agent else "SPPO"
+debug = args.debug == True
 
 device = f"cuda:{args.device}" if args.device != "cpu" else "cpu"
 if not torch.cuda.is_available() and device != "cpu":
@@ -108,23 +111,49 @@ if skilled_agent:
 else:
     policy_kwargs = None
 
-model = PPO("CnnPolicy",
-            vec_env,
-            learning_rate=linear_schedule(config["learning_rate"]),
 
-            n_steps=config["n_steps"], #n_steps=1,
-            n_epochs=config["n_epochs"], #n_epochs=1
+if debug:
+    model = PPO("CnnPolicy",
+                vec_env,
+                learning_rate=linear_schedule(config["learning_rate"]),
 
-            batch_size=config["batch_size"],
-            clip_range=linear_schedule(config["clip_range"]),
-            normalize_advantage=config["normalize"],
-            ent_coef=config["ent_coef"],
-            vf_coef=config["vf_coef"],
-            tensorboard_log=gamelogs,
-            policy_kwargs=policy_kwargs,
-            verbose=1,
-            device=config["device"],
-            )
+                n_steps=1, #n_steps=config["n_steps"], #n_steps=1,
+                n_epochs=1, #n_epochs=config["n_epochs"], #n_epochs=1
+
+                batch_size=config["batch_size"],
+                clip_range=linear_schedule(config["clip_range"]),
+                normalize_advantage=config["normalize"],
+                ent_coef=config["ent_coef"],
+                vf_coef=config["vf_coef"],
+                #tensorboard_log=gamelogs,
+                policy_kwargs=policy_kwargs,
+                verbose=0,
+                device=config["device"],
+                )
+    model.learn(1)
+else:
+    model = PPO("CnnPolicy",
+                vec_env,
+                learning_rate=linear_schedule(config["learning_rate"]),
+
+                n_steps=config["n_steps"],
+                n_epochs=config["n_epochs"],
+
+                batch_size=config["batch_size"],
+                clip_range=linear_schedule(config["clip_range"]),
+                normalize_advantage=config["normalize"],
+                ent_coef=config["ent_coef"],
+                vf_coef=config["vf_coef"],
+                tensorboard_log=gamelogs,
+                policy_kwargs=policy_kwargs,
+                verbose=1,
+                device=config["device"],
+                )
+
+    model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
+
+
+
 
 # print("net_arch:", model.policy.net_arch)
 # print("share_feature_extractor:", model.policy.share_features_extractor)
@@ -134,9 +163,7 @@ model = PPO("CnnPolicy",
 #     print(s.name, "is training", s.skill_model.training)
 # print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))
 
-model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
-#model.learn(1)
-
+#model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
 # model.learn(
 #     config["n_timesteps"],
 #     callback=WandbCallback(
