@@ -95,6 +95,7 @@ skills.append(get_state_rep_uns(config["game"], config["device"]))
 skills.append(get_object_keypoints_encoder(config["game"], config["device"], load_only_model=True))
 skills.append(get_object_keypoints_keynet(config["game"], config["device"], load_only_model=True))
 skills.append(get_video_object_segmentation(config["game"], config["device"], load_only_model=True))
+skills.append(get_autoencoder(config["game"], config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 f_ext_kwargs["skills"] = skills

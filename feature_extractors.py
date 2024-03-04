@@ -71,14 +71,11 @@ class LinearConcatExtractor(FeaturesExtractor):
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print(observations.shape)
         skill_out = self.preprocess_input(observations)
+        # TODO PROVA L'OUTPUT DELL'AUTOENCODER
+        exit()
 
         x = th.cat(skill_out, 1)
-        print("concatenaed shape:", x.shape)
-        print()
-
         x = th.reshape(x, (x.size(0), -1))
-        print("flattened shape:", x.shape)
-        print()
         return x
 
 

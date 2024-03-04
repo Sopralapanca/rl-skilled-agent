@@ -1,5 +1,5 @@
 # MODEL PATHS
-#model_paths = {}
+# model_paths = {}
 # ---------------------------------------------------------------------------------------------------------------
 ## PONG
 
@@ -41,6 +41,7 @@
 # ---------------------------------------------------------------------------------------------------------------
 
 import sys
+
 sys.path.append('skills/autoencoders/src')
 sys.path.append('skills')
 
@@ -51,19 +52,23 @@ from collections import namedtuple
 from argparse import Namespace
 # from atariari.methods.encoders import NatureCNN
 from state_representation.encoder import NatureCNN
-from autoencoders import DeepConvAutoencoder
+# from autoencoders import DeepConvAutoencoder
 from object_keypoints.model import Encoder, KeyNet, RefineNet, Transporter
 from video_object_segmentation.model import VideoObjectSegmentationModel
+from autoencoders.model import Autoencoder
 
 # TODO: Eventually can become: Skill(input_model, input_output, skill_model, skill_output, adapter_model, adapter_output)
 Skill = namedtuple('Skill', ['name', 'input_adapter', 'skill_model', 'skill_output', 'skill_adapter'])
 
+
 def model_forward(model, x):
     return model(x)
+
 
 def state_rep_input_trans(x: Tensor):
     x = x.float()
     return F.interpolate(x, (160, 210), mode='bilinear', align_corners=True)
+
 
 def get_state_rep_uns(game, device):
     input_transformation_function = state_rep_input_trans
@@ -80,15 +85,28 @@ def get_state_rep_uns(game, device):
 
     return Skill("state_rep_uns", input_transformation_function, model, model_forward, adapter)
 
+
+
+def get_autoencoder(game, device):
+    model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+    model = Autoencoder().to(device)
+    model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+    model.eval()
+    adapter = None
+    input_transformation_function = ae_input_trans
+    return Skill("autoencoder", input_transformation_function, model.encoder, model_forward, adapter)
+
+
 def ae_input_trans(x: Tensor):
     return x.float()
+
 
 def get_state_ae(game, device):
     input_transformation_function = ae_input_trans
     model_path = "skills/models/" + game.lower() + "-state-rep-ae.pt"
     model = DeepConvAutoencoder(
         inp_side_len=84,
-        dims=(4,16,32),
+        dims=(4, 16, 32),
         kernel_sizes=3,
         central_dim=512)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
@@ -98,12 +116,13 @@ def get_state_ae(game, device):
 
     return Skill("state_ae", input_transformation_function, model.encoder, model_forward, adapter)
 
+
 def get_denoise_ae(game, device):
     input_transformation_function = ae_input_trans
     model_path = "skills/models/" + game.lower() + "-denoise-ae.pt"
     model = DeepConvAutoencoder(
         inp_side_len=84,
-        dims=(4,16,16),
+        dims=(4, 16, 16),
         kernel_sizes=3,
         central_dim=512)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
@@ -113,16 +132,18 @@ def get_denoise_ae(game, device):
 
     return Skill("denoise_ae", input_transformation_function, model.encoder, model_forward, adapter)
 
+
 def obj_key_input_trans(x: Tensor):
     x = x.float()
     x = x[:, -1, ...]
     return x.unsqueeze(1)
 
+
 def get_object_keypoints_encoder(game, device, load_only_model=False):
     input_transformation_function = obj_key_input_trans
     model_path = "skills/models/" + game.lower() + "-obj-key.pt"
     e = Encoder(1)
-    k = KeyNet(1,4)
+    k = KeyNet(1, 4)
     r = RefineNet(1)
     model = Transporter(e, k, r)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
@@ -133,21 +154,24 @@ def get_object_keypoints_encoder(game, device, load_only_model=False):
         adapter_path = "skills/models/" + game.lower() + "-obj-key-adapt-enc-ae.pt"
         adapter = DeepConvAutoencoder(
             inp_side_len=21,
-            dims=(128,64,64),
+            dims=(128, 64, 64),
             kernel_sizes=3,
             central_dim=512)
         adapter.load_state_dict(torch.load(adapter_path, map_location=device), strict=True)
         adapter.eval()
         adapter.to(device)
-    else: adapter = None
+    else:
+        adapter = None
 
-    return Skill("obj_key_enc", input_transformation_function, model.encoder, model_forward, adapter.encoder if adapter else None)
+    return Skill("obj_key_enc", input_transformation_function, model.encoder, model_forward,
+                 adapter.encoder if adapter else None)
+
 
 def get_object_keypoints_keynet(game, device, load_only_model=False):
     input_transformation_function = obj_key_input_trans
     model_path = "skills/models/" + game.lower() + "-obj-key.pt"
     e = Encoder(1)
-    k = KeyNet(1,4)
+    k = KeyNet(1, 4)
     r = RefineNet(1)
     model = Transporter(e, k, r)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
@@ -158,18 +182,22 @@ def get_object_keypoints_keynet(game, device, load_only_model=False):
         adapter_path = "skills/models/" + game.lower() + "-obj-key-keynet-ae.pt"
         adapter = DeepConvAutoencoder(
             inp_side_len=21,
-            dims=(4,32,64),
+            dims=(4, 32, 64),
             kernel_sizes=3,
             central_dim=512)
         adapter.load_state_dict(torch.load(adapter_path, map_location=device), strict=True)
         adapter.eval()
         adapter.to(device)
-    else: adapter = None
+    else:
+        adapter = None
 
-    return Skill("obj_key_key", input_transformation_function, model.key_net, model_forward, adapter.encoder if adapter else None)
+    return Skill("obj_key_key", input_transformation_function, model.key_net, model_forward,
+                 adapter.encoder if adapter else None)
+
 
 def vos_output_masks(model: VideoObjectSegmentationModel, x):
     return model.compute_masks(x)
+
 
 def vid_obj_seg_input_trans(x: Tensor):
     x = x.float()
@@ -178,6 +206,7 @@ def vid_obj_seg_input_trans(x: Tensor):
     s = torch.stack([first_frames, second_frames])
     norm_s = s / 255.
     return norm_s.permute(1, 0, 2, 3)
+
 
 def get_video_object_segmentation(game, device, load_only_model=False):
     model_path = "skills/models/" + game.lower() + "-vid-obj-seg.pt"
@@ -190,15 +219,17 @@ def get_video_object_segmentation(game, device, load_only_model=False):
         adapter_path = "skills/models/" + game.lower() + "-vid-obj-seg-ae.pt"
         adapter = DeepConvAutoencoder(
             inp_side_len=84,
-            dims=(20,16,32),
+            dims=(20, 16, 32),
             kernel_sizes=3,
             central_dim=512)
         adapter.load_state_dict(torch.load(adapter_path, map_location=device), strict=True)
         adapter.eval()
         adapter.to(device)
-    else: adapter = None
+    else:
+        adapter = None
 
     return Skill("vid_obj_seg", vid_obj_seg_input_trans, model, vos_output_masks, adapter.encoder if adapter else None)
+
 
 if __name__ == "__main__":
     a = get_state_rep_uns("pong", "cuda:0")
