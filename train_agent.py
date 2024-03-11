@@ -21,7 +21,6 @@ parser.add_argument("--device", help="integer number of a device to use (0, 1, 2
                     type=str, default="cpu", required=False, choices=["cpu", "0", "1", "2", "3"])
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
                     type=str, required=True, choices=["Pong", "Breakout"])
-
 parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                     default="lin_concat_ext", required=False,
                     choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext", "self_attention_ext"])
@@ -48,6 +47,17 @@ config["device"] = device
 config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
 
+game_id = config["game"] + "NoFrameskip-v4"
+
+logdir = "./tensorboard_logs"
+gamelogs = f"{logdir}/{config['game']}"
+if not os.path.exists(logdir):
+    os.makedirs(logdir)
+
+if not os.path.exists(gamelogs):
+    os.makedirs(gamelogs)
+
+
 feature_dim = 256
 if args.extractor == "lin_concat_ext":
     config["f_ext_class"] = LinearConcatExtractor
@@ -63,8 +73,8 @@ if args.extractor == "combine_ext":
     feature_dim = 8704
 if args.extractor == "self_attention_ext":
     config["f_ext_class"] = SelfAttentionExtractor
-    tb_log_name += "_sae"
-    feature_dim = 1024 # da cambiare
+    tb_log_name += "_sae_autoencoder"
+    feature_dim = 2560 # da calcolare in modo automatico
 
 # run = wandb.init(
 #     project = "sb3-skillcomp",
@@ -76,15 +86,7 @@ if args.extractor == "self_attention_ext":
 #     # save_code = True,  # optional
 # )
 
-game_id = config["game"] + "NoFrameskip-v4"
 
-logdir = "./tensorboard_logs"
-gamelogs = f"{logdir}/{config['game']}"
-if not os.path.exists(logdir):
-    os.makedirs(logdir)
-
-if not os.path.exists(gamelogs):
-    os.makedirs(gamelogs)
 
 # vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
 vec_env = make_atari_env(game_id, n_envs=config["n_envs"])

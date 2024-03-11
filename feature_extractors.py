@@ -42,6 +42,8 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         self.__kpt_key_adapter.to(device)
 
     def preprocess_input(self, observations: th.Tensor) -> [th.Tensor]:
+        #print("observation shape", observations.shape)
+
         skill_out = []
         for skill in self.skills:
             with th.no_grad():
@@ -71,8 +73,6 @@ class LinearConcatExtractor(FeaturesExtractor):
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print(observations.shape)
         skill_out = self.preprocess_input(observations)
-        # TODO PROVA L'OUTPUT DELL'AUTOENCODER
-        exit()
 
         x = th.cat(skill_out, 1)
         x = th.reshape(x, (x.size(0), -1))
@@ -190,7 +190,7 @@ class SelfAttentionExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
                  skills: List[Skill] = None,
-                 n_features: int = 256,
+                 n_features: int = 512,
                  n_heads: int = 2,
                  device="cpu"):
         super().__init__(observation_space, features_dim, skills, device)

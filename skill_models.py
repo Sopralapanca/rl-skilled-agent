@@ -87,13 +87,19 @@ def get_state_rep_uns(game, device):
 
 
 
+def autoencoder_input_trans(x: Tensor):
+    # al momento l'autoencoder prende solo l'ultimo frame, fare un autoencoder su tutti e 4 i frame?
+
+    # x is of shape 32x4x84x84, because there are 4 frame stacked, pick only the last frame and return a tensor of shape 32x1x84x84
+    x = x[:, -1:, :, :]
+    return x.float()
 def get_autoencoder(game, device):
     model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
     model = Autoencoder().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()
     adapter = None
-    input_transformation_function = ae_input_trans
+    input_transformation_function = autoencoder_input_trans
     return Skill("autoencoder", input_transformation_function, model.encoder, model_forward, adapter)
 
 

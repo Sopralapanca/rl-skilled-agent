@@ -15,3 +15,4 @@ torchvision==0.14.1+cu117
 tensorboard
 tqdm==4.66.2
 pyyaml
+ray[tune]
