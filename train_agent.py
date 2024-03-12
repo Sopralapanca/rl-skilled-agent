@@ -58,23 +58,7 @@ if not os.path.exists(gamelogs):
     os.makedirs(gamelogs)
 
 
-feature_dim = 256
-if args.extractor == "lin_concat_ext":
-    config["f_ext_class"] = LinearConcatExtractor
-    tb_log_name += "_lin"
-    feature_dim = 16896
-if args.extractor == "cnn_concat_ext":
-    config["f_ext_class"] = CNNConcatExtractor
-    tb_log_name += "_cnn"
-    feature_dim = 8192
-if args.extractor == "combine_ext":
-    config["f_ext_class"] = CombineExtractor
-    tb_log_name += "_comb"
-    feature_dim = 8704
-if args.extractor == "self_attention_ext":
-    config["f_ext_class"] = SelfAttentionExtractor
-    tb_log_name += "_sae_autoencoder"
-    feature_dim = 2560 # da calcolare in modo automatico
+
 
 # run = wandb.init(
 #     project = "sb3-skillcomp",
@@ -97,9 +81,30 @@ skills.append(get_state_rep_uns(config["game"], config["device"]))
 skills.append(get_object_keypoints_encoder(config["game"], config["device"], load_only_model=True))
 skills.append(get_object_keypoints_keynet(config["game"], config["device"], load_only_model=True))
 skills.append(get_video_object_segmentation(config["game"], config["device"], load_only_model=True))
-skills.append(get_autoencoder(config["game"], config["device"]))
+#skills.append(get_autoencoder(config["game"], config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
+
+feature_dim = 256
+if args.extractor == "lin_concat_ext":
+    config["f_ext_class"] = LinearConcatExtractor
+    tb_log_name += "_lin"
+    feature_dim = 16896
+if args.extractor == "cnn_concat_ext":
+    config["f_ext_class"] = CNNConcatExtractor
+    tb_log_name += "_cnn"
+    feature_dim = 8192
+if args.extractor == "combine_ext":
+    config["f_ext_class"] = CombineExtractor
+    tb_log_name += "_comb"
+    feature_dim = 8704
+if args.extractor == "self_attention_ext":
+    config["f_ext_class"] = SelfAttentionExtractor
+    tb_log_name += "_sae_512"
+    f_ext_kwargs["n_features"] = 512
+    f_ext_kwargs["n_heads"] = 2
+    feature_dim = len(skills)*f_ext_kwargs["n_features"]
+
 f_ext_kwargs["skills"] = skills
 f_ext_kwargs["features_dim"] = feature_dim
 if skilled_agent:
@@ -138,10 +143,8 @@ else:
     model = PPO("CnnPolicy",
                 vec_env,
                 learning_rate=linear_schedule(config["learning_rate"]),
-
                 n_steps=config["n_steps"],
                 n_epochs=config["n_epochs"],
-
                 batch_size=config["batch_size"],
                 clip_range=linear_schedule(config["clip_range"]),
                 normalize_advantage=config["normalize"],
@@ -176,3 +179,5 @@ else:
 # )
 #
 # run.finish()
+
+# inizia a preparare il codice per lunarlander, cartpole, mountaincar
