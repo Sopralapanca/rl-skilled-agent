@@ -1,5 +1,4 @@
 import sys
-
 import wandb
 from rl_zoo3.utils import linear_schedule
 from skill_models import *
@@ -81,29 +80,44 @@ skills.append(get_state_rep_uns(config["game"], config["device"]))
 skills.append(get_object_keypoints_encoder(config["game"], config["device"], load_only_model=True))
 skills.append(get_object_keypoints_keynet(config["game"], config["device"], load_only_model=True))
 skills.append(get_video_object_segmentation(config["game"], config["device"], load_only_model=True))
-#skills.append(get_autoencoder(config["game"], config["device"]))
+skills.append(get_autoencoder(config["game"], config["device"])) #quando lo usi ricorda di mettere le immagini in grayscale
 
 f_ext_kwargs = config["f_ext_kwargs"]
+sample_obs = vec_env.observation_space.sample()
+sample_obs = torch.tensor(sample_obs).to(device)
+sample_obs = sample_obs.unsqueeze(0)
+sample_obs = sample_obs.transpose(1, 3)
 
 feature_dim = 256
 if args.extractor == "lin_concat_ext":
     config["f_ext_class"] = LinearConcatExtractor
-    tb_log_name += "_lin"
-    feature_dim = 16896
+    tb_log_name += "_lin_ae"
+    ext = LinearConcatExtractor(vec_env.observation_space, 256, skills, device)
+    feature_dim = ext.get_dimension(sample_obs)
+
+# non funziona con autoencoder
 if args.extractor == "cnn_concat_ext":
     config["f_ext_class"] = CNNConcatExtractor
     tb_log_name += "_cnn"
-    feature_dim = 8192
+    ext = CNNConcatExtractor(vec_env.observation_space, 256, skills, 1, device)
+    feature_dim = ext.get_dimension(sample_obs)
+
+# non funziona con autoencoder
 if args.extractor == "combine_ext":
     config["f_ext_class"] = CombineExtractor
     tb_log_name += "_comb"
-    feature_dim = 8704
+    ext = CombineExtractor(vec_env.observation_space, 256, skills, device)
+    feature_dim = ext.get_dimension(sample_obs)
+
 if args.extractor == "self_attention_ext":
     config["f_ext_class"] = SelfAttentionExtractor
-    tb_log_name += "_sae_512"
-    f_ext_kwargs["n_features"] = 512
-    f_ext_kwargs["n_heads"] = 2
-    feature_dim = len(skills)*f_ext_kwargs["n_features"]
+    tb_log_name += "_sae_256_secondtry"
+    f_ext_kwargs["n_features"] = 256
+    f_ext_kwargs["n_heads"] = 4
+
+    ext = SelfAttentionExtractor(vec_env.observation_space, 256, skills, device)
+    feature_dim = ext.get_dimension(sample_obs)
+
 
 f_ext_kwargs["skills"] = skills
 f_ext_kwargs["features_dim"] = feature_dim

@@ -42,7 +42,7 @@
 
 import sys
 
-sys.path.append('skills/autoencoders/src')
+#sys.path.append('skills/autoencoders/src')
 sys.path.append('skills')
 
 import torch
