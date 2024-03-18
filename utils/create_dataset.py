@@ -26,6 +26,7 @@ class CartPoleImageWrapper(CartPoleEnv):
         super(CartPoleImageWrapper, self).__init__(*args, **kwargs)
         self.observation_space = spaces.Box(low=0, high=255, shape=(84, 84, 1), dtype=np.uint8)
         self.render_mode = 'rgb_array'
+        self.max_episode_steps = MAX_EP_LEN
     def _get_image_observation(self):
         # Render the CartPole environment
         cartpole_image = self.render()
@@ -48,7 +49,7 @@ class CartPoleImageWrapper(CartPoleEnv):
 
     def step(self, action):
         observation, reward, terminated, done, info = super(CartPoleImageWrapper, self).step(action)
-        return self._get_image_observation(), reward, done, info
+        return self._get_image_observation(), reward, terminated, info
 
 
 def plot_images(images_array):
@@ -69,7 +70,6 @@ def plot_images(images_array):
 N_ENVS = 1
 FRAME_STACK = 4
 NUM_EPS = 100
-FRAME_SIZE = 84
 MAX_EP_LEN = 100
 ENV_NAME = args.env  # "PongNoFrameskip-v4"
 SAVE_DIR = "../data/" + ENV_NAME
@@ -81,14 +81,15 @@ if not os.path.exists(SAVE_DIR):
 # Create the environment
 if ENV_NAME.lower() in atari_py.list_games():
     ENV_NAME = ENV_NAME + "NoFrameskip-v4"
-    vec_env = make_atari_env(ENV_NAME, n_envs=1)
+    vec_env = make_atari_env(ENV_NAME, n_envs=N_ENVS)
 else:
-    env = CartPoleImageWrapper()
-    # Wrap the environment in a vectorized form
-    vec_env = make_vec_env(lambda: env, n_envs=1)
-    vec_env = VecTransposeImage(vec_env)
+    if ENV_NAME == "CartPole-v1":
+        env = CartPoleImageWrapper()
+        vec_env = make_vec_env(lambda: env, n_envs=N_ENVS)
+    else:
+        raise NotImplementedError(ENV_NAME + " not implemented yet, try CartPole-v1 or one atari game")
 
-vec_env = VecFrameStack(vec_env, n_stack=4)
+vec_env = VecFrameStack(vec_env, n_stack=FRAME_STACK)
 obs = vec_env.reset()
 
 if ENV_NAME.lower() in atari_py.list_games():
@@ -102,6 +103,7 @@ for i in tqdm(range(1, NUM_EPS + 1)):
 
     done = False
     step = 0
+
     while not done:
         action = vec_env.action_space.sample()
         new_obs, rewards, dones, infos = vec_env.step(
@@ -114,15 +116,16 @@ for i in tqdm(range(1, NUM_EPS + 1)):
         new_observations = new_obs[0]
         new_frame = new_observations[-1]
 
+
         cv2.imwrite(ep_path + f"/{step}.png", new_frame)
         step += 1
         frame_count += 1
+
 
         obs = new_obs
         done = dones[0]
 
     obs = vec_env.reset()
-
     # if frame_count >= 1000000:
     #    print("1M frames reached")
     #    break

@@ -5,7 +5,7 @@ from gym import spaces
 from gym.envs.classic_control import CartPoleEnv
 import numpy as np
 import cv2
-
+import matplotlib.pyplot as plt
 
 class CartPoleImageWrapper(CartPoleEnv):
     def __init__(self, *args, **kwargs):
@@ -52,17 +52,33 @@ action = vec_env.action_space.sample()
 new_obs, rewards, dones, infos = vec_env.step([action])
 print(f"Observation space: {new_obs.shape}")
 
-action = vec_env.action_space.sample()
-new_obs, rewards, dones, infos = vec_env.step([action])
-print(f"Observation space: {new_obs.shape}")
+new_observations = new_obs[0]
+new_frame = new_observations[-1]
+plt.imshow(new_frame)
+plt.show()
 
 action = vec_env.action_space.sample()
 new_obs, rewards, dones, infos = vec_env.step([action])
 print(f"Observation space: {new_obs.shape}")
 
+new_observations = new_obs[0]
+new_frame = new_observations[-1]
+plt.imshow(new_frame)
+plt.show()
+
 action = vec_env.action_space.sample()
 new_obs, rewards, dones, infos = vec_env.step([action])
 print(f"Observation space: {new_obs.shape}")
-
+new_observations = new_obs[0]
+new_frame = new_observations[-1]
+plt.imshow(new_frame)
+plt.show()
+action = vec_env.action_space.sample()
+new_obs, rewards, dones, infos = vec_env.step([action])
+print(f"Observation space: {new_obs.shape}")
+new_observations = new_obs[0]
+new_frame = new_observations[-1]
+plt.imshow(new_frame)
+plt.show()
 # exit()
 vec_env.close()
