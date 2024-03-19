@@ -82,3 +82,5 @@ plt.imshow(new_frame)
 plt.show()
 # exit()
 vec_env.close()
+cio
+
