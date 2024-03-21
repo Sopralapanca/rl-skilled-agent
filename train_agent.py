@@ -3,7 +3,7 @@ import wandb
 from rl_zoo3.utils import linear_schedule
 from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
-from stable_baselines3.common.vec_env import VecFrameStack
+from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SelfAttentionExtractor
 from wandb.integration.sb3 import WandbCallback
@@ -74,6 +74,7 @@ if not os.path.exists(gamelogs):
 # vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
 vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
 vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
+vec_env = VecTransposeImage(vec_env)
 
 skills = []
 skills.append(get_state_rep_uns(config["game"], config["device"]))
@@ -86,41 +87,43 @@ f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
 sample_obs = torch.tensor(sample_obs).to(device)
 sample_obs = sample_obs.unsqueeze(0)
-sample_obs = sample_obs.transpose(1, 3)
+#sample_obs = sample_obs.transpose(1, 3)
+
 
 feature_dim = 256
 if args.extractor == "lin_concat_ext":
     config["f_ext_class"] = LinearConcatExtractor
     tb_log_name += "_lin_ae"
-    ext = LinearConcatExtractor(vec_env.observation_space, 256, skills, device)
-    feature_dim = ext.get_dimension(sample_obs)
+    ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+    features_dim = ext.get_dimension(sample_obs)
 
 # non funziona con autoencoder
 if args.extractor == "cnn_concat_ext":
     config["f_ext_class"] = CNNConcatExtractor
     tb_log_name += "_cnn"
-    ext = CNNConcatExtractor(vec_env.observation_space, 256, skills, 1, device)
-    feature_dim = ext.get_dimension(sample_obs)
+    ext = CNNConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+    features_dim = ext.get_dimension(sample_obs)
 
 # non funziona con autoencoder
 if args.extractor == "combine_ext":
     config["f_ext_class"] = CombineExtractor
     tb_log_name += "_comb"
-    ext = CombineExtractor(vec_env.observation_space, 256, skills, device)
-    feature_dim = ext.get_dimension(sample_obs)
+    ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device)
+    features_dim = ext.get_dimension(sample_obs)
 
 if args.extractor == "self_attention_ext":
     config["f_ext_class"] = SelfAttentionExtractor
     tb_log_name += "_sae_256_secondtry"
     f_ext_kwargs["n_features"] = 256
     f_ext_kwargs["n_heads"] = 4
+    features_dim = len(skills) * f_ext_kwargs["n_features"]
 
-    ext = SelfAttentionExtractor(vec_env.observation_space, 256, skills, device)
-    feature_dim = ext.get_dimension(sample_obs)
+    print("obtained feature_dim:", features_dim)
 
 
 f_ext_kwargs["skills"] = skills
-f_ext_kwargs["features_dim"] = feature_dim
+f_ext_kwargs["features_dim"] = features_dim
+print("setto feature_dim a", f_ext_kwargs["features_dim"])
 if skilled_agent:
     policy_kwargs = dict(
         features_extractor_class=config["f_ext_class"],

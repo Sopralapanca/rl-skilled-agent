@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import torch as th
 import torch.nn as nn
 
@@ -57,6 +58,7 @@ class FeaturesExtractor(BaseFeaturesExtractor):
                 adapter = self.adapters[skill.name]
                 so = adapter(so)
 
+            #print(skill.name, so.shape)
             skill_out.append(so)
 
         return skill_out
@@ -73,7 +75,7 @@ class LinearConcatExtractor(FeaturesExtractor):
         super().__init__(observation_space, features_dim, skills, device)
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        # print(observations.shape)
+        print("lin concat ", observations.shape)
         skill_out = self.preprocess_input(observations)
         for i in range(len(skill_out)):
             # flatten
@@ -183,6 +185,7 @@ class SelfAttentionExtractor(FeaturesExtractor):
                  n_features: int = 512,
                  n_heads: int = 2,
                  device="cpu"):
+        print("feature dim received", features_dim)
         super().__init__(observation_space, features_dim, skills, device)
 
         self.n_heads = n_heads
@@ -201,16 +204,19 @@ class SelfAttentionExtractor(FeaturesExtractor):
 
         self.mlp_layers = nn.ModuleList()
         for i in range(len(skill_out)):
-            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], n_features), nn.ReLU())
+            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], n_features, device=device), nn.ReLU())
             self.mlp_layers.append(seq_layer)
 
         self.attention = nn.MultiheadAttention(embed_dim=n_features, num_heads=self.n_heads,
-                                               batch_first=False)  # batch first was True
+                                               batch_first=False, device=device)  # batch first was True
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        #print("observation shape", observations.shape)
+        print("forward observation shape", observations.shape)
+
         skill_out = self.preprocess_input(observations)
 
+        # consider skills as tokens in a sequence
+        # so first fix the dimension of each skill output
         for i in range(len(skill_out)):
             seq_layer = self.mlp_layers[i]
             x = skill_out[i]
@@ -218,13 +224,25 @@ class SelfAttentionExtractor(FeaturesExtractor):
                 x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
             skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
 
-        transformed_embeddings = th.stack(skill_out,0)  # shape num_skills x batch_size (num envs) x n_features (length of the embeddings)
-        #transposed_embeddings = transformed_embeddings.permute(1, 0, 2)  # shape batch_size x num_skills x n_features
+        # From the documentation:
+        # L: Target sequence length. => This refers to the length of the sequences you want to attend to. In the case of text data it could be the length of a sentence or the number of tokens in a sequence.
+        # N: Batch size. => This indicates the number of sequences or samples you're processing simultaneously.
+        # E_q: Query embedding dimension. => This represents the dimensionality of the query embeddings. Dimension of a single token in the sequence.
+
+        # In our case:
+        # L: length of the sequences => Number of skills
+        # N: Batch size => Number of environments
+        # E_q: Query embedding dimension => Dimension of a single skill embedding (n_features)
+
+        # now stack the skill outputs to obtain a sequence of tokens
+        transformed_embeddings = th.stack(skill_out,0)
+        print("transformed embeddings", transformed_embeddings.shape)
+
 
         att_out, att_weights = self.attention(transformed_embeddings, transformed_embeddings,transformed_embeddings)
-
+        print(att_out.shape)
         att_out = att_out.transpose(0, 1)
-        # flatten the attention output to obtain (8, 1024)
-        combined_embeddings = th.flatten(att_out, start_dim=1)
 
+        combined_embeddings = th.flatten(att_out, start_dim=1)
+        print("combined embeddings", combined_embeddings.shape)
         return combined_embeddings
