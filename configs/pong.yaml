@@ -18,12 +18,11 @@ config : {
     "net_arch_pi": [256],
     "net_arch_vf": [256],
 
-    "f_ext_name": "lin_concat_ext",
+    "f_ext_name": "None",
 
     "f_ext_ft_dim": 16896,
     "f_ext_kwargs": {
         "features_dim": 16896, #dimensione vettore dopo aver estratto e combinato le skill
-        "device": dev
     },
 
 }
