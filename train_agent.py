@@ -59,8 +59,6 @@ if not os.path.exists(logdir):
 if not os.path.exists(gamelogs):
     os.makedirs(gamelogs)
 
-
-
 vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
 vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
@@ -71,6 +69,7 @@ skills.append(get_object_keypoints_encoder(config["game"], config["device"], loa
 skills.append(get_object_keypoints_keynet(config["game"], config["device"], load_only_model=True))
 skills.append(get_video_object_segmentation(config["game"], config["device"], load_only_model=True))
 # skills.append(get_autoencoder(config["game"], config["device"]))
+# skills.append(get_image_completion(config["game"], config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -151,19 +150,20 @@ if debug:
                 verbose=0,
                 device=config["device"],
                 )
-    model.learn(1)
+    model.learn(100)
 else:
-    run = wandb.init(
-        project="sb3-skillcomp",
-        config=config,
-        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-        monitor_gym=True,  # auto-upload the videos of agents playing the game
-        name=f"{config['f_ext_name']}_{config['game']}",
-        tags=[config["game"].lower()]
-        # save_code = True,  # optional
-    )
+    # run = wandb.init(
+    #     project="sb3-skillcomp",
+    #     config=config,
+    #     sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+    #     monitor_gym=True,  # auto-upload the videos of agents playing the game
+    #     name=f"{config['f_ext_name']}_{config['game']}",
+    #     tags=[config["game"].lower()]
+    #     # save_code = True,  # optional
+    # )
 
-    vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
+    #vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
+    vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
     vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
     vec_env = VecTransposeImage(vec_env)
 
@@ -177,7 +177,7 @@ else:
                 normalize_advantage=config["normalize"],
                 ent_coef=config["ent_coef"],
                 vf_coef=config["vf_coef"],
-                tensorboard_log=gamelogs,
+                #tensorboard_log=gamelogs,
                 policy_kwargs=policy_kwargs,
                 verbose=1,
                 device=config["device"],
@@ -186,13 +186,13 @@ else:
     #model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
     model.learn(
         config["n_timesteps"],
-        callback=WandbCallback(
-            model_save_path=f"models/{run.id}",
-            verbose=2,
-        )
+        # callback=WandbCallback(
+        #     model_save_path=f"models/{run.id}",
+        #     verbose=2,
+        # )
     )
 
-    run.finish()
+    #run.finish()
 
 # print("net_arch:", model.policy.net_arch)
 # print("share_feature_extractor:", model.policy.share_features_extractor)

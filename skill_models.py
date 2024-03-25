@@ -55,6 +55,7 @@ from state_representation.encoder import NatureCNN
 # from autoencoders import DeepConvAutoencoder
 from object_keypoints.model import Encoder, KeyNet, RefineNet, Transporter
 from video_object_segmentation.model import VideoObjectSegmentationModel
+#from image_completion.model import ImageCompletionModel
 from autoencoders.model import Autoencoder
 
 # TODO: Eventually can become: Skill(input_model, input_output, skill_model, skill_output, adapter_model, adapter_output)
@@ -102,6 +103,19 @@ def get_autoencoder(game, device):
     input_transformation_function = autoencoder_input_trans
     return Skill("autoencoder", input_transformation_function, model.encoder, model_forward, adapter)
 
+
+def imgcompletion_input_trans(x: Tensor):
+    # x is of shape 32x4x84x84, because there are 4 frame stacked, pick only the last frame and return a tensor of shape 32x1x84x84
+    x = x[:, -1:, :, :]
+    return x.float()
+def get_image_completion(game, device):
+    model_path = "skills/models/" + game.lower() + "-image-completion.pt"
+    model = ImageCompletionModel().to(device)
+    model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+    model.eval()
+    adapter = None
+    input_transformation_function = imgcompletion_input_trans
+    return Skill("image_completion", input_transformation_function, model.encoder, model_forward, adapter)
 
 def ae_input_trans(x: Tensor):
     return x.float()

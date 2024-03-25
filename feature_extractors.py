@@ -59,7 +59,7 @@ class FeaturesExtractor(BaseFeaturesExtractor):
                 adapter = self.adapters[skill.name]
                 so = adapter(so)
 
-            # print(skill.name, so.shape)
+            #print(skill.name, so.shape)
             skill_out.append(so)
 
         return skill_out
@@ -247,6 +247,7 @@ class Reservoir(nn.Module):
         self.reservoir_size = reservoir_size
         self.spectral_radius = spectral_radius
 
+
         # Initialize reservoir weights
         self.W_in = th.randn(input_size, reservoir_size)
         self.W_res = th.randn(reservoir_size, reservoir_size)
@@ -262,13 +263,20 @@ class Reservoir(nn.Module):
         self.reservoir_state = self.reservoir_state.to(device)
         self.W_in = self.W_in.to(device)
         self.W_res = self.W_res.to(device)
+        print("ci sono")
+        print()
     def forward(self, input_data):
         # Input transformation
         input_projection = th.mm(input_data, self.W_in)
+        state_projection = th.mm(self.reservoir_state, self.W_res)
 
         # Reservoir dynamics
-        self.reservoir_state = th.tanh(input_projection + th.mm(self.reservoir_state, self.W_res))
+        self.reservoir_state = th.tanh(input_projection + state_projection)
 
+        print("input projection", input_projection.shape)
+        print("state_projection", state_projection.shape)
+        print("reservoir_state", self.reservoir_state.shape)
+        print()
         return self.reservoir_state
 
 
@@ -283,7 +291,6 @@ class ReservoirConcatExtractor(FeaturesExtractor):
         self.reservoir = Reservoir(input_size=input_features_dim, reservoir_size=features_dim, device=device)
         self.reservoir.to(device)
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        # print("res concat observation shape ", observations.shape)
         skill_out = self.preprocess_input(observations)
         for i in range(len(skill_out)):
             # flatten
@@ -291,5 +298,4 @@ class ReservoirConcatExtractor(FeaturesExtractor):
 
         x = th.cat(skill_out, 1)
         x = self.reservoir(x)
-
         return x

@@ -34,12 +34,8 @@ class Dataset(Dataset):
 
         img = np.array(Image.open(f"{self.path}/{n}/{t}.png").resize((self.frame_size, self.frame_size)))
         img = img / 255.0
+
         occluded_img = self.add_black_square(copy.deepcopy(img))
-
-        occluded_img = occluded_img / 255
-
-        diff_count = np.sum(occluded_img != img)
-        print("diff count", diff_count)
 
         img = torch.from_numpy(img).contiguous().float()
         img = img.unsqueeze(0)

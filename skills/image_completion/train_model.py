@@ -58,13 +58,6 @@ model = ImageCompletionModel().to(device)
 # print(f"Total params: {pytorch_total_params}") #forse un po troppi parametri
 
 
-occluded_imgs, imgs = next(iter(train_load))
-plt.imshow(imgs[0][0], cmap='gray')
-plt.show()
-plt.imshow(occluded_imgs[0][0], cmap='gray')
-plt.show()
-exit()
-
 # Define loss function and optimizer
 criterion = torch.nn.MSELoss().cuda()
 optimizer = optim.Adam(model.parameters(), lr=0.001)

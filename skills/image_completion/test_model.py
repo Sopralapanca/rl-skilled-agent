@@ -36,8 +36,7 @@ NUM_EPS = len(os.listdir(data_path))
 img_sz = 84
 batch_size = 32
 
-val_idxs = [100]
-
+val_idxs = [20]
 
 dataset = Dataset(data_path, val_idxs, img_sz, square_size=20)
 val_load = DataLoader(dataset, batch_size, num_workers=8, shuffle=False)
@@ -48,7 +47,7 @@ model.load_state_dict(torch.load("../models/" + save_name + "-image-completion.p
 
 occluded_imgs, imgs = next(iter(val_load))
 occluded_imgs = occluded_imgs.to(device)
-imgs = occluded_imgs.to(imgs)
+imgs = imgs.to(device)
 
 with torch.no_grad():
     model.eval()
