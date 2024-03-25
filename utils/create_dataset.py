@@ -16,7 +16,7 @@ from gym import spaces
 from gym.envs.classic_control import CartPoleEnv
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--env", help="Name of the environment to use i.e. Pong, Breakout, etc.",
+parser.add_argument("--env", help="Name of the environment to use i.e. Pong, Breakoout, etc.",
                     type=str, required=True)
 
 args = parser.parse_args()
@@ -52,35 +52,16 @@ class CartPoleImageWrapper(CartPoleEnv):
         return self._get_image_observation(), reward, terminated, info
 
 
-def plot_images(images_array):
-    length = images_array.shape[0]
-    # Extract each image along the first axis
-    image_list = [images_array[i, :, :, :] for i in range(length)]
-
-    # Display the images side by side
-    fig, axes = plt.subplots(1, length, figsize=(15, 3))
-
-    for i, image in enumerate(image_list):
-        axes[i].imshow(image)  # Assuming the images are grayscale cmap='gray', vmin=0, vmax=255
-        axes[i].axis('off')
-
-    plt.show()
-
 
 N_ENVS = 1
 FRAME_STACK = 4
-NUM_EPS = 100
+NUM_EPS = 500
 MAX_EP_LEN = 100
-ENV_NAME = args.env  # "PongNoFrameskip-v4"
-SAVE_DIR = "../data/" + ENV_NAME
-
-# Create a directory data with subdirectory "breakout" using os to store the frames
-if not os.path.exists(SAVE_DIR):
-    os.makedirs(SAVE_DIR)
+ENV_NAME = args.env  # "Pong"
 
 # Create the environment
 if ENV_NAME.lower() in atari_py.list_games():
-    ENV_NAME = ENV_NAME + "NoFrameskip-v4"
+    ENV_NAME = ENV_NAME+"NoFrameskip-v4"
     vec_env = make_atari_env(ENV_NAME, n_envs=N_ENVS)
 else:
     if ENV_NAME == "CartPole-v1":
@@ -94,6 +75,13 @@ obs = vec_env.reset()
 
 if ENV_NAME.lower() in atari_py.list_games():
     vec_env.render("rgb_array")
+
+SAVE_DIR = "../data/" + ENV_NAME
+
+# Create a directory data with subdirectory "breakout" using os to store the frames
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
+
 
 frame_count = 0
 for i in tqdm(range(1, NUM_EPS + 1)):

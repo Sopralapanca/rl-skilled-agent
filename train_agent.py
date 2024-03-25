@@ -59,18 +59,9 @@ if not os.path.exists(logdir):
 if not os.path.exists(gamelogs):
     os.makedirs(gamelogs)
 
-run = wandb.init(
-    project="sb3-skillcomp",
-    config=config,
-    sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-    monitor_gym=True,  # auto-upload the videos of agents playing the game
-    name=f"{config['f_ext_name']}_{config['game']}",
-    tags=[config["game"].lower()]
-    # save_code = True,  # optional
-)
 
-vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
-# vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
+
+vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
 vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
 
@@ -79,7 +70,7 @@ skills.append(get_state_rep_uns(config["game"], config["device"]))
 skills.append(get_object_keypoints_encoder(config["game"], config["device"], load_only_model=True))
 skills.append(get_object_keypoints_keynet(config["game"], config["device"], load_only_model=True))
 skills.append(get_video_object_segmentation(config["game"], config["device"], load_only_model=True))
-# skills.append(get_autoencoder(config["game"], config["device"])) #quando lo usi ricorda di mettere le immagini in grayscale
+# skills.append(get_autoencoder(config["game"], config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -162,6 +153,20 @@ if debug:
                 )
     model.learn(1)
 else:
+    run = wandb.init(
+        project="sb3-skillcomp",
+        config=config,
+        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+        monitor_gym=True,  # auto-upload the videos of agents playing the game
+        name=f"{config['f_ext_name']}_{config['game']}",
+        tags=[config["game"].lower()]
+        # save_code = True,  # optional
+    )
+
+    vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
+    vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
+    vec_env = VecTransposeImage(vec_env)
+
     model = PPO("CnnPolicy",
                 vec_env,
                 learning_rate=linear_schedule(config["learning_rate"]),
