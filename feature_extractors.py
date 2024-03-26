@@ -1,9 +1,13 @@
+import matplotlib.pyplot as plt
+import torch
 import torch as th
 import torch.nn as nn
 
 from typing import List
 from gymnasium import spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from tensorboard.backend.event_processing import reservoir
+
 from skill_models import Skill
 import numpy as np
 
@@ -43,7 +47,7 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         self.__kpt_key_adapter.to(device)
 
     def preprocess_input(self, observations: th.Tensor) -> [th.Tensor]:
-        #print("observation shape", observations.shape)
+        # print("observation shape", observations.shape)
 
         skill_out = []
         for skill in self.skills:
@@ -57,12 +61,15 @@ class FeaturesExtractor(BaseFeaturesExtractor):
                 adapter = self.adapters[skill.name]
                 so = adapter(so)
 
+            # print(skill.name, so.shape)
             skill_out.append(so)
 
         return skill_out
+
     def get_dimension(self, observations: th.Tensor) -> int:
         out = self.forward(observations)
         return out.shape[1]
+
 
 # feature size = 16896
 class LinearConcatExtractor(FeaturesExtractor):
@@ -73,7 +80,7 @@ class LinearConcatExtractor(FeaturesExtractor):
         super().__init__(observation_space, features_dim, skills, device)
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        # print(observations.shape)
+        # print("lin concat observation shape ", observations.shape)
         skill_out = self.preprocess_input(observations)
         for i in range(len(skill_out)):
             # flatten
@@ -81,6 +88,7 @@ class LinearConcatExtractor(FeaturesExtractor):
 
         x = th.cat(skill_out, 1)
         return x
+
 
 # ----------------------------------------------------------------------------------
 
@@ -125,7 +133,7 @@ class CNNConcatExtractor(FeaturesExtractor):
 # ----------------------------------------------------------------------------------
 
 # feature size = 8704
-class CombineExtractor(BaseFeaturesExtractor):
+class CombineExtractor(FeaturesExtractor):
     """ Assumption:
         skills contains `num_linear_skills` linear encoding skills
         followed by higher dimensional skills
@@ -136,35 +144,24 @@ class CombineExtractor(BaseFeaturesExtractor):
                  skills: List[Skill] = None,
                  num_linear_skills=0,
                  device="cpu"):
-        super().__init__(observation_space, features_dim)
+        super().__init__(observation_space, features_dim, skills, device)
 
         assert len(skills) > num_linear_skills
         self.skills = skills
         self.num_lin_skills = num_linear_skills
 
-        num_channels = 16 + 32 + 16
+        # 2 for state_rep_uns, 16 for obj_key_enc, 32 for vid_obj_seg, 16 for obj_key_key
+        num_channels = 2 + 16 + 32 + 16
         self.cnn = nn.Sequential(
             nn.Conv2d(num_channels, 32, 3, 1, 1),
             nn.ReLU(),
         )
-        self.__vobj_seg_adapter.to(device)
-        self.__kpt_enc_adapter.to(device)
-        self.__kpt_key_adapter.to(device)
+
         self.cnn.to(device)
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        # print(observations.shape)
-        skill_out = []
-        for skill in self.skills:
-            with th.no_grad():
-                so = skill.input_adapter(observations)
-                so = skill.skill_output(skill.skill_model, so)
-
-            if skill.name in self.adapters:
-                adapter = self.adapters[skill.name]
-                so = adapter(so)
-            # print(skill.name, so.shape)
-            skill_out.append(so)
+        # print("forward shape", observations.shape)
+        skill_out = self.preprocess_input(observations)
 
         # concat the cnn feature maps
         x = th.cat(skill_out[self.num_lin_skills:], 1)
@@ -197,20 +194,22 @@ class SelfAttentionExtractor(FeaturesExtractor):
         for i in range(len(skill_out)):
             if len(skill_out[i].shape) > 2:
                 skill_out[i] = th.reshape(skill_out[i],
-                                      (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
+                                          (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
 
         self.mlp_layers = nn.ModuleList()
         for i in range(len(skill_out)):
-            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], n_features), nn.ReLU())
+            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], n_features, device=device), nn.ReLU())
             self.mlp_layers.append(seq_layer)
 
         self.attention = nn.MultiheadAttention(embed_dim=n_features, num_heads=self.n_heads,
-                                               batch_first=False)  # batch first was True
+                                               batch_first=False, device=device)  # batch first was True
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        #print("observation shape", observations.shape)
+        # print("forward observation shape", observations.shape)
         skill_out = self.preprocess_input(observations)
 
+        # consider skills as tokens in a sequence
+        # so first fix the dimension of each skill output
         for i in range(len(skill_out)):
             seq_layer = self.mlp_layers[i]
             x = skill_out[i]
@@ -218,13 +217,85 @@ class SelfAttentionExtractor(FeaturesExtractor):
                 x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
             skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
 
-        transformed_embeddings = th.stack(skill_out,0)  # shape num_skills x batch_size (num envs) x n_features (length of the embeddings)
-        #transposed_embeddings = transformed_embeddings.permute(1, 0, 2)  # shape batch_size x num_skills x n_features
+        # From the documentation:
+        # L: Target sequence length. =>
+        #    This refers to the length of the sequences you want to attend to.
+        #    In the case of text data it could be the length of a sentence or the number of tokens in a sequence.
+        # N: Batch size. => This indicates the number of sequences or samples you're processing simultaneously.
+        # E: embedding dimension. =>
+        #    This represents the dimensionality of the embeddings. Dimension of a single token in the sequence.
 
-        att_out, att_weights = self.attention(transformed_embeddings, transformed_embeddings,transformed_embeddings)
+        # In our case:
+        # L: length of the sequences => Number of skills
+        # N: Batch size => Number of environments
+        # E: embedding dimension => Dimension of a single skill embedding (n_features)
 
+        # now stack the skill outputs to obtain a sequence of tokens
+        transformed_embeddings = th.stack(skill_out, 0)  # 5x8x256 #prova a far passare tran
+
+        att_out, att_weights = self.attention(transformed_embeddings, transformed_embeddings, transformed_embeddings)
         att_out = att_out.transpose(0, 1)
-        # flatten the attention output to obtain (8, 1024)
-        combined_embeddings = th.flatten(att_out, start_dim=1)
+        # print("att weights shape", att_weights.shape) num_envs (batch size) x num_heads x num_skill
 
+        combined_embeddings = th.flatten(att_out, start_dim=1)
         return combined_embeddings
+
+
+class Reservoir(nn.Module):
+    def __init__(self, input_size, reservoir_size, spectral_radius=0.9, max_batch_size=256, device='cpu'):
+        super(Reservoir, self).__init__()
+
+        self.input_size = input_size
+        self.reservoir_size = reservoir_size
+        self.spectral_radius = spectral_radius
+
+        # Initialize reservoir weights
+        self.W_in = th.randn(input_size, reservoir_size)
+        self.W_res = th.randn(reservoir_size, reservoir_size)
+
+        # Scale the spectral radius of W_res
+        eigenvalues, eigenvectors = th.linalg.eig(self.W_res)
+        max_eigenvalue = th.max(th.abs(eigenvalues))
+        self.W_res = self.W_res / max_eigenvalue * spectral_radius
+
+        # Initialize reservoir state
+        self.reservoir_state = th.zeros(max_batch_size, reservoir_size) #first was (1, reservoir_size)
+        self.reservoir_state = self.reservoir_state.to(device)
+        self.W_in = self.W_in.to(device)
+        self.W_res = self.W_res.to(device)
+
+    def forward(self, input_data):
+        # Input transformation
+        input_projection = th.mm(input_data, self.W_in)
+        dim = input_projection.shape[0]
+        state_projection = th.mm(self.reservoir_state[:dim, :], self.W_res)
+
+        # Reservoir dynamics
+        self.reservoir_state[:dim, :] = th.tanh(input_projection + state_projection[:dim, :])
+
+        return self.reservoir_state[:dim, :]
+
+
+class ReservoirConcatExtractor(FeaturesExtractor):
+    def __init__(self, observation_space: spaces.Box,
+                 features_dim: int = 256,
+                 skills: List[Skill] = None,
+                 input_features_dim: int = 512,
+                 max_batch_size: int = 256,
+                 device="cpu"):
+        super().__init__(observation_space, features_dim, skills, device)
+
+        self.reservoir = Reservoir(input_size=input_features_dim, reservoir_size=features_dim, device=device, max_batch_size=max_batch_size)
+        self.reservoir.to(device)
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        skill_out = self.preprocess_input(observations)
+        for i in range(len(skill_out)):
+            # flatten
+            skill_out[i] = th.reshape(skill_out[i], (skill_out[i].size(0), -1))
+
+        x = th.cat(skill_out, 1)
+        with torch.no_grad():
+            x = self.reservoir(x)
+
+        return x
