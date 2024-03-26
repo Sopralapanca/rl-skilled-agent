@@ -36,7 +36,11 @@ NUM_EPS = len(os.listdir(data_path))
 img_sz = 84
 batch_size = 32
 
-val_idxs = [20]
+eps = np.arange(start=1, stop=NUM_EPS + 1)
+np.random.shuffle(eps)
+split_idx = int(NUM_EPS * 0.8)
+train_idxs = eps[:split_idx]
+val_idxs = eps[split_idx:NUM_EPS]
 
 dataset = Dataset(data_path, val_idxs, img_sz, square_size=20)
 val_load = DataLoader(dataset, batch_size, num_workers=8, shuffle=False)
@@ -52,18 +56,18 @@ imgs = imgs.to(device)
 with torch.no_grad():
     model.eval()
     output = model(occluded_imgs)
+    for out, occ, img in zip(output[:10], occluded_imgs[:10], imgs[:10]):
+        fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
+        axes[0].imshow(occ[0].cpu())
+        axes[0].set_title("Occluded Image")
+        axes[0].axis('off')
 
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
-    axes[0].imshow(occluded_imgs[0][0].cpu())
-    axes[0].set_title("Occluded Image")
-    axes[0].axis('off')
+        axes[1].imshow(out[0].cpu())
+        axes[1].set_title("Reconstructed Image")
+        axes[1].axis('off')
 
-    axes[1].imshow(output[0][0].cpu())
-    axes[1].set_title("Reconstructed Image")
-    axes[1].axis('off')
+        axes[2].imshow(img[0].cpu())
+        axes[2].set_title("Ground Truth Image")
+        axes[2].axis('off')
 
-    axes[2].imshow(imgs[0][0].cpu())
-    axes[2].set_title("Ground Truth Image")
-    axes[2].axis('off')
-
-plt.show()
+        plt.show()

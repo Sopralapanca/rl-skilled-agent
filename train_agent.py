@@ -47,9 +47,9 @@ with open(f'configs/{env}.yaml', 'r') as file:
 
 config["device"] = device
 config["f_ext_kwargs"]["device"] = device
-config["game"] = env_name
+config["game"] = env_name+"_ic"
 
-game_id = config["game"] + "NoFrameskip-v4"
+game_id = env_name + "NoFrameskip-v4"
 
 logdir = "./tensorboard_logs"
 gamelogs = f"{logdir}/{config['game']}"
@@ -64,12 +64,12 @@ vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
 
 skills = []
-skills.append(get_state_rep_uns(config["game"], config["device"]))
-skills.append(get_object_keypoints_encoder(config["game"], config["device"], load_only_model=True))
-skills.append(get_object_keypoints_keynet(config["game"], config["device"], load_only_model=True))
-skills.append(get_video_object_segmentation(config["game"], config["device"], load_only_model=True))
+skills.append(get_state_rep_uns(env_name, config["device"]))
+skills.append(get_object_keypoints_encoder(env_name, config["device"], load_only_model=True))
+skills.append(get_object_keypoints_keynet(env_name, config["device"], load_only_model=True))
+skills.append(get_video_object_segmentation(env_name, config["device"], load_only_model=True))
 # skills.append(get_autoencoder(config["game"], config["device"]))
-# skills.append(get_image_completion(config["game"], config["device"]))
+skills.append(get_image_completion(env_name, config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -152,7 +152,7 @@ if debug:
                 verbose=0,
                 device=config["device"],
                 )
-    model.learn(100)
+    model.learn(1000)
 else:
     run = wandb.init(
         project="sb3-skillcomp",
@@ -178,7 +178,7 @@ else:
                 normalize_advantage=config["normalize"],
                 ent_coef=config["ent_coef"],
                 vf_coef=config["vf_coef"],
-                #tensorboard_log=gamelogs,
+                tensorboard_log=gamelogs,
                 policy_kwargs=policy_kwargs,
                 verbose=1,
                 device=config["device"],
