@@ -113,6 +113,8 @@ if args.extractor == "reservoir_concat_ext":
     config["f_ext_name"] = "reservoir_concat_ext"
     config["f_ext_class"] = ReservoirConcatExtractor
     tb_log_name += "_reservoir"
+    max_batch_size = config["net_arch_pi"][0] #config["net_arch_vf"] #controlla PPO, vedi se prima utilizza pi e dopo vf, potrebbe dare errore
+    f_ext_kwargs["max_batch_size"] = max_batch_size
 
     # dato che concateno le skill come nel linear, uso LinearConcatExt per prendere la dimensione
     ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
@@ -152,18 +154,17 @@ if debug:
                 )
     model.learn(100)
 else:
-    # run = wandb.init(
-    #     project="sb3-skillcomp",
-    #     config=config,
-    #     sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-    #     monitor_gym=True,  # auto-upload the videos of agents playing the game
-    #     name=f"{config['f_ext_name']}_{config['game']}",
-    #     tags=[config["game"].lower()]
-    #     # save_code = True,  # optional
-    # )
+    run = wandb.init(
+        project="sb3-skillcomp",
+        config=config,
+        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+        monitor_gym=True,  # auto-upload the videos of agents playing the game
+        name=f"{config['f_ext_name']}_{config['game']}",
+        tags=[config["game"].lower()]
+        # save_code = True,  # optional
+    )
 
-    #vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
-    vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
+    vec_env = make_atari_env(game_id, n_envs=config["n_envs"])#, monitor_dir=f"monitor/{run.id}")
     vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
     vec_env = VecTransposeImage(vec_env)
 
@@ -186,13 +187,12 @@ else:
     #model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
     model.learn(
         config["n_timesteps"],
-        # callback=WandbCallback(
-        #     model_save_path=f"models/{run.id}",
-        #     verbose=2,
-        # )
+        callback=WandbCallback(
+            model_save_path=f"models/{run.id}",
+            verbose=2,
+        )
     )
-
-    #run.finish()
+    run.finish()
 
 # print("net_arch:", model.policy.net_arch)
 # print("share_feature_extractor:", model.policy.share_features_extractor)

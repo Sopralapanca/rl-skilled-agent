@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import torch
 import torch as th
 import torch.nn as nn
 
@@ -9,6 +10,7 @@ from tensorboard.backend.event_processing import reservoir
 
 from skill_models import Skill
 import numpy as np
+
 
 class FeaturesExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
@@ -59,7 +61,7 @@ class FeaturesExtractor(BaseFeaturesExtractor):
                 adapter = self.adapters[skill.name]
                 so = adapter(so)
 
-            #print(skill.name, so.shape)
+            # print(skill.name, so.shape)
             skill_out.append(so)
 
         return skill_out
@@ -240,13 +242,12 @@ class SelfAttentionExtractor(FeaturesExtractor):
 
 
 class Reservoir(nn.Module):
-    def __init__(self, input_size, reservoir_size, spectral_radius=0.9, device='cpu'):
+    def __init__(self, input_size, reservoir_size, spectral_radius=0.9, max_batch_size=256, device='cpu'):
         super(Reservoir, self).__init__()
 
         self.input_size = input_size
         self.reservoir_size = reservoir_size
         self.spectral_radius = spectral_radius
-
 
         # Initialize reservoir weights
         self.W_in = th.randn(input_size, reservoir_size)
@@ -258,26 +259,21 @@ class Reservoir(nn.Module):
         self.W_res = self.W_res / max_eigenvalue * spectral_radius
 
         # Initialize reservoir state
-        self.reservoir_state = th.zeros(1, reservoir_size)
-
+        self.reservoir_state = th.zeros(max_batch_size, reservoir_size) #first was (1, reservoir_size)
         self.reservoir_state = self.reservoir_state.to(device)
         self.W_in = self.W_in.to(device)
         self.W_res = self.W_res.to(device)
-        print("ci sono")
-        print()
+
     def forward(self, input_data):
         # Input transformation
         input_projection = th.mm(input_data, self.W_in)
-        state_projection = th.mm(self.reservoir_state, self.W_res)
+        dim = input_projection.shape[0]
+        state_projection = th.mm(self.reservoir_state[:dim, :], self.W_res)
 
         # Reservoir dynamics
-        self.reservoir_state = th.tanh(input_projection + state_projection)
+        self.reservoir_state[:dim, :] = th.tanh(input_projection + state_projection[:dim, :])
 
-        print("input projection", input_projection.shape)
-        print("state_projection", state_projection.shape)
-        print("reservoir_state", self.reservoir_state.shape)
-        print()
-        return self.reservoir_state
+        return self.reservoir_state[:dim, :]
 
 
 class ReservoirConcatExtractor(FeaturesExtractor):
@@ -285,11 +281,13 @@ class ReservoirConcatExtractor(FeaturesExtractor):
                  features_dim: int = 256,
                  skills: List[Skill] = None,
                  input_features_dim: int = 512,
+                 max_batch_size: int = 256,
                  device="cpu"):
         super().__init__(observation_space, features_dim, skills, device)
 
-        self.reservoir = Reservoir(input_size=input_features_dim, reservoir_size=features_dim, device=device)
+        self.reservoir = Reservoir(input_size=input_features_dim, reservoir_size=features_dim, device=device, max_batch_size=max_batch_size)
         self.reservoir.to(device)
+
     def forward(self, observations: th.Tensor) -> th.Tensor:
         skill_out = self.preprocess_input(observations)
         for i in range(len(skill_out)):
@@ -297,5 +295,7 @@ class ReservoirConcatExtractor(FeaturesExtractor):
             skill_out[i] = th.reshape(skill_out[i], (skill_out[i].size(0), -1))
 
         x = th.cat(skill_out, 1)
-        x = self.reservoir(x)
+        with torch.no_grad():
+            x = self.reservoir(x)
+
         return x
