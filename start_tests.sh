@@ -1,7 +1,5 @@
 #/!/bin/bash
 
-python train_agent.py --env Pong --device 1 --use-skill False --debug False
-echo "Finished"
 python train_agent.py --env Pong --device 1 --use-skill True --debug False --extractor lin_concat_ext
 echo "Finished"
 python train_agent.py --env Pong --device 1 --use-skill True --debug False --extractor cnn_concat_ext
@@ -10,6 +8,3 @@ python train_agent.py --env Pong --device 1 --use-skill True --debug False --ext
 echo "Finished"
 python train_agent.py --env Pong --device 1 --use-skill True --debug False --extractor self_attention_ext
 echo "Finished"
-python train_agent.py --env Pong --device 1 --use-skill True --debug False --extractor reservoir_concat_ext
-echo "Finished"
-
