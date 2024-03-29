@@ -47,7 +47,7 @@ with open(f'configs/{env}.yaml', 'r') as file:
 
 config["device"] = device
 config["f_ext_kwargs"]["device"] = device
-config["game"] = env_name+"_ic"
+config["game"] = env_name+"_ae"
 
 game_id = env_name + "NoFrameskip-v4"
 
@@ -68,8 +68,8 @@ skills.append(get_state_rep_uns(env_name, config["device"]))
 skills.append(get_object_keypoints_encoder(env_name, config["device"], load_only_model=True))
 skills.append(get_object_keypoints_keynet(env_name, config["device"], load_only_model=True))
 skills.append(get_video_object_segmentation(env_name, config["device"], load_only_model=True))
-# skills.append(get_autoencoder(config["game"], config["device"]))
-skills.append(get_image_completion(env_name, config["device"]))
+skills.append(get_autoencoder(env_name, config["device"]))
+#skills.append(get_image_completion(env_name, config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -86,7 +86,6 @@ if skilled_agent:
         ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
         features_dim = ext.get_dimension(sample_obs)
 
-    # non funziona con autoencoder
     if args.extractor == "cnn_concat_ext":
         config["f_ext_name"] = "cnn_concat_ext"
         config["f_ext_class"] = CNNConcatExtractor
@@ -94,7 +93,6 @@ if skilled_agent:
         ext = CNNConcatExtractor(vec_env.observation_space, skills=skills, device=device)
         features_dim = ext.get_dimension(sample_obs)
 
-    # non funziona con autoencoder
     if args.extractor == "combine_ext":
         config["f_ext_name"] = "combine_ext"
         config["f_ext_class"] = CombineExtractor
@@ -153,7 +151,7 @@ if debug:
                 verbose=0,
                 device=config["device"],
                 )
-    model.learn(100)
+    model.learn(1000)
 else:
     run = wandb.init(
         project="sb3-skillcomp",

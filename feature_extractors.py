@@ -103,7 +103,6 @@ class LinearConcatExtractor(FeaturesExtractor):
 
 # ----------------------------------------------------------------------------------
 
-# feature size = 8192
 class CNNConcatExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
@@ -128,10 +127,7 @@ class CNNConcatExtractor(FeaturesExtractor):
         # print("observation shape", observations.shape)
         skill_out = self.preprocess_input(observations)
 
-        # se utilizzo l'autoencoder con la nature cnn,
-        # ottengo una shape in output di (1x64x7x7)
-        # non è possibile concatenarlo con gli altri che hanno shape (1x32x16x16)
-        # quindi questo tipo di concatenamento con autoencoder non funziona
+
         x = th.cat(skill_out, 1)
         x = self.cnn(x)
 
@@ -142,7 +138,6 @@ class CNNConcatExtractor(FeaturesExtractor):
 
 # ----------------------------------------------------------------------------------
 
-# feature size = 8704
 class CombineExtractor(FeaturesExtractor):
     """ Assumption:
         skills contains `num_linear_skills` linear encoding skills
@@ -283,6 +278,7 @@ class Reservoir(nn.Module):
 
         return self.reservoir_state[:dim, :]
 
+# ----------------------------------------------------------------------------------
 
 class ReservoirConcatExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
@@ -293,7 +289,8 @@ class ReservoirConcatExtractor(FeaturesExtractor):
                  device="cpu"):
         super().__init__(observation_space, features_dim, skills, device)
 
-        self.reservoir = Reservoir(input_size=input_features_dim, reservoir_size=features_dim, device=device, max_batch_size=max_batch_size)
+        self.reservoir = Reservoir(input_size=input_features_dim, reservoir_size=features_dim, device=device,
+                                   max_batch_size=max_batch_size)
         self.reservoir.to(device)
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
