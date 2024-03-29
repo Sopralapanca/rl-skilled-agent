@@ -5,7 +5,7 @@ from dataset import Dataset
 import torch
 import os
 import numpy as np
-from model import ImageCompletionModel
+from model import Autoencoder
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -42,32 +42,28 @@ split_idx = int(NUM_EPS * 0.8)
 train_idxs = eps[:split_idx]
 val_idxs = eps[split_idx:NUM_EPS]
 
-dataset = Dataset(data_path, val_idxs, img_sz, square_size=20)
+dataset = Dataset(data_path, val_idxs, img_sz)
 val_load = DataLoader(dataset, batch_size, num_workers=8, shuffle=False)
 
 # Initialize the autoencoder model
-model = ImageCompletionModel().to(device)
-model.load_state_dict(torch.load("../models/" + save_name + "-image-completion.pt"))
+model = Autoencoder().to(device)
+model.load_state_dict(torch.load("../models/" + save_name + "-nature-encoder.pt"))
 
-occluded_imgs, imgs = next(iter(val_load))
-occluded_imgs = occluded_imgs.to(device)
+imgs = next(iter(val_load))
 imgs = imgs.to(device)
 
 with torch.no_grad():
     model.eval()
-    output = model(occluded_imgs)
-    for out, occ, img in zip(output[:10], occluded_imgs[:10], imgs[:10]):
-        fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
-        axes[0].imshow(occ[0].cpu())
-        axes[0].set_title("Occluded Image")
+    output = model(imgs)
+    for out, img in zip(output[:10], imgs[:10]):
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
+
+        axes[0].imshow(out[0].cpu())
+        axes[0].set_title("Reconstructed Image")
         axes[0].axis('off')
 
-        axes[1].imshow(out[0].cpu())
-        axes[1].set_title("Reconstructed Image")
+        axes[1].imshow(img[0].cpu())
+        axes[1].set_title("Ground Truth Image")
         axes[1].axis('off')
-
-        axes[2].imshow(img[0].cpu())
-        axes[2].set_title("Ground Truth Image")
-        axes[2].axis('off')
 
         plt.show()

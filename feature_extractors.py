@@ -6,7 +6,6 @@ import torch.nn as nn
 from typing import List
 from gymnasium import spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
-from tensorboard.backend.event_processing import reservoir
 
 from skill_models import Skill
 import numpy as np
@@ -45,6 +44,18 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         self.__vobj_seg_adapter.to(device)
         self.__kpt_enc_adapter.to(device)
         self.__kpt_key_adapter.to(device)
+
+        sample = observation_space.sample()  # 4x84x84
+        sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
+        sample = th.from_numpy(sample) / 255
+        sample = sample.to(device)
+
+        skill_out = self.preprocess_input(sample)
+
+        self.num_channels = 0
+        for el in skill_out:
+            if el.ndim == 4:
+                self.num_channels += el.shape[1]
 
     def preprocess_input(self, observations: th.Tensor) -> [th.Tensor]:
         # print("observation shape", observations.shape)
@@ -92,7 +103,6 @@ class LinearConcatExtractor(FeaturesExtractor):
 
 # ----------------------------------------------------------------------------------
 
-# feature size = 8192
 class CNNConcatExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
@@ -101,10 +111,9 @@ class CNNConcatExtractor(FeaturesExtractor):
                  device="cpu"):
         super().__init__(observation_space, features_dim, skills, device)
 
-        # 2 for state_rep_uns, 16 for obj_key_enc, 32 for vid_obj_seg, 16 for obj_key_key
-        num_channels = 2 + 16 + 32 + 16
+
         self.cnn = nn.Sequential(
-            nn.Conv2d(num_channels, 32, 3, 1, 1),
+            nn.Conv2d(self.num_channels, 32, 3, 1, 1),
             nn.ReLU(),
         )
         if num_conv_layers > 1:
@@ -118,10 +127,7 @@ class CNNConcatExtractor(FeaturesExtractor):
         # print("observation shape", observations.shape)
         skill_out = self.preprocess_input(observations)
 
-        # se utilizzo l'autoencoder con la nature cnn,
-        # ottengo una shape in output di (1x64x7x7)
-        # non è possibile concatenarlo con gli altri che hanno shape (1x32x16x16)
-        # quindi questo tipo di concatenamento con autoencoder non funziona
+
         x = th.cat(skill_out, 1)
         x = self.cnn(x)
 
@@ -132,7 +138,6 @@ class CNNConcatExtractor(FeaturesExtractor):
 
 # ----------------------------------------------------------------------------------
 
-# feature size = 8704
 class CombineExtractor(FeaturesExtractor):
     """ Assumption:
         skills contains `num_linear_skills` linear encoding skills
@@ -150,10 +155,8 @@ class CombineExtractor(FeaturesExtractor):
         self.skills = skills
         self.num_lin_skills = num_linear_skills
 
-        # 2 for state_rep_uns, 16 for obj_key_enc, 32 for vid_obj_seg, 16 for obj_key_key
-        num_channels = 2 + 16 + 32 + 16
         self.cnn = nn.Sequential(
-            nn.Conv2d(num_channels, 32, 3, 1, 1),
+            nn.Conv2d(self.num_channels, 32, 3, 1, 1),
             nn.ReLU(),
         )
 
@@ -275,6 +278,7 @@ class Reservoir(nn.Module):
 
         return self.reservoir_state[:dim, :]
 
+# ----------------------------------------------------------------------------------
 
 class ReservoirConcatExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
@@ -285,7 +289,8 @@ class ReservoirConcatExtractor(FeaturesExtractor):
                  device="cpu"):
         super().__init__(observation_space, features_dim, skills, device)
 
-        self.reservoir = Reservoir(input_size=input_features_dim, reservoir_size=features_dim, device=device, max_batch_size=max_batch_size)
+        self.reservoir = Reservoir(input_size=input_features_dim, reservoir_size=features_dim, device=device,
+                                   max_batch_size=max_batch_size)
         self.reservoir.to(device)
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
