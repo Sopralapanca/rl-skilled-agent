@@ -17,7 +17,7 @@ from gym.envs.classic_control import CartPoleEnv
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong, Breakoout, etc.",
-                    type=str, required=True)
+                    type=str, required=True, choices=["Breakout", "Pong", "CartPole-v1"])
 
 args = parser.parse_args()
 
@@ -55,7 +55,7 @@ class CartPoleImageWrapper(CartPoleEnv):
 
 N_ENVS = 1
 FRAME_STACK = 4
-NUM_EPS = 500
+NUM_EPS = 1000
 MAX_EP_LEN = 100
 ENV_NAME = args.env  # "Pong"
 

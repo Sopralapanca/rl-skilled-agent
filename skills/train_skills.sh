@@ -1,10 +1,14 @@
 #/!/bin/bash
 
-python ./autoencoders/train_model.py --env Breakout --device 3 &
+cd ./autoencoders
+python train_model.py --env BreakoutNoFrameskip-v4 --device 2 &
+cd ..
+
 sleep 1
-python ./image_completion/train_model.py --env Breakout --device 3 &
+
+cd ./image_completion
+python train_model.py --env BreakoutNoFrameskip-v4 --device 2 &
+cd ..
 
 wait
 echo "Skills training finished"
-
-

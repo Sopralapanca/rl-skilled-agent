@@ -6,7 +6,7 @@ from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SelfAttentionExtractor, \
-    ReservoirConcatExtractor
+    ReservoirConcatExtractor, SelfAttentionExtractor2
 from wandb.integration.sb3 import WandbCallback
 import os
 import torch
@@ -24,7 +24,8 @@ parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
 parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                     default="lin_concat_ext", required=False,
                     choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext",
-                             "self_attention_ext", "reservoir_concat_ext"])
+                             "self_attention_ext", "reservoir_concat_ext",
+                             "self_attention_ext2"])
 
 parser.add_argument("--debug", type=str, default="False", choices=["True", "False"])
 
@@ -47,7 +48,7 @@ with open(f'configs/{env}.yaml', 'r') as file:
 
 config["device"] = device
 config["f_ext_kwargs"]["device"] = device
-config["game"] = env_name+"_ae"
+config["game"] = env_name
 
 game_id = env_name + "NoFrameskip-v4"
 
@@ -68,7 +69,7 @@ skills.append(get_state_rep_uns(env_name, config["device"]))
 skills.append(get_object_keypoints_encoder(env_name, config["device"], load_only_model=True))
 skills.append(get_object_keypoints_keynet(env_name, config["device"], load_only_model=True))
 skills.append(get_video_object_segmentation(env_name, config["device"], load_only_model=True))
-skills.append(get_autoencoder(env_name, config["device"]))
+#skills.append(get_autoencoder(env_name, config["device"]))
 #skills.append(get_image_completion(env_name, config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
@@ -80,10 +81,13 @@ sample_obs = sample_obs.unsqueeze(0)
 features_dim = 256
 if skilled_agent:
     if args.extractor == "lin_concat_ext":
-        config["f_ext_name"] = "lin_concat_ext"
+        config["f_ext_name"] = "fixed_lin_concat_ext"
         config["f_ext_class"] = LinearConcatExtractor
+        fixed_dim = 0 # if > 0 will fix the dimension of the embeddings
+        f_ext_kwargs["fixed_dim"] = fixed_dim
+
         tb_log_name += "_lin"
-        ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+        ext = LinearConcatExtractor(observation_space=vec_env.observation_space, skills=skills, device=device, fixed_dim=fixed_dim)
         features_dim = ext.get_dimension(sample_obs)
 
     if args.extractor == "cnn_concat_ext":
@@ -107,6 +111,17 @@ if skilled_agent:
         f_ext_kwargs["n_features"] = 256
         f_ext_kwargs["n_heads"] = 4
         features_dim = len(skills) * f_ext_kwargs["n_features"]
+
+    if args.extractor == "self_attention_ext2":
+        config["f_ext_name"] = "self_attention_ext2"
+        config["f_ext_class"] = SelfAttentionExtractor2
+        tb_log_name += "_sae2"
+        f_ext_kwargs["n_heads"] = 4
+
+        # alla fine faccio il flattening come nel linear, prendo il size allo stesso modo
+        ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+        features_dim = ext.get_dimension(sample_obs)
+
 
     if args.extractor == "reservoir_concat_ext":
         config["f_ext_name"] = "reservoir_concat_ext"
@@ -179,7 +194,7 @@ else:
                 vf_coef=config["vf_coef"],
                 tensorboard_log=gamelogs,
                 policy_kwargs=policy_kwargs,
-                verbose=1,
+                verbose=0,
                 device=config["device"],
                 )
 
