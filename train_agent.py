@@ -6,7 +6,7 @@ from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SelfAttentionExtractor, \
-    ReservoirConcatExtractor
+    ReservoirConcatExtractor, SelfAttentionExtractor2
 from wandb.integration.sb3 import WandbCallback
 import os
 import torch
@@ -24,7 +24,8 @@ parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
 parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                     default="lin_concat_ext", required=False,
                     choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext",
-                             "self_attention_ext", "reservoir_concat_ext"])
+                             "self_attention_ext", "reservoir_concat_ext",
+                             "self_attention_ext2"])
 
 parser.add_argument("--debug", type=str, default="False", choices=["True", "False"])
 
@@ -49,10 +50,10 @@ config["device"] = device
 config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
 
-game_id = config["game"] + "NoFrameskip-v4"
+game_id = env_name + "NoFrameskip-v4"
 
 logdir = "./tensorboard_logs"
-gamelogs = f"{logdir}/{config['game']}"
+gamelogs = f"{logdir}/{env_name}"
 if not os.path.exists(logdir):
     os.makedirs(logdir)
 
@@ -64,12 +65,12 @@ vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
 
 skills = []
-skills.append(get_state_rep_uns(config["game"], config["device"]))
-skills.append(get_object_keypoints_encoder(config["game"], config["device"], load_only_model=True))
-skills.append(get_object_keypoints_keynet(config["game"], config["device"], load_only_model=True))
-skills.append(get_video_object_segmentation(config["game"], config["device"], load_only_model=True))
-# skills.append(get_autoencoder(config["game"], config["device"]))
-# skills.append(get_image_completion(config["game"], config["device"]))
+skills.append(get_state_rep_uns(env_name, config["device"]))
+skills.append(get_object_keypoints_encoder(env_name, config["device"], load_only_model=True))
+skills.append(get_object_keypoints_keynet(env_name, config["device"], load_only_model=True))
+skills.append(get_video_object_segmentation(env_name, config["device"], load_only_model=True))
+#skills.append(get_autoencoder(env_name, config["device"]))
+#skills.append(get_image_completion(env_name, config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -78,49 +79,62 @@ sample_obs = sample_obs.unsqueeze(0)
 # print("sample obs shape", sample_obs.shape)
 
 features_dim = 256
-if args.extractor == "lin_concat_ext":
-    config["f_ext_name"] = "lin_concat_ext"
-    config["f_ext_class"] = LinearConcatExtractor
-    tb_log_name += "_lin"
-    ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
-    features_dim = ext.get_dimension(sample_obs)
+if skilled_agent:
+    if args.extractor == "lin_concat_ext":
+        config["f_ext_name"] = "fixed_lin_concat_ext"
+        config["f_ext_class"] = LinearConcatExtractor
+        fixed_dim = 0 # if > 0 will fix the dimension of the embeddings
+        f_ext_kwargs["fixed_dim"] = fixed_dim
 
-# non funziona con autoencoder
-if args.extractor == "cnn_concat_ext":
-    config["f_ext_name"] = "cnn_concat_ext"
-    config["f_ext_class"] = CNNConcatExtractor
-    tb_log_name += "_cnn"
-    ext = CNNConcatExtractor(vec_env.observation_space, skills=skills, device=device)
-    features_dim = ext.get_dimension(sample_obs)
+        tb_log_name += "_lin"
+        ext = LinearConcatExtractor(observation_space=vec_env.observation_space, skills=skills, device=device, fixed_dim=fixed_dim)
+        features_dim = ext.get_dimension(sample_obs)
 
-# non funziona con autoencoder
-if args.extractor == "combine_ext":
-    config["f_ext_name"] = "combine_ext"
-    config["f_ext_class"] = CombineExtractor
-    tb_log_name += "_comb"
-    ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device, num_linear_skills=0)
-    features_dim = ext.get_dimension(sample_obs)
+    if args.extractor == "cnn_concat_ext":
+        config["f_ext_name"] = "cnn_concat_ext"
+        config["f_ext_class"] = CNNConcatExtractor
+        tb_log_name += "_cnn"
+        ext = CNNConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+        features_dim = ext.get_dimension(sample_obs)
 
-if args.extractor == "self_attention_ext":
-    config["f_ext_name"] = "self_attention_ext"
-    config["f_ext_class"] = SelfAttentionExtractor
-    tb_log_name += "_sae"
-    f_ext_kwargs["n_features"] = 256
-    f_ext_kwargs["n_heads"] = 4
-    features_dim = len(skills) * f_ext_kwargs["n_features"]
+    if args.extractor == "combine_ext":
+        config["f_ext_name"] = "combine_ext"
+        config["f_ext_class"] = CombineExtractor
+        tb_log_name += "_comb"
+        ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device, num_linear_skills=0)
+        features_dim = ext.get_dimension(sample_obs)
 
-if args.extractor == "reservoir_concat_ext":
-    config["f_ext_name"] = "reservoir_concat_ext"
-    config["f_ext_class"] = ReservoirConcatExtractor
-    tb_log_name += "_reservoir"
-    max_batch_size = config["net_arch_pi"][0] #config["net_arch_vf"] #controlla PPO, vedi se prima utilizza pi e dopo vf, potrebbe dare errore
-    f_ext_kwargs["max_batch_size"] = max_batch_size
+    if args.extractor == "self_attention_ext":
+        config["f_ext_name"] = "self_attention_ext"
+        config["f_ext_class"] = SelfAttentionExtractor
+        tb_log_name += "_sae"
+        f_ext_kwargs["n_features"] = 256
+        f_ext_kwargs["n_heads"] = 4
+        features_dim = len(skills) * f_ext_kwargs["n_features"]
 
-    # dato che concateno le skill come nel linear, uso LinearConcatExt per prendere la dimensione
-    ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
-    input_features_dim = ext.get_dimension(sample_obs)
-    features_dim = len(skills) * 256  # output dimension of the reservoir WARNING: if it is too big memory error
-    f_ext_kwargs["input_features_dim"] = input_features_dim
+    if args.extractor == "self_attention_ext2":
+        config["f_ext_name"] = "self_attention_ext2"
+        config["f_ext_class"] = SelfAttentionExtractor2
+        tb_log_name += "_sae2"
+        f_ext_kwargs["n_heads"] = 4
+
+        # alla fine faccio il flattening come nel linear, prendo il size allo stesso modo
+        ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+        features_dim = ext.get_dimension(sample_obs)
+
+
+    if args.extractor == "reservoir_concat_ext":
+        config["f_ext_name"] = "reservoir_concat_ext"
+        config["f_ext_class"] = ReservoirConcatExtractor
+        tb_log_name += "_reservoir"
+        max_batch_size = config["net_arch_pi"][0] #config["net_arch_vf"] #controlla PPO, vedi se prima utilizza pi e dopo vf, potrebbe dare errore
+        f_ext_kwargs["max_batch_size"] = max_batch_size
+
+        # dato che concateno le skill come nel linear, uso LinearConcatExt per prendere la dimensione
+        ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+        input_features_dim = ext.get_dimension(sample_obs)
+        features_dim = len(skills) * 256  # output dimension of the reservoir WARNING: if it is too big memory error
+        f_ext_kwargs["input_features_dim"] = input_features_dim
 
 f_ext_kwargs["skills"] = skills
 f_ext_kwargs["features_dim"] = features_dim
@@ -152,7 +166,7 @@ if debug:
                 verbose=0,
                 device=config["device"],
                 )
-    model.learn(100)
+    model.learn(1000)
 else:
     run = wandb.init(
         project="sb3-skillcomp",
@@ -164,7 +178,7 @@ else:
         # save_code = True,  # optional
     )
 
-    vec_env = make_atari_env(game_id, n_envs=config["n_envs"])#, monitor_dir=f"monitor/{run.id}")
+    vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
     vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
     vec_env = VecTransposeImage(vec_env)
 
@@ -178,9 +192,9 @@ else:
                 normalize_advantage=config["normalize"],
                 ent_coef=config["ent_coef"],
                 vf_coef=config["vf_coef"],
-                #tensorboard_log=gamelogs,
+                tensorboard_log=gamelogs,
                 policy_kwargs=policy_kwargs,
-                verbose=1,
+                verbose=0,
                 device=config["device"],
                 )
 

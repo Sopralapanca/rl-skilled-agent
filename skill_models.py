@@ -55,7 +55,7 @@ from state_representation.encoder import NatureCNN
 # from autoencoders import DeepConvAutoencoder
 from object_keypoints.model import Encoder, KeyNet, RefineNet, Transporter
 from video_object_segmentation.model import VideoObjectSegmentationModel
-#from image_completion.model import ImageCompletionModel
+from skills.image_completion.model import ImageCompletionModel
 from autoencoders.model import Autoencoder
 
 # TODO: Eventually can become: Skill(input_model, input_output, skill_model, skill_output, adapter_model, adapter_output)

@@ -65,7 +65,7 @@ optimizer = optim.Adam(autoencoder.parameters(), lr=0.001)
 best_loss = 1000
 
 # Training loop
-num_epochs = 300 * len(train_load)
+num_epochs = 400 * len(train_load)
 for epoch in range(num_epochs):
     autoencoder.train()
     train_losses = []

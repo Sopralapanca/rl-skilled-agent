@@ -25,8 +25,3 @@ class ImageCompletionModel(nn.Module):
         x = self.encoder(x)
         x = self.decoder(x)
         return x
-
-    def forward(self, x):
-        x = self.encoder(x)
-        x = self.decoder(x)
-        return x
