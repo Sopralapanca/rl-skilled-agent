@@ -240,6 +240,7 @@ class SelfAttentionExtractor(FeaturesExtractor):
             x = skill_out[i]
             if len(x.shape) > 2:
                 x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
+
             skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
 
         # From the documentation:
@@ -256,7 +257,7 @@ class SelfAttentionExtractor(FeaturesExtractor):
         # E: embedding dimension => Dimension of a single skill embedding (n_features)
 
         # now stack the skill outputs to obtain a sequence of tokens
-        transformed_embeddings = th.stack(skill_out, 0)  # 5x8x256 #prova a far passare tran
+        transformed_embeddings = th.stack(skill_out, 0)  # 5x8x512 #prova a far passare tran
 
         att_out, att_weights = self.attention(transformed_embeddings, transformed_embeddings, transformed_embeddings)
         att_out = att_out.transpose(0, 1)
