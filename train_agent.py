@@ -5,8 +5,9 @@ from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
-from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SelfAttentionExtractor, \
-    ReservoirConcatExtractor, SelfAttentionExtractor2
+from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SkillsAttentionExtractor, \
+    ReservoirConcatExtractor, ChannelsAttentionExtractor, FixedLinearConcatExtractor
+from stable_baselines3.common.callbacks import EvalCallback
 from wandb.integration.sb3 import WandbCallback
 import os
 import torch
@@ -17,17 +18,23 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--use-skill", help="if True, use skill agent, otherwise standard agent",
                     type=str, choices=["True", "False"], required=True)
-parser.add_argument("--device", help="integer number of a device to use (0, 1, 2, 3), or cpu",
+parser.add_argument("--device", help="Integer number of a device to use (0, 1, 2, 3), or cpu",
                     type=str, default="cpu", required=False, choices=["cpu", "0", "1", "2", "3"])
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
                     type=str, required=True, choices=["Pong", "Breakout"])
 parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                     default="lin_concat_ext", required=False,
                     choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext",
-                             "self_attention_ext", "reservoir_concat_ext",
-                             "self_attention_ext2"])
+                             "skills_attention_ext", "reservoir_concat_ext",
+                             "channels_attention_ext", "fixed_lin_concat_ext"])
 
 parser.add_argument("--debug", type=str, default="False", choices=["True", "False"])
+parser.add_argument("--pi", type=int, nargs='+', default=[256],
+                    help="Layers and units for custom actor (pi) network. "
+                         "Usage --pi 256 128 for 2 hidden layers with 256 and 128 units respectively.")
+parser.add_argument("--vf", type=int, nargs='+', default=[256],
+                    help="Layers and units for custom value function (vf) network. "
+                         "Usage --vf 256 128 for 2 hidden layers with 256 and 128 units respectively.")
 
 args = parser.parse_args()
 
@@ -49,6 +56,9 @@ with open(f'configs/{env}.yaml', 'r') as file:
 config["device"] = device
 config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
+config["net_arch_pi"] = args.pi
+config["net_arch_vf"] = args.vf
+infos = f"pi{config['net_arch_pi'][0]}_vf{config['net_arch_vf'][0]}"
 
 game_id = env_name + "NoFrameskip-v4"
 
@@ -69,8 +79,8 @@ skills.append(get_state_rep_uns(env_name, config["device"]))
 skills.append(get_object_keypoints_encoder(env_name, config["device"], load_only_model=True))
 skills.append(get_object_keypoints_keynet(env_name, config["device"], load_only_model=True))
 skills.append(get_video_object_segmentation(env_name, config["device"], load_only_model=True))
-#skills.append(get_autoencoder(env_name, config["device"]))
-#skills.append(get_image_completion(env_name, config["device"]))
+# skills.append(get_autoencoder(env_name, config["device"]))
+# skills.append(get_image_completion(env_name, config["device"]))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -81,13 +91,20 @@ sample_obs = sample_obs.unsqueeze(0)
 features_dim = 256
 if skilled_agent:
     if args.extractor == "lin_concat_ext":
-        config["f_ext_name"] = "fixed_lin_concat_ext"
+        config["f_ext_name"] = "lin_concat_ext"
         config["f_ext_class"] = LinearConcatExtractor
-        fixed_dim = 0 # if > 0 will fix the dimension of the embeddings
-        f_ext_kwargs["fixed_dim"] = fixed_dim
-
         tb_log_name += "_lin"
-        ext = LinearConcatExtractor(observation_space=vec_env.observation_space, skills=skills, device=device, fixed_dim=fixed_dim)
+        ext = LinearConcatExtractor(observation_space=vec_env.observation_space, skills=skills, device=device)
+        features_dim = ext.get_dimension(sample_obs)
+
+    if args.extractor == "fixed_lin_concat_ext":
+        config["f_ext_name"] = "fixed_lin_concat_ext"
+        config["f_ext_class"] = FixedLinearConcatExtractor
+        f_ext_kwargs["fixed_dim"] = 256
+        infos += f"_fixed_dim{f_ext_kwargs['fixed_dim']}"
+        tb_log_name += "_fixedlin"
+        ext = FixedLinearConcatExtractor(observation_space=vec_env.observation_space, skills=skills, device=device,
+                                         fixed_dim=f_ext_kwargs["fixed_dim"])
         features_dim = ext.get_dimension(sample_obs)
 
     if args.extractor == "cnn_concat_ext":
@@ -104,30 +121,31 @@ if skilled_agent:
         ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device, num_linear_skills=0)
         features_dim = ext.get_dimension(sample_obs)
 
-    if args.extractor == "self_attention_ext":
-        config["f_ext_name"] = "self_attention_ext"
-        config["f_ext_class"] = SelfAttentionExtractor
+    if args.extractor == "skills_attention_ext":
+        config["f_ext_name"] = "skills_attention_ext"
+        config["f_ext_class"] = SkillsAttentionExtractor
         tb_log_name += "_sae"
         f_ext_kwargs["n_features"] = 256
         f_ext_kwargs["n_heads"] = 4
+        infos += f"_heads{f_ext_kwargs['n_heads']}_nfeatures{f_ext_kwargs['n_features']}"
         features_dim = len(skills) * f_ext_kwargs["n_features"]
 
-    if args.extractor == "self_attention_ext2":
-        config["f_ext_name"] = "self_attention_ext2"
-        config["f_ext_class"] = SelfAttentionExtractor2
-        tb_log_name += "_sae2"
+    if args.extractor == "channels_attention_ext":
+        config["f_ext_name"] = "channels_attention_ext"
+        config["f_ext_class"] = ChannelsAttentionExtractor
+        tb_log_name += "_chsae"
         f_ext_kwargs["n_heads"] = 4
+        infos += f"_heads{f_ext_kwargs['n_heads']}"
 
         # alla fine faccio il flattening come nel linear, prendo il size allo stesso modo
         ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
         features_dim = ext.get_dimension(sample_obs)
 
-
     if args.extractor == "reservoir_concat_ext":
         config["f_ext_name"] = "reservoir_concat_ext"
         config["f_ext_class"] = ReservoirConcatExtractor
         tb_log_name += "_reservoir"
-        max_batch_size = config["net_arch_pi"][0] #config["net_arch_vf"] #controlla PPO, vedi se prima utilizza pi e dopo vf, potrebbe dare errore
+        max_batch_size = max(config["net_arch_pi"][0], config["net_arch_vf"][0])
         f_ext_kwargs["max_batch_size"] = max_batch_size
 
         # dato che concateno le skill come nel linear, uso LinearConcatExt per prendere la dimensione
@@ -173,7 +191,8 @@ else:
         config=config,
         sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
         monitor_gym=True,  # auto-upload the videos of agents playing the game
-        name=f"{config['f_ext_name']}_{config['game']}",
+        name=f"{config['f_ext_name']}_{infos}",
+        group=config['game'],
         tags=[config["game"].lower()]
         # save_code = True,  # optional
     )
@@ -181,6 +200,10 @@ else:
     vec_env = make_atari_env(game_id, n_envs=config["n_envs"], monitor_dir=f"monitor/{run.id}")
     vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
     vec_env = VecTransposeImage(vec_env)
+
+    vec_eval_env = make_atari_env(game_id, n_envs=config["n_envs"])
+    vec_eval_env = VecFrameStack(vec_eval_env, n_stack=config["n_stacks"])
+    vec_eval_env = VecTransposeImage(vec_eval_env)
 
     model = PPO("CnnPolicy",
                 vec_env,
@@ -198,13 +221,23 @@ else:
                 device=config["device"],
                 )
 
-    #model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
+    # model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
+    callbacks = [
+        WandbCallback(
+            verbose=2
+        ),
+        EvalCallback(
+            vec_eval_env,
+            n_eval_episodes=10,
+            best_model_save_path=f"models/{run.id}",
+            log_path=gamelogs,
+            eval_freq=5000 * config["n_envs"]
+        )
+    ]
+
     model.learn(
         config["n_timesteps"],
-        callback=WandbCallback(
-            model_save_path=f"models/{run.id}",
-            verbose=2,
-        )
+        callback=callbacks
     )
     run.finish()
 
