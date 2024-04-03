@@ -20,7 +20,6 @@ class FeaturesExtractor(BaseFeaturesExtractor):
 
         self.skills = skills
         # [hardcoded] adapters using 1x1 conv
-        # provare a modificarli per matchare le dimensioni dell'autoencoder
         self.__vobj_seg_adapter = nn.Sequential(
             nn.Conv2d(20, 16, 1),
             nn.Conv2d(16, 16, 5, 5),
@@ -82,44 +81,57 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         return out.shape[1]
 
 
-# feature size = 16896
 class LinearConcatExtractor(FeaturesExtractor):
-    def __init__(self,observation_space: spaces.Box,
+    def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
                  skills: List[Skill] = None,
-                 fixed_dim: int = 0,
                  device="cpu"):
         super().__init__(observation_space, features_dim, skills, device)
-
-        self.fixed_dim = fixed_dim
-
-        if fixed_dim > 0:
-            sample = observation_space.sample()  # 4x84x84
-            sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
-            sample = th.from_numpy(sample) / 255
-            sample = sample.to(device)
-
-            skill_out = self.preprocess_input(sample)
-
-            for i in range(len(skill_out)):
-                if len(skill_out[i].shape) > 2:
-                    skill_out[i] = th.reshape(skill_out[i],
-                                              (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
-
-            self.mlp_layers = nn.ModuleList()
-            for i in range(len(skill_out)):
-                seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], fixed_dim, device=device), nn.ReLU())
-                self.mlp_layers.append(seq_layer)
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print("lin concat observation shape ", observations.shape)
         skill_out = self.preprocess_input(observations)
         for i in range(len(skill_out)):
-            skill_out[i] = th.reshape(skill_out[i], (skill_out[i].size(0), -1)) # flatten
+            skill_out[i] = th.reshape(skill_out[i], (skill_out[i].size(0), -1))  # flatten
+
+        x = th.cat(skill_out, 1)
+        return x
+
+
+class FixedLinearConcatExtractor(FeaturesExtractor):
+    def __init__(self, observation_space: spaces.Box,
+                 features_dim: int = 256,
+                 skills: List[Skill] = None,
+                 fixed_dim: int = 256,
+                 device="cpu"):
+        super().__init__(observation_space, features_dim, skills, device)
+
+        self.fixed_dim = fixed_dim
+
+        sample = observation_space.sample()  # 4x84x84
+        sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
+        sample = th.from_numpy(sample) / 255
+        sample = sample.to(device)
+
+        skill_out = self.preprocess_input(sample)
+
+        for i in range(len(skill_out)):
+            if len(skill_out[i].shape) > 2:
+                skill_out[i] = th.reshape(skill_out[i],(skill_out[i].size(0), -1))  # flatten skill out to take the dimension
+
+        self.mlp_layers = nn.ModuleList()
+        for i in range(len(skill_out)):
+            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], fixed_dim, device=device), nn.ReLU())
+            self.mlp_layers.append(seq_layer)
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        # print("lin concat observation shape ", observations.shape)
+        skill_out = self.preprocess_input(observations)
+        for i in range(len(skill_out)):
+            skill_out[i] = th.reshape(skill_out[i], (skill_out[i].size(0), -1))  # flatten
             # pass through a mlp layer to reduce and fix the dimension
-            if self.fixed_dim > 0:
-                seq_layer = self.mlp_layers[i]
-                skill_out[i] = seq_layer(skill_out[i])
+            seq_layer = self.mlp_layers[i]
+            skill_out[i] = seq_layer(skill_out[i])
 
         x = th.cat(skill_out, 1)
         return x
@@ -198,7 +210,7 @@ class CombineExtractor(FeaturesExtractor):
 
 # ----------------------------------------------------------------------------------
 
-class SelfAttentionExtractor(FeaturesExtractor):
+class SkillsAttentionExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
                  skills: List[Skill] = None,
@@ -240,6 +252,7 @@ class SelfAttentionExtractor(FeaturesExtractor):
             x = skill_out[i]
             if len(x.shape) > 2:
                 x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
+
             skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
 
         # From the documentation:
@@ -256,7 +269,7 @@ class SelfAttentionExtractor(FeaturesExtractor):
         # E: embedding dimension => Dimension of a single skill embedding (n_features)
 
         # now stack the skill outputs to obtain a sequence of tokens
-        transformed_embeddings = th.stack(skill_out, 0)  # 5x8x256 #prova a far passare tran
+        transformed_embeddings = th.stack(skill_out, 0)  # 5x8x512 #prova a far passare tran
 
         att_out, att_weights = self.attention(transformed_embeddings, transformed_embeddings, transformed_embeddings)
         att_out = att_out.transpose(0, 1)
@@ -266,7 +279,7 @@ class SelfAttentionExtractor(FeaturesExtractor):
         return combined_embeddings
 
 
-class SelfAttentionExtractor2(FeaturesExtractor):
+class ChannelsAttentionExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
                  skills: List[Skill] = None,
