@@ -6,8 +6,9 @@ from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SkillsAttentionExtractor, \
-    ReservoirConcatExtractor, ChannelsAttentionExtractor, FixedLinearConcatExtractor
-from stable_baselines3.common.callbacks import EvalCallback
+    ReservoirConcatExtractor, ChannelsAttentionExtractor, FixedLinearConcatExtractor, DotProductAttentionExtractor, MLPAttentionExtractor
+from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
+    StopTrainingOnNoModelImprovement
 from wandb.integration.sb3 import WandbCallback
 import os
 import torch
@@ -25,7 +26,7 @@ parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
 parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                     default="lin_concat_ext", required=False,
                     choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext",
-                             "skills_attention_ext", "reservoir_concat_ext",
+                             "skills_attention_ext", "dp_attention_ext", "mlp_attention_ext", "reservoir_concat_ext",
                              "channels_attention_ext", "fixed_lin_concat_ext"])
 
 parser.add_argument("--debug", type=str, default="False", choices=["True", "False"])
@@ -58,7 +59,17 @@ config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
-infos = f"pi{config['net_arch_pi'][0]}_vf{config['net_arch_vf'][0]}"
+tags = [f'game:{config["game"]}']
+
+string = "pi:"
+for el in config["net_arch_pi"]:
+    string += str(el) + "-"
+tags.append(string)
+
+string = "vf:"
+for el in config["net_arch_vf"]:
+    string += str(el) + "-"
+tags.append(string)
 
 game_id = env_name + "NoFrameskip-v4"
 
@@ -90,6 +101,7 @@ sample_obs = sample_obs.unsqueeze(0)
 
 features_dim = 256
 if skilled_agent:
+    tags.append(f'ext:{args.extractor}')
     if args.extractor == "lin_concat_ext":
         config["f_ext_name"] = "lin_concat_ext"
         config["f_ext_class"] = LinearConcatExtractor
@@ -101,7 +113,7 @@ if skilled_agent:
         config["f_ext_name"] = "fixed_lin_concat_ext"
         config["f_ext_class"] = FixedLinearConcatExtractor
         f_ext_kwargs["fixed_dim"] = 256
-        infos += f"_fixed_dim{f_ext_kwargs['fixed_dim']}"
+        tags.append(f"fixed_dim:{f_ext_kwargs['fixed_dim']}")
         tb_log_name += "_fixedlin"
         ext = FixedLinearConcatExtractor(observation_space=vec_env.observation_space, skills=skills, device=device,
                                          fixed_dim=f_ext_kwargs["fixed_dim"])
@@ -127,7 +139,8 @@ if skilled_agent:
         tb_log_name += "_sae"
         f_ext_kwargs["n_features"] = 256
         f_ext_kwargs["n_heads"] = 4
-        infos += f"_heads{f_ext_kwargs['n_heads']}_nfeatures{f_ext_kwargs['n_features']}"
+        tags.append(f"heads:{f_ext_kwargs['n_heads']}")
+        tags.append(f"nfeatures:{f_ext_kwargs['n_features']}")
         features_dim = len(skills) * f_ext_kwargs["n_features"]
 
     if args.extractor == "channels_attention_ext":
@@ -135,11 +148,31 @@ if skilled_agent:
         config["f_ext_class"] = ChannelsAttentionExtractor
         tb_log_name += "_chsae"
         f_ext_kwargs["n_heads"] = 4
-        infos += f"_heads{f_ext_kwargs['n_heads']}"
+        tags.append(f"heads:{f_ext_kwargs['n_heads']}")
 
         # alla fine faccio il flattening come nel linear, prendo il size allo stesso modo
         ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
         features_dim = ext.get_dimension(sample_obs)
+
+    if args.extractor == "dp_attention_ext":
+        config["f_ext_name"] = "dp_attention_ext"
+        config["f_ext_class"] = DotProductAttentionExtractor
+        tb_log_name += "_dpae"
+        f_ext_kwargs["game"] = env_name
+        f_ext_kwargs["n_features"] = 1024
+        tags.append(f"n_features:{f_ext_kwargs['n_features']}")
+
+        features_dim = f_ext_kwargs["n_features"]
+
+    if args.extractor == "mlp_attention_ext":
+        config["f_ext_name"] = "mlp_attention_ext"
+        config["f_ext_class"] = MLPAttentionExtractor
+        tb_log_name += "_mlpae"
+        f_ext_kwargs["game"] = env_name
+        f_ext_kwargs["n_features"] = 1024
+        tags.append(f"n_features:{f_ext_kwargs['n_features']}")
+
+        features_dim = f_ext_kwargs["n_features"]
 
     if args.extractor == "reservoir_concat_ext":
         config["f_ext_name"] = "reservoir_concat_ext"
@@ -173,8 +206,8 @@ if debug:
     model = PPO("CnnPolicy",
                 vec_env,
                 learning_rate=linear_schedule(config["learning_rate"]),
-                n_steps=1,
-                n_epochs=1,
+                n_steps=128,
+                n_epochs=4,
                 batch_size=config["batch_size"],
                 clip_range=linear_schedule(config["clip_range"]),
                 normalize_advantage=config["normalize"],
@@ -191,9 +224,9 @@ else:
         config=config,
         sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
         monitor_gym=True,  # auto-upload the videos of agents playing the game
-        name=f"{config['f_ext_name']}_{infos}",
+        name=f"{config['f_ext_name']}__{config['game']}",
         group=config['game'],
-        tags=[config["game"].lower()]
+        tags=tags
         # save_code = True,  # optional
     )
 
@@ -222,17 +255,38 @@ else:
                 )
 
     # model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
-    callbacks = [
-        WandbCallback(
-            verbose=2
-        ),
-        EvalCallback(
+
+    stop_train_callback = StopTrainingOnNoModelImprovement(max_no_improvement_evals=3, min_evals=3, verbose=0)
+    if env_name == "Pong":
+        callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=21, verbose=0)
+        eval_callback = EvalCallback(
             vec_eval_env,
             n_eval_episodes=10,
             best_model_save_path=f"models/{run.id}",
             log_path=gamelogs,
-            eval_freq=5000 * config["n_envs"]
+            eval_freq=5000 * config["n_envs"],
+            callback_on_new_best=callback_on_best,
+            callback_after_eval=stop_train_callback,
+            verbose=0
+
         )
+    else:
+        eval_callback = EvalCallback(
+            vec_eval_env,
+            n_eval_episodes=10,
+            best_model_save_path=f"models/{run.id}",
+            log_path=gamelogs,
+            eval_freq=5000 * config["n_envs"],
+            callback_after_eval=stop_train_callback,
+            verbose=0
+
+        )
+
+    callbacks = [
+        WandbCallback(
+            verbose=0
+        ),
+        eval_callback
     ]
 
     model.learn(

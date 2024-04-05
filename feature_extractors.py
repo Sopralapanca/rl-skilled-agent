@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch as th
 import torch.nn as nn
-
+import torch.nn.functional as F
 from typing import List
 from gymnasium import spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
@@ -326,6 +326,173 @@ class ChannelsAttentionExtractor(FeaturesExtractor):
 
         combined_embeddings = th.flatten(att_out, start_dim=1)
         return combined_embeddings
+
+
+
+
+from autoencoders.model import Autoencoder
+import torch.nn.functional as F
+class DotProductAttentionExtractor(FeaturesExtractor):
+    def __init__(self, observation_space: spaces.Box,
+                 features_dim: int = 256,
+                 skills: List[Skill] = None,
+                 game: str = "Pong",
+                 n_features: int = 1024,
+                 device="cpu"):
+        super().__init__(observation_space, features_dim, skills, device)
+        model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+        model = Autoencoder().to(device)
+        model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+        model.eval()
+        self.encoder = model.encoder
+        self.n_features = n_features
+        self.device = device
+        sample = observation_space.sample()  # 4x84x84
+        sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
+        sample = th.from_numpy(sample) / 255
+        sample = sample.to(device)
+
+        x = sample[:, -1:, :, :]
+        with torch.no_grad():
+            z = self.encoder(x)
+            z = th.reshape(z, (z.size(0), -1))
+            self.input_size = z.shape[-1]
+
+        self.encoder_seq_layer = nn.Sequential(nn.Linear(self.input_size, self.n_features, device=device), nn.ReLU())
+
+
+        skill_out = self.preprocess_input(sample)
+        for i in range(len(skill_out)):
+            if len(skill_out[i].shape) > 2:
+                skill_out[i] = th.reshape(skill_out[i],
+                                          (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
+
+        self.mlp_layers = nn.ModuleList()
+        for i in range(len(skill_out)):
+            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], self.n_features, device=device), nn.ReLU())
+            self.mlp_layers.append(seq_layer)
+
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        #print("forward observation shape", observations.shape)
+        skill_out = self.preprocess_input(observations)
+
+        with torch.no_grad():
+            # pick only the last frame and return a tensor of shape batch_size x 1 x 84 x 84
+            x = observations[:, -1:, :, :]
+            encoded_frame = self.encoder(x)
+            encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))  # prima di fare il flatten, provare a farlo passare in qualche livello convoluzionale per ridurre un po i canali?
+
+        encoded_frame = self.encoder_seq_layer(encoded_frame) #query
+
+        combined_embeddings = th.zeros(observations.shape[0], observations.shape[0], self.n_features).to(self.device)
+
+        for i in range(len(skill_out)):
+            seq_layer = self.mlp_layers[i]
+            x = skill_out[i]
+            if len(x.shape) > 2:
+                x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
+                x = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
+
+            relevance = th.matmul(x, encoded_frame.T)
+            att_weigths = F.softmax(relevance, dim=1)
+            el = att_weigths.unsqueeze(-1) * x
+            combined_embeddings = combined_embeddings + el
+        combined_embeddings = combined_embeddings.sum(dim=1)
+
+        return combined_embeddings
+
+
+
+
+class MLPAttentionExtractor(FeaturesExtractor):
+    def __init__(self, observation_space: spaces.Box,
+                 features_dim: int = 256,
+                 skills: List[Skill] = None,
+                 game: str = "Pong",
+                 n_features: int = 1024,
+                 device="cpu"):
+        super().__init__(observation_space, features_dim, skills, device)
+        model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+        model = Autoencoder().to(device)
+        model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+        model.eval()
+        self.encoder = model.encoder
+        self.n_features = n_features
+        self.device = device
+        sample = observation_space.sample()  # 4x84x84
+        sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
+        sample = th.from_numpy(sample) / 255
+        sample = sample.to(device)
+
+        x = sample[:, -1:, :, :]
+        with torch.no_grad():
+            z = self.encoder(x)
+            z = th.reshape(z, (z.size(0), -1))
+            self.input_size = z.shape[-1]
+
+        self.encoder_seq_layer = nn.Sequential(nn.Linear(self.input_size, self.n_features, device=device), nn.ReLU())
+
+
+        skill_out = self.preprocess_input(sample)
+        for i in range(len(skill_out)):
+            if len(skill_out[i].shape) > 2:
+                skill_out[i] = th.reshape(skill_out[i],
+                                          (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
+
+        self.mlp_layers = nn.ModuleList()
+        for i in range(len(skill_out)):
+            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], self.n_features, device=device), nn.ReLU())
+            self.mlp_layers.append(seq_layer)
+
+        self.relevance_mlp_layers = nn.ModuleList()
+        for i in range(len(skill_out)):
+            seq_layer = nn.Sequential(nn.Linear(2*n_features, 1, device=device), nn.ReLU())
+            self.relevance_mlp_layers.append(seq_layer)
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        #print("forward observation shape", observations.shape)
+        skill_out = self.preprocess_input(observations)
+
+        with torch.no_grad():
+            # pick only the last frame and return a tensor of shape batch_size x 1 x 84 x 84
+            x = observations[:, -1:, :, :]
+            encoded_frame = self.encoder(x)
+            encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))  # prima di fare il flatten, provare a farlo passare in qualche livello convoluzionale per ridurre un po i canali?
+
+        encoded_frame = self.encoder_seq_layer(encoded_frame) #query
+        relevance_t = []
+
+        for i in range(len(skill_out)):
+            seq_layer = self.mlp_layers[i]
+            x = skill_out[i]
+            if len(x.shape) > 2:
+                x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
+
+            x = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
+            skill_out[i] = x
+
+            c = th.cat((x, encoded_frame), dim=1)
+
+            relevance_mlp_layer = self.relevance_mlp_layers[i]
+            relevance = relevance_mlp_layer(c)
+
+            relevance_t.append(relevance)
+
+        relevance_t = th.cat(relevance_t, dim=1)
+        att_weigths = F.softmax(relevance_t, dim=1)
+
+        s = th.stack(skill_out, dim=1)
+
+        # Reshape weights to (8, nskills, 1) to perform broadcasting
+        att_weigths = att_weigths.unsqueeze(2)
+        # Perform element-wise multiplication of weights with skills
+        weighted_skills = att_weigths * s
+
+        # Sum along the second dimension to get the weighted summation
+        weighted_sum = torch.sum(weighted_skills, dim=1)
+
+        return weighted_sum
 
 
 # ----------------------------------------------------------------------------------
