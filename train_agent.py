@@ -5,8 +5,11 @@ from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
-from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SkillsAttentionExtractor, SkillsAttentionExtractor2, \
-    ReservoirConcatExtractor, ChannelsAttentionExtractor, FixedLinearConcatExtractor, DotProductAttentionExtractor, MLPAttentionExtractor
+from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
+                               CNNConcatExtractor, CombineExtractor, \
+                               SelfAttentionExtractor, DotProductAttentionExtractor, \
+                               ReservoirConcatExtractor
+
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
     StopTrainingOnNoModelImprovement
 from wandb.integration.sb3 import WandbCallback
@@ -25,9 +28,10 @@ parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
                     type=str, required=True, choices=["Pong", "Breakout"])
 parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                     default="lin_concat_ext", required=False,
-                    choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext",
-                             "skills_attention_ext", "skills_attention_ext2", "dp_attention_ext", "mlp_attention_ext", "reservoir_concat_ext",
-                             "channels_attention_ext", "fixed_lin_concat_ext"])
+                    choices=["lin_concat_ext", "fixed_lin_concat_ext",
+                             "cnn_concat_ext", "combine_ext",
+                             "self_attention_ext", "dotproduct_attention_ext",
+                             "reservoir_concat_ext",])
 
 parser.add_argument("--debug", type=str, default="False", choices=["True", "False"])
 parser.add_argument("--pi", type=int, nargs='+', default=[256],
@@ -133,57 +137,26 @@ if skilled_agent:
         ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device, num_linear_skills=0)
         features_dim = ext.get_dimension(sample_obs)
 
-    if args.extractor == "skills_attention_ext":
-        config["f_ext_name"] = "skills_attention_ext"
-        config["f_ext_class"] = SkillsAttentionExtractor
+    if args.extractor == "self_attention_ext":
+        config["f_ext_name"] = "self_attention_ext"
+        config["f_ext_class"] = SelfAttentionExtractor
         tb_log_name += "_sae"
-        f_ext_kwargs["n_features"] = 256
+        f_ext_kwargs["fixed_dim"] = 256
         f_ext_kwargs["n_heads"] = 4
         tags.append(f"heads:{f_ext_kwargs['n_heads']}")
-        tags.append(f"nfeatures:{f_ext_kwargs['n_features']}")
-        features_dim = len(skills) * f_ext_kwargs["n_features"]
+        tags.append(f"fixed_dim:{f_ext_kwargs['fixed_dim']}")
+        features_dim = len(skills) * f_ext_kwargs["fixed_dim"]
 
-    if args.extractor == "skills_attention_ext2":
-        config["f_ext_name"] = "skills_attention_ext2"
-        config["f_ext_class"] = SkillsAttentionExtractor2
+    if args.extractor == "dotproduct_attention_ext":
+        config["f_ext_name"] = "dotproduct_attention_ext"
+        config["f_ext_class"] = DotProductAttentionExtractor
         features_dim = 1024
-        tb_log_name += "_sae2"
-        f_ext_kwargs["n_heads"] = 4
+        tb_log_name += "_dpae"
         f_ext_kwargs["game"] = env
         tags.append(f"heads:{f_ext_kwargs['n_heads']}")
-        tags.append(f"nfeatures:{features_dim}")
+        tags.append(f"fixed_dim:{features_dim}")
 
 
-    if args.extractor == "channels_attention_ext":
-        config["f_ext_name"] = "channels_attention_ext"
-        config["f_ext_class"] = ChannelsAttentionExtractor
-        tb_log_name += "_chsae"
-        f_ext_kwargs["n_heads"] = 4
-        tags.append(f"heads:{f_ext_kwargs['n_heads']}")
-
-        # alla fine faccio il flattening come nel linear, prendo il size allo stesso modo
-        ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
-        features_dim = ext.get_dimension(sample_obs)
-
-    if args.extractor == "dp_attention_ext":
-        config["f_ext_name"] = "dp_attention_ext"
-        config["f_ext_class"] = DotProductAttentionExtractor
-        tb_log_name += "_dpae"
-        f_ext_kwargs["game"] = env_name
-        f_ext_kwargs["n_features"] = 1024
-        tags.append(f"n_features:{f_ext_kwargs['n_features']}")
-
-        features_dim = f_ext_kwargs["n_features"]
-
-    if args.extractor == "mlp_attention_ext":
-        config["f_ext_name"] = "mlp_attention_ext"
-        config["f_ext_class"] = MLPAttentionExtractor
-        tb_log_name += "_mlpae"
-        f_ext_kwargs["game"] = env_name
-        f_ext_kwargs["n_features"] = 1024
-        tags.append(f"n_features:{f_ext_kwargs['n_features']}")
-
-        features_dim = f_ext_kwargs["n_features"]
 
     if args.extractor == "reservoir_concat_ext":
         config["f_ext_name"] = "reservoir_concat_ext"
