@@ -1,14 +1,14 @@
-import matplotlib.pyplot as plt
 import torch
 import torch as th
 import torch.nn as nn
-import torch.nn.functional as F
 from typing import List
 from gymnasium import spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
-
+from autoencoders.model import Autoencoder
+import torch.nn.functional as F
 from skill_models import Skill
 import numpy as np
+import math
 
 
 class FeaturesExtractor(BaseFeaturesExtractor):
@@ -117,7 +117,8 @@ class FixedLinearConcatExtractor(FeaturesExtractor):
 
         for i in range(len(skill_out)):
             if len(skill_out[i].shape) > 2:
-                skill_out[i] = th.reshape(skill_out[i],(skill_out[i].size(0), -1))  # flatten skill out to take the dimension
+                skill_out[i] = th.reshape(skill_out[i],
+                                          (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
 
         self.mlp_layers = nn.ModuleList()
         for i in range(len(skill_out)):
@@ -279,6 +280,104 @@ class SkillsAttentionExtractor(FeaturesExtractor):
         return combined_embeddings
 
 
+class SkillsAttentionExtractor2(FeaturesExtractor):
+    def __init__(self, observation_space: spaces.Box,
+                 features_dim: int = 256,
+                 skills: List[Skill] = None,
+                 game: str = "pong",
+                 #n_features: int = 512,
+                 n_heads: int = 2,
+                 device="cpu"):
+        super().__init__(observation_space, features_dim, skills, device)
+
+        self.n_heads = n_heads
+        self.device = device
+        sample = observation_space.sample()  # 4x84x84
+        sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
+        sample = th.from_numpy(sample) / 255
+        sample = sample.to(device)
+
+        skill_out = self.preprocess_input(sample)
+
+        for i in range(len(skill_out)):
+            if len(skill_out[i].shape) > 2:
+                skill_out[i] = th.reshape(skill_out[i],
+                                          (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
+
+        self.mlp_layers = nn.ModuleList()
+        for i in range(len(skill_out)):
+            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device), nn.ReLU())
+            self.mlp_layers.append(seq_layer)
+
+        self.attention = nn.MultiheadAttention(embed_dim=features_dim, num_heads=self.n_heads,
+                                               batch_first=False, device=device)  # batch first was True
+
+        model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+        model = Autoencoder().to(device)
+        model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+        model.eval()
+        self.encoder = model.encoder
+        x = sample[:, -1:, :, :]
+        with torch.no_grad():
+            z = self.encoder(x)
+            z = th.reshape(z, (z.size(0), -1))
+            self.input_size = z.shape[-1]
+        self.encoder_seq_layer = nn.Sequential(nn.Linear(self.input_size, features_dim, device=device), nn.ReLU())
+
+    # Efficient implementation equivalent to the following:
+    def scaled_dot_product_attention(self, query, key, value, attn_mask=None, dropout_p=0.0, is_causal=False,
+                                     scale=None, device='cpu') -> torch.Tensor:
+        # Efficient implementation equivalent to the following:
+        L, S = query.size(-2), key.size(-2)
+        scale_factor = 1 / math.sqrt(query.size(-1)) if scale is None else scale
+        attn_bias = torch.zeros(L, S, dtype=query.dtype, device=device)
+        if is_causal:
+            assert attn_mask is None
+            temp_mask = torch.ones(L, S, dtype=torch.bool).tril(diagonal=0)
+            attn_bias.masked_fill_(temp_mask.logical_not(), float("-inf"))
+            attn_bias.to(query.dtype)
+
+        if attn_mask is not None:
+            if attn_mask.dtype == torch.bool:
+                attn_bias.masked_fill_(attn_mask.logical_not(), float("-inf"))
+            else:
+                attn_bias += attn_mask
+        attn_weight = query @ key.transpose(-2, -1) * scale_factor
+        attn_weight += attn_bias
+        attn_weight = torch.softmax(attn_weight, dim=-1)
+        attn_weight = torch.dropout(attn_weight, dropout_p, train=True)
+        return attn_weight @ value
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        # print("forward observation shape", observations.shape)
+        skill_out = self.preprocess_input(observations)
+
+        # consider skills as tokens in a sequence
+        # so first fix the dimension of each skill output
+        for i in range(len(skill_out)):
+            seq_layer = self.mlp_layers[i]
+            x = skill_out[i]
+            if len(x.shape) > 2:
+                x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
+
+            skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
+
+        with torch.no_grad():
+            # pick only the last frame and return a tensor of shape batch_size x 1 x 84 x 84
+            x = observations[:, -1:, :, :]
+            encoded_frame = self.encoder(x)
+            encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))
+        encoded_frame = self.encoder_seq_layer(encoded_frame)  # query
+        encoded_frame = encoded_frame.unsqueeze(1)
+
+        # now stack the skill outputs to obtain a sequence of tokens
+        stacked_skills = th.stack(skill_out, 0).permute(1, 0, 2)
+
+        att_out = self.scaled_dot_product_attention(query=encoded_frame, key=stacked_skills, value=stacked_skills, device=self.device)
+        att_out = att_out.squeeze(1)
+        return att_out
+
+
 class ChannelsAttentionExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
@@ -328,10 +427,6 @@ class ChannelsAttentionExtractor(FeaturesExtractor):
         return combined_embeddings
 
 
-
-
-from autoencoders.model import Autoencoder
-import torch.nn.functional as F
 class DotProductAttentionExtractor(FeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
@@ -360,7 +455,6 @@ class DotProductAttentionExtractor(FeaturesExtractor):
 
         self.encoder_seq_layer = nn.Sequential(nn.Linear(self.input_size, self.n_features, device=device), nn.ReLU())
 
-
         skill_out = self.preprocess_input(sample)
         for i in range(len(skill_out)):
             if len(skill_out[i].shape) > 2:
@@ -372,7 +466,6 @@ class DotProductAttentionExtractor(FeaturesExtractor):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], self.n_features, device=device), nn.ReLU())
             self.mlp_layers.append(seq_layer)
 
-
     def forward(self, observations: th.Tensor) -> th.Tensor:
         #print("forward observation shape", observations.shape)
         skill_out = self.preprocess_input(observations)
@@ -381,9 +474,10 @@ class DotProductAttentionExtractor(FeaturesExtractor):
             # pick only the last frame and return a tensor of shape batch_size x 1 x 84 x 84
             x = observations[:, -1:, :, :]
             encoded_frame = self.encoder(x)
-            encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))  # prima di fare il flatten, provare a farlo passare in qualche livello convoluzionale per ridurre un po i canali?
+            encoded_frame = th.reshape(encoded_frame, (x.size(0),
+                                                       -1))  # prima di fare il flatten, provare a farlo passare in qualche livello convoluzionale per ridurre un po i canali?
 
-        encoded_frame = self.encoder_seq_layer(encoded_frame) #query
+        encoded_frame = self.encoder_seq_layer(encoded_frame)  #query
 
         combined_embeddings = th.zeros(observations.shape[0], observations.shape[0], self.n_features).to(self.device)
 
@@ -401,8 +495,6 @@ class DotProductAttentionExtractor(FeaturesExtractor):
         combined_embeddings = combined_embeddings.sum(dim=1)
 
         return combined_embeddings
-
-
 
 
 class MLPAttentionExtractor(FeaturesExtractor):
@@ -433,7 +525,6 @@ class MLPAttentionExtractor(FeaturesExtractor):
 
         self.encoder_seq_layer = nn.Sequential(nn.Linear(self.input_size, self.n_features, device=device), nn.ReLU())
 
-
         skill_out = self.preprocess_input(sample)
         for i in range(len(skill_out)):
             if len(skill_out[i].shape) > 2:
@@ -447,7 +538,7 @@ class MLPAttentionExtractor(FeaturesExtractor):
 
         self.relevance_mlp_layers = nn.ModuleList()
         for i in range(len(skill_out)):
-            seq_layer = nn.Sequential(nn.Linear(2*n_features, 1, device=device), nn.ReLU())
+            seq_layer = nn.Sequential(nn.Linear(2 * n_features, 1, device=device), nn.ReLU())
             self.relevance_mlp_layers.append(seq_layer)
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
@@ -458,9 +549,10 @@ class MLPAttentionExtractor(FeaturesExtractor):
             # pick only the last frame and return a tensor of shape batch_size x 1 x 84 x 84
             x = observations[:, -1:, :, :]
             encoded_frame = self.encoder(x)
-            encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))  # prima di fare il flatten, provare a farlo passare in qualche livello convoluzionale per ridurre un po i canali?
+            encoded_frame = th.reshape(encoded_frame, (x.size(0),
+                                                       -1))  # prima di fare il flatten, provare a farlo passare in qualche livello convoluzionale per ridurre un po i canali?
 
-        encoded_frame = self.encoder_seq_layer(encoded_frame) #query
+        encoded_frame = self.encoder_seq_layer(encoded_frame)  #query
         relevance_t = []
 
         for i in range(len(skill_out)):

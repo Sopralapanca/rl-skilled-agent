@@ -5,7 +5,7 @@ from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
-from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SkillsAttentionExtractor, \
+from feature_extractors import LinearConcatExtractor, CNNConcatExtractor, CombineExtractor, SkillsAttentionExtractor, SkillsAttentionExtractor2, \
     ReservoirConcatExtractor, ChannelsAttentionExtractor, FixedLinearConcatExtractor, DotProductAttentionExtractor, MLPAttentionExtractor
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
     StopTrainingOnNoModelImprovement
@@ -26,7 +26,7 @@ parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
 parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                     default="lin_concat_ext", required=False,
                     choices=["lin_concat_ext", "cnn_concat_ext", "combine_ext",
-                             "skills_attention_ext", "dp_attention_ext", "mlp_attention_ext", "reservoir_concat_ext",
+                             "skills_attention_ext", "skills_attention_ext2", "dp_attention_ext", "mlp_attention_ext", "reservoir_concat_ext",
                              "channels_attention_ext", "fixed_lin_concat_ext"])
 
 parser.add_argument("--debug", type=str, default="False", choices=["True", "False"])
@@ -142,6 +142,17 @@ if skilled_agent:
         tags.append(f"heads:{f_ext_kwargs['n_heads']}")
         tags.append(f"nfeatures:{f_ext_kwargs['n_features']}")
         features_dim = len(skills) * f_ext_kwargs["n_features"]
+
+    if args.extractor == "skills_attention_ext2":
+        config["f_ext_name"] = "skills_attention_ext2"
+        config["f_ext_class"] = SkillsAttentionExtractor2
+        features_dim = 1024
+        tb_log_name += "_sae2"
+        f_ext_kwargs["n_heads"] = 4
+        f_ext_kwargs["game"] = env
+        tags.append(f"heads:{f_ext_kwargs['n_heads']}")
+        tags.append(f"nfeatures:{features_dim}")
+
 
     if args.extractor == "channels_attention_ext":
         config["f_ext_name"] = "channels_attention_ext"

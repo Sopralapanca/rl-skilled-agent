@@ -17,7 +17,9 @@ from gym.envs.classic_control import CartPoleEnv
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong, Breakoout, etc.",
-                    type=str, required=True, choices=["Breakout", "Pong", "CartPole-v1"])
+                    type=str, required=True, choices=["Breakout", "Pong", "CartPole-v1",
+                                                      'Ms_Pacman', 'Seaquest', 'Qbert', 'Asteroids',
+                                                      'Enduro', 'Space_Invaders', 'Road_Runner', 'Beam_Rider'])
 
 args = parser.parse_args()
 
@@ -61,6 +63,7 @@ ENV_NAME = args.env  # "Pong"
 
 # Create the environment
 if ENV_NAME.lower() in atari_py.list_games():
+    ENV_NAME = ENV_NAME.replace('_', '')
     ENV_NAME = ENV_NAME+"NoFrameskip-v4"
     vec_env = make_atari_env(ENV_NAME, n_envs=N_ENVS)
 else:

@@ -1,14 +1,18 @@
 #/!/bin/bash
 
-cd ./autoencoders
-python train_model.py --env BreakoutNoFrameskip-v4 --device 2 &
-cd ..
+games_list=('MsPacman' 'Seaquest' 'Qbert' 'Asteroids' 'Enduro' 'SpaceInvaders' 'BeamRider')
 
-sleep 1
+for game in "${games_list[@]}"
+do
+  cd ./autoencoders
+  python train_model.py --env "$game""NoFrameskip-v4" --device 1 &
+  cd ..
 
-cd ./image_completion
-python train_model.py --env BreakoutNoFrameskip-v4 --device 2 &
-cd ..
+  sleep 1
 
-wait
-echo "Skills training finished"
+  cd ./image_completion
+  python train_model.py --env "$game""NoFrameskip-v4" --device 1 &
+  cd ..
+
+  wait
+done

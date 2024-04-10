@@ -17,14 +17,17 @@ parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
 args = parser.parse_args()
 
 ENV = args.env
-save_name = ""
-if "pong" in ENV.lower():
-    save_name = "pong"
-elif "breakout" in ENV.lower():
-    save_name = "breakout"
-else:
-    print("Env name error")
-    exit()
+save_name = ENV.split("No")[0].lower()
+# print(save_name)
+# exit()
+# save_name = ""
+# if "pong" in ENV.lower():
+#     save_name = "pong"
+# elif "breakout" in ENV.lower():
+#     save_name = "breakout"
+# else:
+#     print("Env name error")
+#     exit()
 
 device = f"cuda:{args.device}" if args.device != "cpu" else "cpu"
 if not torch.cuda.is_available() and device != "cpu":
