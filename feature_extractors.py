@@ -167,7 +167,7 @@ class CNNConcatExtractor(FeaturesExtractor):
         :param features_dim: Number of features extracted from the observations. This corresponds to the number of units for the last layer.
         :param skills: List of skill objects.
         :param device: Device used for computation.
-        :param num_conv_layers: Number of convolutional layers to concatenate the skills.
+        :param num_conv_layers: Number of convolutional layers to concatenate skills.
         """
 
         super().__init__(observation_space, features_dim, skills, device)

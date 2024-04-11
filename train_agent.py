@@ -13,35 +13,13 @@ from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
     StopTrainingOnNoModelImprovement
 from wandb.integration.sb3 import WandbCallback
+from utils.args import parse_args
 import os
 import torch
 import yaml
 
-import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--use-skill", help="if True, use skill agent, otherwise standard agent",
-                    type=str, choices=["True", "False"], required=True)
-parser.add_argument("--device", help="Integer number of a device to use (0, 1, 2, 3), or cpu",
-                    type=str, default="cpu", required=False, choices=["cpu", "0", "1", "2", "3"])
-parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
-                    type=str, required=True, choices=["Pong", "Breakout"])
-parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
-                    default="lin_concat_ext", required=False,
-                    choices=["lin_concat_ext", "fixed_lin_concat_ext",
-                             "cnn_concat_ext", "combine_ext",
-                             "self_attention_ext", "dotproduct_attention_ext",
-                             "reservoir_concat_ext",])
-
-parser.add_argument("--debug", type=str, default="False", choices=["True", "False"])
-parser.add_argument("--pi", type=int, nargs='+', default=[256],
-                    help="Layers and units for custom actor (pi) network. "
-                         "Usage --pi 256 128 for 2 hidden layers with 256 and 128 units respectively.")
-parser.add_argument("--vf", type=int, nargs='+', default=[256],
-                    help="Layers and units for custom value function (vf) network. "
-                         "Usage --vf 256 128 for 2 hidden layers with 256 and 128 units respectively.")
-
-args = parser.parse_args()
+args = parse_args()
 
 skilled_agent = args.use_skill == "True"
 
@@ -116,7 +94,7 @@ if skilled_agent:
     if args.extractor == "fixed_lin_concat_ext":
         config["f_ext_name"] = "fixed_lin_concat_ext"
         config["f_ext_class"] = FixedLinearConcatExtractor
-        f_ext_kwargs["fixed_dim"] = 256
+        f_ext_kwargs["fixed_dim"] = args.fd
         tags.append(f"fixed_dim:{f_ext_kwargs['fixed_dim']}")
         tb_log_name += "_fixedlin"
         ext = FixedLinearConcatExtractor(observation_space=vec_env.observation_space, skills=skills, device=device,
@@ -126,6 +104,7 @@ if skilled_agent:
     if args.extractor == "cnn_concat_ext":
         config["f_ext_name"] = "cnn_concat_ext"
         config["f_ext_class"] = CNNConcatExtractor
+        f_ext_kwargs["num_conv_layers"] = args.cv
         tb_log_name += "_cnn"
         ext = CNNConcatExtractor(vec_env.observation_space, skills=skills, device=device)
         features_dim = ext.get_dimension(sample_obs)
@@ -141,8 +120,8 @@ if skilled_agent:
         config["f_ext_name"] = "self_attention_ext"
         config["f_ext_class"] = SelfAttentionExtractor
         tb_log_name += "_sae"
-        f_ext_kwargs["fixed_dim"] = 256
-        f_ext_kwargs["n_heads"] = 4
+        f_ext_kwargs["fixed_dim"] = args.fd
+        f_ext_kwargs["n_heads"] = args.heads
         tags.append(f"heads:{f_ext_kwargs['n_heads']}")
         tags.append(f"fixed_dim:{f_ext_kwargs['fixed_dim']}")
         features_dim = len(skills) * f_ext_kwargs["fixed_dim"]
@@ -150,10 +129,9 @@ if skilled_agent:
     if args.extractor == "dotproduct_attention_ext":
         config["f_ext_name"] = "dotproduct_attention_ext"
         config["f_ext_class"] = DotProductAttentionExtractor
-        features_dim = 1024
+        features_dim = args.fd
         tb_log_name += "_dpae"
         f_ext_kwargs["game"] = env
-        tags.append(f"heads:{f_ext_kwargs['n_heads']}")
         tags.append(f"fixed_dim:{features_dim}")
 
 
@@ -168,7 +146,8 @@ if skilled_agent:
         # dato che concateno le skill come nel linear, uso LinearConcatExt per prendere la dimensione
         ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
         input_features_dim = ext.get_dimension(sample_obs)
-        features_dim = len(skills) * 256  # output dimension of the reservoir WARNING: if it is too big memory error
+        reservoir_output_dim = args.ro # output dimension of the reservoir WARNING: if it is too big memory error
+        features_dim = reservoir_output_dim
         f_ext_kwargs["input_features_dim"] = input_features_dim
 
 f_ext_kwargs["skills"] = skills
@@ -240,7 +219,7 @@ else:
 
     # model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
 
-    stop_train_callback = StopTrainingOnNoModelImprovement(max_no_improvement_evals=3, min_evals=3, verbose=0)
+    stop_train_callback = StopTrainingOnNoModelImprovement(max_no_improvement_evals=5, min_evals=5, verbose=0)
     if env_name == "Pong":
         callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=21, verbose=0)
         eval_callback = EvalCallback(
