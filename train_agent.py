@@ -108,6 +108,7 @@ if skilled_agent:
         tb_log_name += "_cnn"
         ext = CNNConcatExtractor(vec_env.observation_space, skills=skills, device=device)
         features_dim = ext.get_dimension(sample_obs)
+        tags.append(f"cnn_layers:{args.cv}")
 
     if args.extractor == "combine_ext":
         config["f_ext_name"] = "combine_ext"
@@ -142,8 +143,6 @@ if skilled_agent:
         f_ext_kwargs["game"] = env
         tags.append(f"fixed_dim:{features_dim}")
 
-
-
     if args.extractor == "reservoir_concat_ext":
         config["f_ext_name"] = "reservoir_concat_ext"
         config["f_ext_class"] = ReservoirConcatExtractor
@@ -157,6 +156,7 @@ if skilled_agent:
         reservoir_output_dim = args.ro # output dimension of the reservoir WARNING: if it is too big memory error
         features_dim = reservoir_output_dim
         f_ext_kwargs["input_features_dim"] = input_features_dim
+        tags.append(f"res_size:{args.ro}")
 
 f_ext_kwargs["skills"] = skills
 f_ext_kwargs["features_dim"] = features_dim
