@@ -86,7 +86,6 @@ class LinearConcatExtractor(FeaturesExtractor):
                  features_dim: int = 256,
                  skills: List[Skill] = None,
                  device="cpu"):
-
         """
         :param observation_space: Gymnasium observation space
         :param features_dim: Number of features extracted from the observations. This corresponds to the number of units for the last layer.
@@ -413,8 +412,100 @@ class DotProductAttentionExtractor(FeaturesExtractor):
         # now stack the skill outputs to obtain a sequence of tokens
         stacked_skills = th.stack(skill_out, 0).permute(1, 0, 2)
 
-        att_out = self.scaled_dot_product_attention(query=encoded_frame, key=stacked_skills, value=stacked_skills, device=self.device)
+        att_out = self.scaled_dot_product_attention(query=encoded_frame, key=stacked_skills, value=stacked_skills,
+                                                    device=self.device)
         att_out = att_out.squeeze(1)
+        return att_out
+
+
+class WeightSharingAttentionExtractor(FeaturesExtractor):
+    def __init__(self, observation_space: spaces.Box,
+                 features_dim: int = 256,
+                 skills: List[Skill] = None,
+                 game: str = "pong",
+                 device="cpu"):
+        """
+        :param observation_space: Gymnasium observation space
+        :param features_dim: Number of features extracted from the observations. This corresponds to the number of units for the last layer.
+        :param skills: List of skill objects.
+        :param device: Device used for computation.
+        :param game: Name of the game to load the Autoencoder model
+        """
+        super().__init__(observation_space, features_dim, skills, device)
+
+        self.device = device
+        sample = observation_space.sample()  # 4x84x84
+        sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
+        sample = th.from_numpy(sample) / 255
+        sample = sample.to(device)
+
+        skill_out = self.preprocess_input(sample)
+
+        for i in range(len(skill_out)):
+            if len(skill_out[i].shape) > 2:
+                skill_out[i] = th.reshape(skill_out[i],
+                                          (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
+
+        # for the skills
+        self.mlp_layers = nn.ModuleList()
+        for i in range(len(skill_out)):
+            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device), nn.ReLU())
+            self.mlp_layers.append(seq_layer)
+
+        # for the context
+        model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+        model = Autoencoder().to(device)
+        model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+        model.eval()
+        self.encoder = model.encoder
+        x = sample[:, -1:, :, :]
+        with torch.no_grad():
+            z = self.encoder(x)
+            z = th.reshape(z, (z.size(0), -1))
+            self.input_size = z.shape[-1]
+        self.encoder_seq_layer = nn.Sequential(nn.Linear(self.input_size, features_dim, device=device), nn.ReLU())
+
+        # for the weights sharing attention
+        self.weights = nn.Sequential(nn.Linear((2 * features_dim), 1, device=device), nn.ReLU())
+
+    def forward(self, observations: th.Tensor) -> th.Tensor:
+        # print("forward observation shape", observations.shape)
+        skill_out = self.preprocess_input(observations)
+        weights = []
+
+        with torch.no_grad():
+            # pick only the last frame and return a tensor of shape batch_size x 1 x 84 x 84
+            x = observations[:, -1:, :, :]
+            encoded_frame = self.encoder(x)
+            encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))
+        encoded_frame = self.encoder_seq_layer(encoded_frame)  # query
+
+        # consider skills as tokens in a sequence
+        # so first fix the dimension of each skill output
+        for i in range(len(skill_out)):
+            seq_layer = self.mlp_layers[i]
+            x = skill_out[i]
+            if len(x.shape) > 2:
+                x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
+
+            skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
+
+            concatenated = th.cat([encoded_frame, skill_out[i]], 1)
+
+            weight = self.weights(concatenated)
+            weights.append(weight)
+
+        weights = th.stack(weights, 1)  # batch_size x num_skills x 1 (perchè x 1?)
+        #weights = weights.squeeze(2)
+        weights = th.softmax(weights, 1)
+
+        # now stack the skill outputs to obtain a sequence of tokens
+        stacked_skills = th.stack(skill_out, 0).permute(1, 0, 2)
+
+        # sum product of weights and skills
+        att_out = weights * stacked_skills
+        att_out = th.sum(att_out, 1)
+
         return att_out
 
 

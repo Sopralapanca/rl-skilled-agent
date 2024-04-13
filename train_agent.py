@@ -7,7 +7,7 @@ from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
                                CNNConcatExtractor, CombineExtractor, \
-                               SelfAttentionExtractor, DotProductAttentionExtractor, \
+                               SelfAttentionExtractor, DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
                                ReservoirConcatExtractor
 
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
@@ -129,6 +129,14 @@ if skilled_agent:
     if args.extractor == "dotproduct_attention_ext":
         config["f_ext_name"] = "dotproduct_attention_ext"
         config["f_ext_class"] = DotProductAttentionExtractor
+        features_dim = args.fd
+        tb_log_name += "_dpae"
+        f_ext_kwargs["game"] = env
+        tags.append(f"fixed_dim:{features_dim}")
+
+    if args.extractor == "wsharing_attention_ext":
+        config["f_ext_name"] = "wsharing_attention_ext"
+        config["f_ext_class"] = WeightSharingAttentionExtractor
         features_dim = args.fd
         tb_log_name += "_dpae"
         f_ext_kwargs["game"] = env
