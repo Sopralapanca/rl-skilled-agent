@@ -13,7 +13,7 @@ def parse_args():
                         default="lin_concat_ext", required=False,
                         choices=["lin_concat_ext", "fixed_lin_concat_ext",
                                  "cnn_concat_ext", "combine_ext",
-                                 "self_attention_ext", "dotproduct_attention_ext", "wsharing_attention_ext",
+                                 "self_attention_ext", "self_attention_ext2", "dotproduct_attention_ext", "wsharing_attention_ext",
                                  "reservoir_concat_ext", ])
 
     parser.add_argument("--debug", type=str, default="False", choices=["True", "False"])

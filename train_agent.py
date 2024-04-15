@@ -7,7 +7,7 @@ from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
                                CNNConcatExtractor, CombineExtractor, \
-                               SelfAttentionExtractor, DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
+                               SelfAttentionExtractor, DotProductAttentionExtractor, WeightSharingAttentionExtractor, SelfAttentionExtractor2, \
                                ReservoirConcatExtractor
 
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
@@ -126,6 +126,16 @@ if skilled_agent:
         tags.append(f"heads:{f_ext_kwargs['n_heads']}")
         tags.append(f"fixed_dim:{f_ext_kwargs['fixed_dim']}")
         features_dim = len(skills) * f_ext_kwargs["fixed_dim"]
+
+    if args.extractor == "self_attention_ext2":
+        config["f_ext_name"] = "self_attention_ext2"
+        config["f_ext_class"] = SelfAttentionExtractor2
+        tb_log_name += "_sae"
+        f_ext_kwargs["fixed_dim"] = args.fd
+        f_ext_kwargs["n_heads"] = args.heads
+        tags.append(f"heads:{f_ext_kwargs['n_heads']}")
+        tags.append(f"fixed_dim:{f_ext_kwargs['fixed_dim']}")
+        features_dim = args.fd
 
     if args.extractor == "dotproduct_attention_ext":
         config["f_ext_name"] = "dotproduct_attention_ext"
