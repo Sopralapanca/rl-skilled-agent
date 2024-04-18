@@ -15,7 +15,8 @@ class FeaturesExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: spaces.Box,
                  features_dim: int = 256,
                  skills: List[Skill] = None,
-                 device="cpu"):
+                 device="cpu",
+                 mode=0):
         super().__init__(observation_space, features_dim)
 
         self.skills = skills
@@ -49,14 +50,19 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         sample = th.from_numpy(sample) / 255
         sample = sample.to(device)
 
-        skill_out = self.preprocess_input(sample)
+        skill_out = self.preprocess_input(sample, mode=mode)
 
         self.num_channels = 0
         for el in skill_out:
             if el.ndim == 4:
                 self.num_channels += el.shape[1]
 
-    def preprocess_input(self, observations: th.Tensor) -> [th.Tensor]:
+    def preprocess_input(self, observations: th.Tensor, mode: int = 0) -> [th.Tensor]:
+        """
+        :param observations: torch tensor of shape (n_envs, n_stacked_frames, height, width)
+        :param mode:    if 0 reshape linear features into spatial
+                        if 1 keep the dimension of linear skills
+        """
         # print("observation shape", observations.shape)
 
         skill_out = []
@@ -65,11 +71,17 @@ class FeaturesExtractor(BaseFeaturesExtractor):
                 so = skill.input_adapter(observations)
                 so = skill.skill_output(skill.skill_model, so)
 
-            if skill.name == "state_rep_uns":
-                so = th.reshape(so, (observations.size(0), -1, 16, 16))
-            elif skill.name in self.adapters:
-                adapter = self.adapters[skill.name]
-                so = adapter(so)
+            if mode == 0:
+                if skill.name == "state_rep_uns":
+                    so = th.reshape(so, (observations.size(0), -1, 16, 16))
+                elif skill.name in self.adapters:
+                    adapter = self.adapters[skill.name]
+                    so = adapter(so)
+
+            elif mode == 1:
+                if skill.name in self.adapters:
+                    adapter = self.adapters[skill.name]
+                    so = adapter(so)
 
             # print(skill.name, so.shape)
             skill_out.append(so)
@@ -206,8 +218,9 @@ class CombineExtractor(FeaturesExtractor):
                  features_dim: int = 256,
                  skills: List[Skill] = None,
                  num_linear_skills=0,
-                 device="cpu"):
-        super().__init__(observation_space, features_dim, skills, device)
+                 device="cpu",
+                 mode=1):
+        super().__init__(observation_space, features_dim, skills, device,mode)
 
         """
         :param observation_space: Gymnasium observation space
@@ -229,14 +242,15 @@ class CombineExtractor(FeaturesExtractor):
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print("forward shape", observations.shape)
-        skill_out = self.preprocess_input(observations)
+        skill_out = self.preprocess_input(observations, mode=1)
 
-        # concat the cnn feature maps
-        x = th.cat(skill_out[self.num_lin_skills:], 1)
-        x = self.cnn(x)
-        x = th.reshape(x, (x.size(0), -1))
-        # concat the linear features
-        return th.cat([*skill_out[:self.num_lin_skills], x], 1)
+        # concat the cnn feature maps and pass to a convolutional layer
+        spatial_x = th.cat(skill_out[self.num_lin_skills:], 1)
+        spatial_x = self.cnn(spatial_x)
+        linear_x = th.reshape(spatial_x, (spatial_x.size(0), -1))
+
+        # concat the linear features all together
+        return th.cat([*skill_out[:self.num_lin_skills], linear_x], 1)
 
 
 # ----------------------------------------------------------------------------------

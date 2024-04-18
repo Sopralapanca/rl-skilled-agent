@@ -117,8 +117,9 @@ if skilled_agent:
     if args.extractor == "combine_ext":
         config["f_ext_name"] = "combine_ext"
         config["f_ext_class"] = CombineExtractor
+        f_ext_kwargs["num_linear_skills"] = 1
         tb_log_name += "_comb"
-        ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device, num_linear_skills=0)
+        ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device, num_linear_skills=f_ext_kwargs["num_linear_skills"])
         features_dim = ext.get_dimension(sample_obs)
 
     if args.extractor == "self_attention_ext":
