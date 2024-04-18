@@ -17,14 +17,15 @@ parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
 args = parser.parse_args()
 
 ENV = args.env
-save_name = ""
-if "pong" in ENV.lower():
-    save_name = "pong"
-elif "breakout" in ENV.lower():
-    save_name = "breakout"
-else:
-    print("Env name error")
-    exit()
+save_name = ENV.split("No")[0].lower()
+# save_name = ""
+# if "pong" in ENV.lower():
+#     save_name = "pong"
+# elif "breakout" in ENV.lower():
+#     save_name = "breakout"
+# else:
+#     print("Env name error")
+#     exit()
 
 device = f"cuda:{args.device}" if args.device != "cpu" else "cpu"
 if not torch.cuda.is_available() and device != "cpu":
@@ -58,11 +59,11 @@ with torch.no_grad():
     for out, img in zip(output[:10], imgs[:10]):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
 
-        axes[0].imshow(out[0].cpu())
+        axes[0].imshow(out[0].cpu(), cmap='gray')
         axes[0].set_title("Reconstructed Image")
         axes[0].axis('off')
 
-        axes[1].imshow(img[0].cpu())
+        axes[1].imshow(img[0].cpu(), cmap='gray')
         axes[1].set_title("Ground Truth Image")
         axes[1].axis('off')
 

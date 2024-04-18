@@ -35,13 +35,17 @@ env = args.env.lower()
 env_name = args.env
 with open(f'configs/{env}.yaml', 'r') as file:
     config = yaml.safe_load(file)["config"]
+    if "_" in env_name:
+        env_name = env_name.replace("_", "")
 
 config["device"] = device
 config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
-tags = [f'game:{config["game"]}']
+
+version = "1.0"
+tags = [f'game:{config["game"]}', f'version:{version}']
 
 string = "pi:"
 for el in config["net_arch_pi"]:
@@ -142,7 +146,7 @@ if skilled_agent:
         config["f_ext_class"] = DotProductAttentionExtractor
         features_dim = args.fd
         tb_log_name += "_dpae"
-        f_ext_kwargs["game"] = env
+        f_ext_kwargs["game"] = env_name
         tags.append(f"fixed_dim:{features_dim}")
 
     if args.extractor == "wsharing_attention_ext":
@@ -150,7 +154,7 @@ if skilled_agent:
         config["f_ext_class"] = WeightSharingAttentionExtractor
         features_dim = args.fd
         tb_log_name += "_dpae"
-        f_ext_kwargs["game"] = env
+        f_ext_kwargs["game"] = env_name
         tags.append(f"fixed_dim:{features_dim}")
 
     if args.extractor == "reservoir_concat_ext":

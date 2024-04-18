@@ -1,17 +1,14 @@
 #/!/bin/bash
+set -e
+games_list=('Pong' 'Qbert' 'Seaquest' 'Space_Invaders' 'Ms_Pacman' 'Breakout' 'Asteroids')
+extractors_list=('lin_concat_ext' 'fixed_lin_concat_ext' 'cnn_concat_ext' 'combine_ext' 'dotproduct_attention_ext' 'wsharing_attention_ext' 'reservoir_concat_ext')
 
-
-python train_agent.py --env Pong --device 2 --use-skill True --debug True --extractor lin_concat_ext
-echo "Linear Concat Finished"
-python train_agent.py --env Pong --device 2 --use-skill True --debug True --extractor fixed_lin_concat_ext
-echo "Fixed Linear Concat Finished"
-python train_agent.py --env Pong --device 2 --use-skill True --debug True --extractor cnn_concat_ext
-echo "CNN Concat Finished"
-python train_agent.py --env Pong --device 2 --use-skill True --debug True --extractor combine_ext
-echo "Combine Concat Finished"
-python train_agent.py --env Pong --device 2 --use-skill True --debug True --extractor self_attention_ext
-echo "Self Attention Concat Finished"
-python train_agent.py --env Pong --device 2 --use-skill True --debug True --extractor dotproduct_attention_ext
-echo "Dot Product Attention Concat Finished"
-python train_agent.py --env Pong --device 2 --use-skill True --debug True --extractor reservoir_concat_ext
-echo "Reservoir Concat Finished"
+for extractor in "${extractors_list[@]}"
+do
+  for game in "${games_list[@]}"
+  do
+    echo "Testing $game with extractor $extractor"
+    python train_agent.py --env "$game" --device 1 --use-skill True --debug True --extractor "$extractor"
+    echo "Done"
+  done
+done

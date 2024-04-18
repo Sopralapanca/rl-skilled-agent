@@ -8,7 +8,8 @@ def parse_args():
     parser.add_argument("--device", help="Integer number of a device to use (0, 1, 2, 3), or cpu",
                         type=str, default="cpu", required=False, choices=["cpu", "0", "1", "2", "3"])
     parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
-                        type=str, required=True, choices=["Pong", "Breakout"])
+                        type=str, required=True, choices=['Pong', 'Qbert', 'Seaquest', 'Space_Invaders', 'Beam_Rider',
+                                                          'Road_Runner', 'Ms_Pacman', 'Breakout', 'Asteroids', 'Enduro'])
     parser.add_argument("--extractor", help="Which type of feature extractor to use", type=str,
                         default="lin_concat_ext", required=False,
                         choices=["lin_concat_ext", "fixed_lin_concat_ext",

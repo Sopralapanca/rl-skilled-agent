@@ -1,4 +1,4 @@
-# Breakout configuration file
+# Space Invaders configuration file
 
 config : {
   "n_envs": 8,

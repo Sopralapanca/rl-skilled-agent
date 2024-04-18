@@ -1,4 +1,4 @@
-# Breakout configuration file
+# Road Runner configuration file
 
 config : {
   "n_envs": 8,

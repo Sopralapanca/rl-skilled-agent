@@ -1,30 +1,43 @@
 #/!/bin/bash
+set -e
 
-#extractors_list=("fixed_lin_concat_ext" "cnn_concat_ext" "combine_ext" "reservoir_concat_ext" "fixed_lin_concat_ext")
-#games_list=("Pong")
+#games_list=('Asteroids' 'Ms_Pacman' 'Space_Invaders' 'Seaquest' 'Qbert' 'Pong' 'Breakout')
+games_list=('Asteroids' 'Ms_Pacman' 'Space_Invaders')
+extractors_list=('lin_concat_ext' 'fixed_lin_concat_ext' 'cnn_concat_ext' 'combine_ext' 'dotproduct_attention_ext' 'wsharing_attention_ext' 'reservoir_concat_ext')
 
-#for game in "${games_list[@]}"
-#do
-#  for extractor in "${extractors_list[@]}"
-#  do
-#    python train_agent.py --env "$game" --device 2 --use-skill True --debug False --extractor "$extractor" --fd 256 &
-#    sleep 1
+fd=(256 512 1024)
+ro=(512 1024)
+cv=(1 2 3)
 
-#  done
-#  wait
+for game in "${games_list[@]}"
+do
+  python train_agent.py --env "$game" --device 1 --use-skill False --debug False &
 
-#done
-#echo "All tests finished"
+  for extractor in "${extractors_list[@]}"
+  do
+    if [ "$extractor" = "fixed_lin_concat_ext" ] || [ "$extractor" = "dotproduct_attention_ext" ] || [ "$extractor" = "wsharing_attention_ext" ] ; then
+      for d in "${fd[@]}"
+      do
+        python train_agent.py --env "$game" --device 1 --use-skill True --debug False --extractor "$extractor" --fd "$d" &
+      done
 
+    elif [ "$extractor" = "cnn_concat_ext" ] ; then
+      for l in "${cv[@]}"
+      do
+        python train_agent.py --env "$game" --device 1 --use-skill True --debug False --extractor "$extractor" --cv "$l" &
+      done
 
-python train_agent.py --env "Pong" --device 3 --use-skill True --debug False --extractor "self_attention_ext2" --fd 256 --heads 4 &
-sleep 1
+    elif [ "$extractor" = "reservoir_concat_ext" ] ; then
+      for s in "${ro[@]}"
+      do
+        python train_agent.py --env "$game" --device 1 --use-skill True --debug False --extractor "$extractor" --ro "$s" &
+      done
 
-python train_agent.py --env "Pong" --device 3 --use-skill True --debug False --extractor "self_attention_ext2" --fd 512 --heads 4 &
-sleep 1
+    else
+      python train_agent.py --env "$game" --device 1 --use-skill True --debug False --extractor "$extractor" &
+    fi
 
-python train_agent.py --env "Pong" --device 3 --use-skill True --debug False --extractor "self_attention_ext2" --fd 1024 --heads 4 &
-sleep 1
+    wait
 
-python train_agent.py --env "Pong" --device 3 --use-skill True --debug False --extractor "self_attention_ext2" --fd 2048 --heads 4 &
-sleep 1
+  done
+done

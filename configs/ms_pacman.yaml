@@ -1,4 +1,4 @@
-# Breakout configuration file
+# Beam Rider configuration file
 
 config : {
   "n_envs": 8,

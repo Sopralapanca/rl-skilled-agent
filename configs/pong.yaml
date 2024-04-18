@@ -20,9 +20,11 @@ config : {
 
     "f_ext_name": "None",
 
-    "f_ext_ft_dim": 16896,
+    #"f_ext_ft_dim": 16896,
+
+    # filled with other parameters at runtime according to the extractor used
     "f_ext_kwargs": {
-        "features_dim": 16896, #dimensione vettore dopo aver estratto e combinato le skill
+        "features_dim": 0, #final dimension of the embedding before passing it to policy net or value function net
     },
 
 }

@@ -1,4 +1,4 @@
-# Breakout configuration file
+# Seaquest configuration file
 
 config : {
   "n_envs": 8,

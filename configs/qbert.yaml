@@ -1,4 +1,4 @@
-# Breakout configuration file
+# Qbert configuration file
 
 config : {
   "n_envs": 8,
