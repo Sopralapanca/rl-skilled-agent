@@ -15,6 +15,8 @@ import atari_py
 from gym import spaces
 from gym.envs.classic_control import CartPoleEnv
 
+from stable_baselines3 import PPO
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong, Breakoout, etc.",
                     type=str, required=True, choices=["Breakout", "Pong", "CartPole-v1",
@@ -79,12 +81,14 @@ obs = vec_env.reset()
 if ENV_NAME.lower() in atari_py.list_games():
     vec_env.render("rgb_array")
 
-SAVE_DIR = "../data/" + ENV_NAME
+#SAVE_DIR = "../data/" + ENV_NAME
+SAVE_DIR = "../data2/" + ENV_NAME
+
+model = PPO.load("../models/ddjyu7ba/model.zip")
 
 # Create a directory data with subdirectory "breakout" using os to store the frames
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
-
 
 frame_count = 0
 for i in tqdm(range(1, NUM_EPS + 1)):
@@ -96,9 +100,14 @@ for i in tqdm(range(1, NUM_EPS + 1)):
     step = 0
 
     while not done:
-        action = vec_env.action_space.sample()
+        if i > (NUM_EPS / 2):
+            action, _states = model.predict(obs) # returns a list of actions
+        else:
+            action = vec_env.action_space.sample() # returns just a single action
+            action = [action]
+
         new_obs, rewards, dones, infos = vec_env.step(
-            [action])  # we need to pass an array of actions in step, one action for each environment
+            action)  # we need to pass an array of actions in step, one action for each environment
 
         # obs = obs.reshape(N_ENVS, FRAME_STACK, FRAME_SIZE, FRAME_SIZE, CHANNELS)
         # new_obs = new_obs.reshape(N_ENVS, FRAME_STACK, FRAME_SIZE, FRAME_SIZE)

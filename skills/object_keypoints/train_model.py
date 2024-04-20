@@ -10,11 +10,13 @@ from torch.utils.data import DataLoader
 from model import Encoder, KeyNet, RefineNet, Transporter
 from dataset import Dataset, Sampler
 
-if len(sys.argv) < 3:
-    print(f"Usage: python {sys.argv[0]} <gpu-device> <seed>")
+if len(sys.argv) < 4:
+    print(f"Usage: python {sys.argv[0]} <gpu-device> <seed> <env>")
     exit()
 gpu = sys.argv[1]
 seed = int(sys.argv[2])
+env = sys.argv[3]
+
 project = "attskills"
 
 device = torch.device(gpu if torch.cuda.is_available() else "cpu")
@@ -23,12 +25,11 @@ random.seed(seed)
 np.random.seed(seed)
 torch.manual_seed(seed)
 
-# ENV = "PongNoFrameskip-v4"
 IMG_SZ = 84
-data_path = f"data/PongNoFrameskip-v4_84"
+data_path = f"../../data2/{env}"
+
 NUM_TR_ENVS = 10
-NUM_EPS = 100
-MAX_EP_LEN = 100
+NUM_EPS = 1000
 MAX_ITER = 1e6
 batch_size = 64
 image_channels = 1
@@ -37,10 +38,9 @@ lr = 1e-3
 lr_decay = 0.95
 lr_deacy_len = 1e5
 
-wandb.init(project=project, entity="epai", tags=["obj_key"])
+wandb.init(project=project, tags=["obj_key"])
 wandb.config.update({
         "num_eps": NUM_EPS,
-        "max_ep_len": MAX_EP_LEN,
         "image-channels": image_channels,
         "image-size": IMG_SZ,
         "steps": MAX_ITER,
@@ -58,11 +58,11 @@ transporter = Transporter(encoder, key_net, refine_net)
 transporter.to(device)
 transporter.train()
 
-t_dataset = Dataset(data_path, NUM_EPS, MAX_EP_LEN, transforms.ToTensor())
+t_dataset = Dataset(data_path, NUM_EPS, transforms.ToTensor())
 t_sampler = Sampler(t_dataset)
 t_data_loader = DataLoader(t_dataset, batch_size, sampler=t_sampler)
 
-v_dataset = Dataset(data_path, NUM_EPS, MAX_EP_LEN, transforms.ToTensor())
+v_dataset = Dataset(data_path, NUM_EPS, transforms.ToTensor())
 v_sampler = Sampler(v_dataset)
 v_data_loader = DataLoader(v_dataset, 2*batch_size, sampler=v_sampler)
 
@@ -94,7 +94,8 @@ for i, (xt, xtp1) in enumerate(t_data_loader):
 
     if eval_loss < best_loss:
         best_loss = eval_loss
-        torch.save(transporter.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
+        torch.save(transporter.state_dict(), 'breakout-obj-key.pt')
+        #torch.save(transporter.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
 
     last_lr = scheduler.get_last_lr()[0]
     wandb.log({
@@ -106,4 +107,4 @@ for i, (xt, xtp1) in enumerate(t_data_loader):
     # wandb.watch(transporter, F.mse_loss)
 
     # print(f"[{i}] - Loss: {loss} , Eval Loss: {eval_loss}")
-torch.save(transporter.state_dict(), os.path.join(wandb.run.dir, 'model_final.pt'))
+#torch.save(transporter.state_dict(), os.path.join(wandb.run.dir, 'model_final.pt'))

@@ -53,15 +53,15 @@
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset, Sampler
+import os
 
 class Dataset(Dataset):
-    def __init__(self, path, ep=10, max_ep_len=100, transform=None):
+    def __init__(self, path, ep=10, transform=None):
         super().__init__()
 
         self.path = path
         self.transform = transform
         self.ep = ep
-        self.max_ep_len = max_ep_len
 
     def __len__(self):
         raise NotImplementedError
@@ -77,7 +77,8 @@ class Dataset(Dataset):
         return imgt, imgtp1
 
     def get_trajectory(self, idx):
-        images = [np.array(Image.open('{}/{}/{}.png'.format(self.path, idx, t))) for t in range(self.max_ep_len)]
+        max_ep_len = len(os.listdir(self.path + f"/{idx}"))
+        images = [np.array(Image.open('{}/{}/{}.png'.format(self.path, idx, t))) for t in range(max_ep_len)]
         return [self.transform(im) for im in images]
 
 class Sampler(Sampler):
@@ -86,10 +87,13 @@ class Sampler(Sampler):
 
     def __iter__(self):
         while True:
-            n = np.random.randint(self.dataset.ep)
-            num_images = self.dataset.max_ep_len
+            n = np.random.randint(1, self.dataset.ep+1)
+            num_images = len(os.listdir(self.dataset.path + f"/{n}"))
+            if num_images < 21:
+                continue
+
             t_ind = np.random.randint(0, num_images - 20)
-            tp1_ind = t_ind + np.random.randint(20)
+            tp1_ind = t_ind + np.random.randint(min(20, (num_images-t_ind)))
             yield n, t_ind, tp1_ind
 
     def __len__(self):
