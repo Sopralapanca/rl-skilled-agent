@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument("--cv", type=int, required=False, default=1,
                         help="Number of convolutional layers to concatenate skills.")
 
-    parser.add_argument("--heads", type=int, required=False, default=2,
+    parser.add_argument("--heads", type=int, required=False, default=4,
                         help="Number of attention heads.")
 
     parser.add_argument("--ro", type=int, required=False, default=1024,

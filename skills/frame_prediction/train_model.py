@@ -72,41 +72,35 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 best_loss = 1000
 
 # Training loop
-num_epochs = 400 * len(train_load)
-for epoch in range(num_epochs):
+steps = 400 * len(train_load)
+for step in range(steps):
     model.train()
-    train_losses = []
+    frames, new_frame = next(iter(train_load))
 
-    for i, (frames, new_frame) in enumerate(train_load):
-        optimizer.zero_grad()
-        frames = frames.to(device)
-        new_frame = new_frame.to(device)
+    optimizer.zero_grad()
+    frames = frames.to(device)
+    new_frame = new_frame.to(device)
 
-        # Forward pass
-        outputs = model(frames)
+    # Forward pass
+    outputs = model(frames)
 
-        # Compute loss and optimize
-        loss = criterion(outputs, new_frame)
-        train_losses.append(loss.item())
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+    # Compute loss and optimize
+    train_loss = criterion(outputs, new_frame)
+    optimizer.zero_grad()
+    train_loss.backward()
+    optimizer.step()
 
-    avg_train_loss = sum(train_losses) / len(train_losses)
-
-    val_losses = []
     with torch.no_grad():
         model.eval()
-        for i, (frames, new_frame) in enumerate(val_load):
-            new_frame = new_frame.to(device)
-            frames = frames.to(device)
-            out = model(frames)
-            loss = criterion(out, new_frame)
-            val_losses.append(loss.item())
+        frames, new_frame = next(iter(val_load))
+        new_frame = new_frame.to(device)
+        frames = frames.to(device)
+        out = model(frames)
+        val_loss = criterion(out, new_frame)
 
-    avg_val_loss = sum(val_losses) / len(val_losses)
 
-    if avg_val_loss < best_loss:
-        print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {avg_train_loss:.7f}, Val Loss: {avg_val_loss:.7f}")
-        best_loss = avg_val_loss
-        torch.save(model.state_dict(), os.path.join(SAVE_MODELS_DIR, save_name + '-image-completion.pt'))
+    if val_loss < best_loss:
+        print(f"Epoch [{step + 1}/{steps}], Train Loss: {train_loss:.7f}, Val Loss: {val_loss:.7f}")
+        best_loss = val_loss
+        #torch.save(model.state_dict(), os.path.join(SAVE_MODELS_DIR, save_name + '-frame-prediction.pt'))
+        torch.save(model.state_dict(), './breakout-frame-prediction.pt')

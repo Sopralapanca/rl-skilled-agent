@@ -75,7 +75,7 @@ for i in range(steps):
         print(f"Ep: {i} new best val_loss : {val_loss}")
         # torch.save(model.state_dict(), f"model_{i}.pt")
         # torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
-        torch.save(model.state_dict(), './breakout-vid-obj-seg.pt')
+        torch.save(model.state_dict(), './breakout-vid-obj-seg.pt') # attenzione cambia nome
 
     # if i % 100 == 0:
     #     print(f"Step: {i:5d} - TLoss: {tr_loss.item():.8f} - VLoss: {val_loss.item():.8f} - BestV: {best_val_loss:.8f}")
