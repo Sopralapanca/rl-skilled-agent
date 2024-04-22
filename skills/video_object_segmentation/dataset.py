@@ -11,8 +11,9 @@ class Dataset():
         self.num_frames = num_frames
         self.H = H
         self.W = W
-        self.data_path = f'data/{env}/*'
-        print('data path is {}'.format(self.data_path))
+        #self.data_path = f'data/{env}/*'
+        self.data_path = f"../../data2/{env}/*"
+        #print('data path is {}'.format(self.data_path))
 
         self.episode_paths = sorted(glob.glob(self.data_path))
         print('found {} episode paths'.format(len(self.episode_paths)))
@@ -21,17 +22,18 @@ class Dataset():
         for episode_path in self.episode_paths:
             self.episodes[episode_path] = sorted(
                 glob.glob(os.path.join(episode_path, '*.png')),
-                key=lambda x: int(os.path.basename(x).split('_')[0]),
+                key=lambda x: int(os.path.basename(x).split('.')[0]),
             )
 
-        all_episodes = sorted(self.episodes.keys(), key=lambda s: int(s.split('/')[2]))
-        print(all_episodes)
+
+        all_episodes = sorted(self.episodes.keys(), key=lambda s: int(s.split('/')[-1]))
+
         # self.train_data_keys = all_episodes[:-1]
         # self.valid_data_keys = [all_episodes[-1]]
         split = int(0.8 * len(all_episodes))
         self.train_data_keys = all_episodes[:split]
         self.valid_data_keys = all_episodes[split:]
-        print(self.train_data_keys, self.valid_data_keys)
+        #print(self.train_data_keys, self.valid_data_keys)
 
     # def get_batch(self, data_type):
     #     if data_type == "train":

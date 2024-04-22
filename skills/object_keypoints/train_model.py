@@ -26,6 +26,7 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 
 IMG_SZ = 84
+#data_path = f"../../data/{env}"
 data_path = f"../../data2/{env}"
 
 NUM_TR_ENVS = 10
