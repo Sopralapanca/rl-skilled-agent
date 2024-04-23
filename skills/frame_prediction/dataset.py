@@ -41,8 +41,8 @@ class Sampler(Sampler):
             episode_index = np.random.choice(self.dataset.idxs)
             num_images = len(os.listdir(self.dataset.path + f"/{episode_index}"))
 
-            if num_images < 9:
-                continue
+            if num_images < 10:
+                pass
 
             # try to reconstruct the frame 5 steps ahead
             start_index = np.random.randint(4, num_images - 5)

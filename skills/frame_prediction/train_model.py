@@ -41,11 +41,11 @@ if not os.path.exists(SAVE_MODELS_DIR):
 
 #data_path = f"../.././data/{ENV}"
 data_path = f"../.././data2/{ENV}"
-NUM_EPS = len(os.listdir(data_path)) - 100
+NUM_EPS = len(os.listdir(data_path))
 img_sz = 84
 batch_size = 128
 
-eps = np.arange(start=100, stop=NUM_EPS + 1)
+eps = np.arange(start=1, stop=NUM_EPS + 1)
 np.random.shuffle(eps)
 split_idx = int(NUM_EPS * 0.8)
 train_idxs = eps[:split_idx]
@@ -72,7 +72,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 best_loss = 1000
 
 # Training loop
-steps = 400 * len(train_load)
+steps = 1000 * len(train_load)
 for step in range(steps):
     model.train()
     frames, new_frame = next(iter(train_load))
@@ -103,4 +103,4 @@ for step in range(steps):
         print(f"Epoch [{step + 1}/{steps}], Train Loss: {train_loss:.7f}, Val Loss: {val_loss:.7f}")
         best_loss = val_loss
         #torch.save(model.state_dict(), os.path.join(SAVE_MODELS_DIR, save_name + '-frame-prediction.pt'))
-        torch.save(model.state_dict(), './breakout-frame-prediction.pt')
+        torch.save(model.state_dict(), f'./{save_name}-frame-prediction.pt')

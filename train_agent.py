@@ -183,7 +183,9 @@ if skilled_agent:
         net_arch={
             'pi': config["net_arch_pi"],
             'vf': config["net_arch_vf"]
-        }
+        },
+        #activation_fn=th.nn.ReLU, prova con relu e vedi se ci sono cambiamenti
+
     )
 else:
     policy_kwargs = None
