@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from dataset import Dataset, Sampler
+from dataset import Dataset
 import torch
 import os
 import numpy as np
@@ -43,7 +43,7 @@ if not os.path.exists(SAVE_MODELS_DIR):
 data_path = f"../.././data2/{ENV}"
 NUM_EPS = len(os.listdir(data_path))
 img_sz = 84
-batch_size = 128
+batch_size = 32
 
 eps = np.arange(start=1, stop=NUM_EPS + 1)
 np.random.shuffle(eps)
@@ -52,12 +52,10 @@ train_idxs = eps[:split_idx]
 val_idxs = eps[split_idx:NUM_EPS]
 
 dataset_ts = Dataset(path=data_path, idxs=train_idxs)
-t_sampler = Sampler(dataset_ts)
-train_load = DataLoader(dataset_ts, batch_size, num_workers=8, sampler=t_sampler)
+train_load = DataLoader(dataset_ts, batch_size, num_workers=8)
 
 dataset_vs = Dataset(path=data_path, idxs=val_idxs)
-v_sampler = Sampler(dataset_vs)
-val_load = DataLoader(dataset_ts, batch_size, num_workers=8, sampler=v_sampler)
+val_load = DataLoader(dataset_ts, batch_size, num_workers=8)
 
 # Initialize the autoencoder model
 model = FramePredictionModel(input_channels=4).to(device)
@@ -72,35 +70,43 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 best_loss = 1000
 
 # Training loop
-steps = 1000 * len(train_load)
-for step in range(steps):
+num_epochs = 400 * len(train_load)
+for epoch in range(num_epochs):
     model.train()
-    frames, new_frame = next(iter(train_load))
+    train_losses = []
 
-    optimizer.zero_grad()
-    frames = frames.to(device)
-    new_frame = new_frame.to(device)
+    for i, (frames, new_frame) in enumerate(train_load):
 
-    # Forward pass
-    outputs = model(frames)
+        optimizer.zero_grad()
+        frames = frames.to(device)
+        new_frame = new_frame.to(device)
 
-    # Compute loss and optimize
-    train_loss = criterion(outputs, new_frame)
-    optimizer.zero_grad()
-    train_loss.backward()
-    optimizer.step()
+        # Forward pass
+        outputs = model(frames)
 
+        # Compute loss and optimize
+        train_loss = criterion(outputs, new_frame)
+        train_losses.append(train_loss.item())
+        optimizer.zero_grad()
+        train_loss.backward()
+        optimizer.step()
+
+    avg_train_loss = sum(train_losses) / len(train_losses)
+
+    val_losses = []
     with torch.no_grad():
         model.eval()
-        frames, new_frame = next(iter(val_load))
-        new_frame = new_frame.to(device)
-        frames = frames.to(device)
-        out = model(frames)
-        val_loss = criterion(out, new_frame)
+        for i, (frames, new_frame) in enumerate(train_load):
+            new_frame = new_frame.to(device)
+            frames = frames.to(device)
+            out = model(frames)
+            val_loss = criterion(out, new_frame)
+            val_losses.append(val_loss.item())
 
+    avg_val_loss = sum(val_losses) / len(val_losses)
 
-    if val_loss < best_loss:
-        print(f"Epoch [{step + 1}/{steps}], Train Loss: {train_loss:.7f}, Val Loss: {val_loss:.7f}")
+    if avg_val_loss < best_loss:
+        print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {avg_train_loss:.7f}, Val Loss: {avg_val_loss:.7f}")
         best_loss = val_loss
         #torch.save(model.state_dict(), os.path.join(SAVE_MODELS_DIR, save_name + '-frame-prediction.pt'))
         torch.save(model.state_dict(), f'./{save_name}-frame-prediction.pt')

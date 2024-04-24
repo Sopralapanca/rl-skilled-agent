@@ -1,4 +1,5 @@
 import sys
+import torch as th
 import wandb
 from rl_zoo3.utils import linear_schedule
 from skill_models import *
@@ -43,6 +44,7 @@ config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
+
 
 version = "1.0"
 tags = [f'game:{config["game"]}', f'version:{version}']
@@ -184,7 +186,7 @@ if skilled_agent:
             'pi': config["net_arch_pi"],
             'vf': config["net_arch_vf"]
         },
-        #activation_fn=th.nn.ReLU, prova con relu e vedi se ci sono cambiamenti
+        #activation_fn=th.nn.ReLU,
 
     )
 else:

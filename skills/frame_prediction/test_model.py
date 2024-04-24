@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from dataset import Dataset, Sampler
+from dataset import Dataset
 import torch
 import os
 import numpy as np
@@ -41,8 +41,7 @@ batch_size = 32
 eps = np.arange(start=1, stop=NUM_EPS + 1)
 np.random.shuffle(eps)
 dataset_ts = Dataset(path=data_path, idxs=eps)
-t_sampler = Sampler(dataset_ts)
-loader = DataLoader(dataset_ts, batch_size, num_workers=8, sampler=t_sampler)
+loader = DataLoader(dataset_ts, batch_size, num_workers=8)
 
 # Initialize the autoencoder model
 model = FramePredictionModel().to(device)
