@@ -1,5 +1,11 @@
-import sys
-import torch as th
+# general imports
+import torch
+import yaml
+import numpy as np
+import random
+import os
+
+# training imports
 import wandb
 from rl_zoo3.utils import linear_schedule
 from skill_models import *
@@ -7,20 +13,32 @@ from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
-                               CNNConcatExtractor, CombineExtractor, \
-                               SelfAttentionExtractor, DotProductAttentionExtractor, WeightSharingAttentionExtractor, SelfAttentionExtractor2, \
-                               ReservoirConcatExtractor
+    CNNConcatExtractor, CombineExtractor, \
+    SelfAttentionExtractor, DotProductAttentionExtractor, WeightSharingAttentionExtractor, SelfAttentionExtractor2, \
+    ReservoirConcatExtractor
 
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
     StopTrainingOnNoModelImprovement
 from wandb.integration.sb3 import WandbCallback
-from utils.args import parse_args
-import os
-import torch
-import yaml
+import tensorflow as tf
 
+# utility imports
+from utils.args import parse_args
+
+# ---------------------------------- MAIN ----------------------------------
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
 
 args = parse_args()
+
+if args.seed is not None:
+    seed = args.seed
+else:
+    seed = np.random.randint(0, 100000)
+
+tf.random.set_seed(seed)
+np.random.seed(seed)
+random.seed(seed)
 
 skilled_agent = args.use_skill == "True"
 
@@ -45,7 +63,6 @@ config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
 
-
 version = "1.0"
 tags = [f'game:{config["game"]}', f'version:{version}']
 
@@ -69,6 +86,7 @@ if not os.path.exists(logdir):
 if not os.path.exists(gamelogs):
     os.makedirs(gamelogs)
 
+#vec_env = make_atari_env(game_id, n_envs=config["n_envs"], seed=seed)
 vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
 vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
@@ -121,7 +139,8 @@ if skilled_agent:
         config["f_ext_class"] = CombineExtractor
         f_ext_kwargs["num_linear_skills"] = 1
         tb_log_name += "_comb"
-        ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device, num_linear_skills=f_ext_kwargs["num_linear_skills"])
+        ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device,
+                               num_linear_skills=f_ext_kwargs["num_linear_skills"])
         features_dim = ext.get_dimension(sample_obs)
 
     if args.extractor == "self_attention_ext":
@@ -170,7 +189,7 @@ if skilled_agent:
         # dato che concateno le skill come nel linear, uso LinearConcatExt per prendere la dimensione
         ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
         input_features_dim = ext.get_dimension(sample_obs)
-        reservoir_output_dim = args.ro # output dimension of the reservoir WARNING: if it is too big memory error
+        reservoir_output_dim = args.ro  # output dimension of the reservoir WARNING: if it is too big memory error
         features_dim = reservoir_output_dim
         f_ext_kwargs["input_features_dim"] = input_features_dim
         tags.append(f"res_size:{args.ro}")
@@ -248,29 +267,50 @@ else:
 
     stop_train_callback = StopTrainingOnNoModelImprovement(max_no_improvement_evals=5, min_evals=5, verbose=0)
     if env_name == "Pong":
-        callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=21, verbose=0)
-        eval_callback = EvalCallback(
-            vec_eval_env,
-            n_eval_episodes=10,
-            best_model_save_path=f"models/{run.id}",
-            log_path=gamelogs,
-            eval_freq=5000 * config["n_envs"],
-            callback_on_new_best=callback_on_best,
-            callback_after_eval=stop_train_callback,
-            verbose=0
+        if not skilled_agent:
+            eval_callback = EvalCallback(
+                vec_eval_env,
+                n_eval_episodes=10,
+                best_model_save_path=f"models/{run.id}",
+                log_path=gamelogs,
+                eval_freq=5000 * config["n_envs"],
+                verbose=0
 
-        )
+            )
+        else:
+            callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=21, verbose=0)
+            eval_callback = EvalCallback(
+                vec_eval_env,
+                n_eval_episodes=10,
+                best_model_save_path=f"models/{run.id}",
+                log_path=gamelogs,
+                eval_freq=5000 * config["n_envs"],
+                callback_on_new_best=callback_on_best,
+                callback_after_eval=stop_train_callback,
+                verbose=0
+
+            )
     else:
-        eval_callback = EvalCallback(
-            vec_eval_env,
-            n_eval_episodes=10,
-            best_model_save_path=f"models/{run.id}",
-            log_path=gamelogs,
-            eval_freq=5000 * config["n_envs"],
-            callback_after_eval=stop_train_callback,
-            verbose=0
+        if not skilled_agent:
+            eval_callback = EvalCallback(
+                vec_eval_env,
+                n_eval_episodes=10,
+                best_model_save_path=f"models/{run.id}",
+                log_path=gamelogs,
+                eval_freq=5000 * config["n_envs"],
+                verbose=0
 
-        )
+            )
+        else:
+            eval_callback = EvalCallback(
+                vec_eval_env,
+                n_eval_episodes=10,
+                best_model_save_path=f"models/{run.id}",
+                log_path=gamelogs,
+                eval_freq=5000 * config["n_envs"],
+                callback_after_eval=stop_train_callback,
+                verbose=0
+            )
 
     callbacks = [
         WandbCallback(

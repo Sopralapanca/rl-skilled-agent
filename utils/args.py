@@ -37,6 +37,9 @@ def parse_args():
     parser.add_argument("--ro", type=int, required=False, default=1024,
                         help="Reservoir output size.")
 
+    parser.add_argument("--seed", type=int, required=False,
+                        help="Seed to be used for reproducibility. If not provided, a random seed will be used.")
+
     args = parser.parse_args()
 
     return args
