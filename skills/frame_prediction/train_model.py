@@ -70,7 +70,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001)
 best_loss = 1000
 
 # Training loop
-num_epochs = 400 * len(train_load)
+num_epochs = 1200 * len(train_load)
 for epoch in range(num_epochs):
     model.train()
     train_losses = []
@@ -107,6 +107,6 @@ for epoch in range(num_epochs):
 
     if avg_val_loss < best_loss:
         print(f"Epoch [{epoch + 1}/{num_epochs}], Train Loss: {avg_train_loss:.7f}, Val Loss: {avg_val_loss:.7f}")
-        best_loss = val_loss
+        best_loss = avg_val_loss
         #torch.save(model.state_dict(), os.path.join(SAVE_MODELS_DIR, save_name + '-frame-prediction.pt'))
         torch.save(model.state_dict(), f'./{save_name}-frame-prediction.pt')

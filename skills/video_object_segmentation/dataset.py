@@ -27,6 +27,8 @@ class Dataset():
 
 
         all_episodes = sorted(self.episodes.keys(), key=lambda s: int(s.split('/')[-1]))
+        # shuffle a list
+        #all_episodes = random.sample(all_episodes, len(all_episodes))
 
         # self.train_data_keys = all_episodes[:-1]
         # self.valid_data_keys = [all_episodes[-1]]
@@ -71,6 +73,7 @@ class Dataset():
             episodes_keys = self.train_data_keys
         else: #validation
             episodes_keys = self.valid_data_keys
+
         episodes = {k : self.episodes[k] for k in episodes_keys}
         valid_keys = [k for k in episodes.keys() if len(episodes[k]) >= 2]
         # probs = np.array([len(episodes[k]) for k in valid_keys], dtype=np.float32)

@@ -31,16 +31,15 @@ if not torch.cuda.is_available() and device != "cpu":
     print("CUDA not available, using CPU")
     device = "cpu"
 
-data_path = f"../.././data/{ENV}"
+#data_path = f"../.././data/{ENV}"
+data_path = f"../.././data2/{ENV}"
 NUM_EPS = len(os.listdir(data_path))
 img_sz = 84
 batch_size = 32
 
 eps = np.arange(start=1, stop=NUM_EPS + 1)
 np.random.shuffle(eps)
-split_idx = int(NUM_EPS * 0.8)
-train_idxs = eps[:split_idx]
-val_idxs = eps[split_idx:NUM_EPS]
+val_idxs = eps
 
 dataset = Dataset(data_path, val_idxs, img_sz, square_size=20)
 val_load = DataLoader(dataset, batch_size, num_workers=8, shuffle=False)

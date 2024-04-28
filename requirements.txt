@@ -17,3 +17,4 @@ tqdm==4.66.2
 pyyaml
 ray[tune]
 avalanche-rl @ git+https://github.com/ContinualAI/avalanche-rl.git
+moviepy==1.0.3

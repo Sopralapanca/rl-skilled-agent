@@ -20,7 +20,7 @@ image_channels = 1
 k = 4 # number of keypoints, the same as in train_model.py
 #data_path = f"../../data/{ENV}"
 data_path = f"../../data2/{ENV}"
-episode = 33
+
 
 encoder = Encoder(image_channels)
 key_net = KeyNet(image_channels, k)
@@ -107,6 +107,7 @@ def unnormalize_kp(kp, img_width):
     return (kp + 1) / 2 * img_width
 
 
+episode = 599
 traj = torch.stack(dataset.get_trajectory(episode))
 keypoints = get_keypoints(model, traj)
 image_width = traj.size(-1)

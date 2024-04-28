@@ -57,13 +57,12 @@ with open(f'configs/{env}.yaml', 'r') as file:
     if "_" in env_name:
         env_name = env_name.replace("_", "")
 
-config["device"] = device
 config["f_ext_kwargs"]["device"] = device
 config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
 
-version = "1.0"
+version = "2.0 seeds"
 tags = [f'game:{config["game"]}', f'version:{version}']
 
 string = "pi:"
@@ -86,18 +85,17 @@ if not os.path.exists(logdir):
 if not os.path.exists(gamelogs):
     os.makedirs(gamelogs)
 
-#vec_env = make_atari_env(game_id, n_envs=config["n_envs"], seed=seed)
-vec_env = make_atari_env(game_id, n_envs=config["n_envs"])
+vec_env = make_atari_env(game_id, n_envs=config["n_envs"], seed=seed)
 vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
 
 skills = []
-skills.append(get_state_rep_uns(env_name, config["device"]))
-skills.append(get_object_keypoints_encoder(env_name, config["device"], load_only_model=True))
-skills.append(get_object_keypoints_keynet(env_name, config["device"], load_only_model=True))
-skills.append(get_video_object_segmentation(env_name, config["device"], load_only_model=True))
-# skills.append(get_autoencoder(env_name, config["device"]))
-# skills.append(get_image_completion(env_name, config["device"]))
+skills.append(get_state_rep_uns(env_name, device))
+skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=True))
+skills.append(get_object_keypoints_keynet(env_name, device, load_only_model=True))
+skills.append(get_video_object_segmentation(env_name, device, load_only_model=True))
+# skills.append(get_autoencoder(env_name, device))
+# skills.append(get_image_completion(env_name, device))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -224,7 +222,7 @@ if debug:
                 vf_coef=config["vf_coef"],
                 policy_kwargs=policy_kwargs,
                 verbose=0,
-                device=config["device"],
+                device=device,
                 )
     model.learn(1000)
 else:
@@ -260,57 +258,65 @@ else:
                 tensorboard_log=gamelogs,
                 policy_kwargs=policy_kwargs,
                 verbose=0,
-                device=config["device"],
+                device=device,
                 )
 
     # model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
 
-    stop_train_callback = StopTrainingOnNoModelImprovement(max_no_improvement_evals=5, min_evals=5, verbose=0)
-    if env_name == "Pong":
-        if not skilled_agent:
-            eval_callback = EvalCallback(
-                vec_eval_env,
-                n_eval_episodes=10,
-                best_model_save_path=f"models/{run.id}",
-                log_path=gamelogs,
-                eval_freq=5000 * config["n_envs"],
-                verbose=0
+    #stop_train_callback = StopTrainingOnNoModelImprovement(max_no_improvement_evals=5, min_evals=5, verbose=0)
+    # if env_name == "Pong":
+    #     if not skilled_agent:
+    #         eval_callback = EvalCallback(
+    #             vec_eval_env,
+    #             n_eval_episodes=10,
+    #             best_model_save_path=f"models/{run.id}",
+    #             log_path=gamelogs,
+    #             eval_freq=5000 * config["n_envs"],
+    #             verbose=0
+    #         )
+    #     else:
+    #         callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=21, verbose=0)
+    #         eval_callback = EvalCallback(
+    #             vec_eval_env,
+    #             n_eval_episodes=10,
+    #             best_model_save_path=f"models/{run.id}",
+    #             log_path=gamelogs,
+    #             eval_freq=5000 * config["n_envs"],
+    #             callback_on_new_best=callback_on_best,
+    #             callback_after_eval=stop_train_callback,
+    #             verbose=0
+    #
+    #         )
+    # else:
+    #     if not skilled_agent:
+    #         eval_callback = EvalCallback(
+    #             vec_eval_env,
+    #             n_eval_episodes=10,
+    #             best_model_save_path=f"models/{run.id}",
+    #             log_path=gamelogs,
+    #             eval_freq=5000 * config["n_envs"],
+    #             verbose=0
+    #
+    #         )
+    #     else:
+    #         eval_callback = EvalCallback(
+    #             vec_eval_env,
+    #             n_eval_episodes=10,
+    #             best_model_save_path=f"models/{run.id}",
+    #             log_path=gamelogs,
+    #             eval_freq=5000 * config["n_envs"],
+    #             callback_after_eval=stop_train_callback,
+    #             verbose=0
+    #         )
 
-            )
-        else:
-            callback_on_best = StopTrainingOnRewardThreshold(reward_threshold=21, verbose=0)
-            eval_callback = EvalCallback(
-                vec_eval_env,
-                n_eval_episodes=10,
-                best_model_save_path=f"models/{run.id}",
-                log_path=gamelogs,
-                eval_freq=5000 * config["n_envs"],
-                callback_on_new_best=callback_on_best,
-                callback_after_eval=stop_train_callback,
-                verbose=0
-
-            )
-    else:
-        if not skilled_agent:
-            eval_callback = EvalCallback(
-                vec_eval_env,
-                n_eval_episodes=10,
-                best_model_save_path=f"models/{run.id}",
-                log_path=gamelogs,
-                eval_freq=5000 * config["n_envs"],
-                verbose=0
-
-            )
-        else:
-            eval_callback = EvalCallback(
-                vec_eval_env,
-                n_eval_episodes=10,
-                best_model_save_path=f"models/{run.id}",
-                log_path=gamelogs,
-                eval_freq=5000 * config["n_envs"],
-                callback_after_eval=stop_train_callback,
-                verbose=0
-            )
+    eval_callback = EvalCallback(
+        vec_eval_env,
+        n_eval_episodes=100,
+        best_model_save_path=f"models/{run.id}",
+        log_path=gamelogs,
+        eval_freq=5000 * config["n_envs"],
+        verbose=0
+    )
 
     callbacks = [
         WandbCallback(

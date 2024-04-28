@@ -25,14 +25,12 @@ class Dataset(Dataset):
         return img
 
     def __getitem__(self, idx):
-        n = idx + 1  # idx starts from 0, but episode folders start from 1
+        episode_index = np.random.choice(self.idxs)
+        num_images = len(os.listdir(self.path + f"/{episode_index}"))
 
-        ep_len = len([name for name in os.listdir(f"{self.path}/{n}/") if
-                      os.path.isfile(os.path.join(f"{self.path}/{n}/", name))])
+        t = np.random.randint(0, num_images)
 
-        t = np.random.randint(0, ep_len)
-
-        img = np.array(Image.open(f"{self.path}/{n}/{t}.png").resize((self.frame_size, self.frame_size)))
+        img = np.array(Image.open(f"{self.path}/{episode_index}/{t}.png").resize((self.frame_size, self.frame_size)))
         img = img / 255.0
 
         occluded_img = self.add_black_square(copy.deepcopy(img))

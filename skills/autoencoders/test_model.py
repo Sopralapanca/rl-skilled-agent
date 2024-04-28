@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataset import Dataset
 import torch
@@ -32,23 +31,23 @@ if not torch.cuda.is_available() and device != "cpu":
     print("CUDA not available, using CPU")
     device = "cpu"
 
-data_path = f"../.././data/{ENV}"
+#data_path = f"../.././data/{ENV}"
+data_path = f"../.././data2/{ENV}"
 NUM_EPS = len(os.listdir(data_path))
 img_sz = 84
 batch_size = 32
 
-eps = np.arange(start=1, stop=NUM_EPS + 1)
+eps = np.arange(start=599, stop=600)
 np.random.shuffle(eps)
-split_idx = int(NUM_EPS * 0.8)
-train_idxs = eps[:split_idx]
-val_idxs = eps[split_idx:NUM_EPS]
+train_idxs = eps
 
-dataset = Dataset(data_path, val_idxs, img_sz)
+dataset = Dataset(data_path, train_idxs, img_sz)
 val_load = DataLoader(dataset, batch_size, num_workers=8, shuffle=False)
 
 # Initialize the autoencoder model
 model = Autoencoder().to(device)
-model.load_state_dict(torch.load("../models/" + save_name + "-nature-encoder.pt"))
+#model.load_state_dict(torch.load("../models/" + save_name + "-nature-encoder.pt"))
+model.load_state_dict(torch.load("./" + save_name + "-nature-encoder.pt"))
 
 imgs = next(iter(val_load))
 imgs = imgs.to(device)
@@ -56,7 +55,7 @@ imgs = imgs.to(device)
 with torch.no_grad():
     model.eval()
     output = model(imgs)
-    for out, img in zip(output[:10], imgs[:10]):
+    for out, img in zip(output[:15], imgs[:15]):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
 
         axes[0].imshow(out[0].cpu(), cmap='gray')

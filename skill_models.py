@@ -1,45 +1,3 @@
-# MODEL PATHS
-# model_paths = {}
-# ---------------------------------------------------------------------------------------------------------------
-## PONG
-
-# # ### state
-# model_paths["pong_state_rep_uns_path"] = "skills/models/pong-state-rep.pt"
-# model_paths["pong_state_ae_path"] = "skills/models/pong-state-rep-ae.pt"
-#
-# # ### denoise-ae
-# model_paths["pong_denoise_ae_path"] = "skills/models/pong-denoise-ae.pt"
-#
-# # ### object-keypoints
-# model_paths["pong_obj_key_path"] = "skills/models/pong-obj-key.pt"
-# model_paths["pong_obj_key_adapt_enc_path"] = "skills/models/pong-obj-key-enc-ae.pt"
-# model_paths["pong_obj_key_adapt_keynet_path"] = "skills/models/pong-obj-key-keynet-ae.pt"
-#
-# # ### video-segmentation
-# model_paths["pong_vid_obj_seg_path"] = "skills/models/pong-vid-obj-seg.pt"
-# model_paths["pong_vid_obj_seg_adapt_path"] = "skills/models/pong-vid-obj-seg-ae.pt"
-#
-# # ---------------------------------------------------------------------------------------------------------------
-# ## BREAKOUT
-#
-# # ### state
-# model_paths["breakout_state_rep_uns_path"] = "skills/models/breakout-state-rep.pt"
-# model_paths["breakout_state_ae_path"] = "skills/models/breakout-state-rep-ae.pt"
-#
-# # ### denoise-ae
-# model_paths["breakout_denoise_ae_path"] = "skills/models/breakout-denoise-ae.pt"
-#
-# # ### object-keypoints
-# model_paths["breakout_obj_key_path"] = "skills/models/breakout-obj-key.pt"
-# model_paths["breakout_obj_key_adapt_enc_path"] = "skills/models/breakout-obj-key-enc-ae.pt"
-# model_paths["breakout_obj_key_adapt_keynet_path"] = "skills/models/breakout-obj-key-keynet-ae.pt"
-#
-# # ### video-segmentation
-# model_paths["breakout_vid_obj_seg_path"] = "skills/models/breakout-vid-obj-seg.pt"
-# model_paths["breakout_vid_obj_seg_adapt_path"] = "skills/models/breakout-vid-obj-seg-ae.pt"
-
-# ---------------------------------------------------------------------------------------------------------------
-
 import sys
 
 #sys.path.append('skills/autoencoders/src')
@@ -161,7 +119,8 @@ def obj_key_input_trans(x: Tensor):
 
 def get_object_keypoints_encoder(game, device, load_only_model=False):
     input_transformation_function = obj_key_input_trans
-    model_path = "skills/models/" + game.lower() + "-obj-key.pt"
+    #model_path = "skills/models/" + game.lower() + "-obj-key.pt"
+    model_path = "skills/object_keypoints/" + game.lower() + "-obj-key.pt"
     e = Encoder(1)
     k = KeyNet(1, 4)
     r = RefineNet(1)
@@ -189,7 +148,8 @@ def get_object_keypoints_encoder(game, device, load_only_model=False):
 
 def get_object_keypoints_keynet(game, device, load_only_model=False):
     input_transformation_function = obj_key_input_trans
-    model_path = "skills/models/" + game.lower() + "-obj-key.pt"
+    #model_path = "skills/models/" + game.lower() + "-obj-key.pt"
+    model_path = "skills/object_keypoints/" + game.lower() + "-obj-key.pt"
     e = Encoder(1)
     k = KeyNet(1, 4)
     r = RefineNet(1)
@@ -229,7 +189,8 @@ def vid_obj_seg_input_trans(x: Tensor):
 
 
 def get_video_object_segmentation(game, device, load_only_model=False):
-    model_path = "skills/models/" + game.lower() + "-vid-obj-seg.pt"
+    #model_path = "skills/models/" + game.lower() + "-vid-obj-seg.pt"
+    model_path = "skills/video_object_segmentation/" + game.lower() + "-vid-obj-seg.pt"
     model = VideoObjectSegmentationModel(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()
