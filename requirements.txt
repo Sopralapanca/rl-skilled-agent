@@ -3,7 +3,7 @@ gymnasium[atari]==0.29.1
 kornia==0.7.1
 urllib3==1.26.11
 wandb
-numpy==1.24.4
+numpy==1.24.3
 Pillow==10.2.0
 matplotlib==3.7.5
 rl-zoo3==2.2.1

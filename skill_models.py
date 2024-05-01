@@ -15,6 +15,7 @@ from object_keypoints.model import Encoder, KeyNet, RefineNet, Transporter
 from video_object_segmentation.model import VideoObjectSegmentationModel
 from skills.image_completion.model import ImageCompletionModel
 from autoencoders.model import Autoencoder
+from skills.frame_prediction.model import FramePredictionModel
 
 # TODO: Eventually can become: Skill(input_model, input_output, skill_model, skill_output, adapter_model, adapter_output)
 Skill = namedtuple('Skill', ['name', 'input_adapter', 'skill_model', 'skill_output', 'skill_adapter'])
@@ -53,7 +54,8 @@ def autoencoder_input_trans(x: Tensor):
     x = x[:, -1:, :, :]
     return x.float()
 def get_autoencoder(game, device):
-    model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+    #model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+    model_path = "skills/autoencoders/" + game.lower() + "-nature-encoder.pt"
     model = Autoencoder().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()
@@ -67,13 +69,31 @@ def imgcompletion_input_trans(x: Tensor):
     x = x[:, -1:, :, :]
     return x.float()
 def get_image_completion(game, device):
-    model_path = "skills/models/" + game.lower() + "-image-completion.pt"
+    #model_path = "skills/models/" + game.lower() + "-image-completion.pt"
+    model_path = "skills/image_completion/" + game.lower() + "-image-completion.pt"
     model = ImageCompletionModel().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()
     adapter = None
     input_transformation_function = imgcompletion_input_trans
     return Skill("image_completion", input_transformation_function, model.encoder, model_forward, adapter)
+
+
+def framepred_input_trans(x: Tensor):
+    return x.float()
+def get_frame_prediction(game, device):
+    #model_path = "skills/models/" + game.lower() + "-frame-prediction.pt"
+    model_path = "skills/frame_prediction/" + game.lower() + "-frame-prediction.pt"
+    model = FramePredictionModel().to(device)
+    model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
+    model.eval()
+    adapter = None
+    input_transformation_function = framepred_input_trans
+    return Skill("frame_prediction", input_transformation_function, model.encoder, model_forward, adapter)
+
+
+
+
 
 def ae_input_trans(x: Tensor):
     return x.float()

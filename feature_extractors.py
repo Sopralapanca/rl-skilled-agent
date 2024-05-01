@@ -83,7 +83,7 @@ class FeaturesExtractor(BaseFeaturesExtractor):
                     adapter = self.adapters[skill.name]
                     so = adapter(so)
 
-            # print(skill.name, so.shape)
+            #print(skill.name, so.shape)
             skill_out.append(so)
 
         return skill_out
@@ -543,7 +543,8 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             self.mlp_layers.append(seq_layer)
 
         # for the context
-        model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+        #model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+        model_path = "skills/autoencoders/" + game.lower() + "-nature-encoder.pt"
         model = Autoencoder().to(device)
         model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
         model.eval()

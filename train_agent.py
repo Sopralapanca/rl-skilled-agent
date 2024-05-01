@@ -63,7 +63,7 @@ config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
 
 version = "2.0 seeds"
-tags = [f'game:{config["game"]}', f'version:{version}']
+tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}']
 
 string = "pi:"
 for el in config["net_arch_pi"]:
@@ -95,7 +95,8 @@ skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=Tru
 skills.append(get_object_keypoints_keynet(env_name, device, load_only_model=True))
 skills.append(get_video_object_segmentation(env_name, device, load_only_model=True))
 # skills.append(get_autoencoder(env_name, device))
-# skills.append(get_image_completion(env_name, device))
+skills.append(get_image_completion(env_name, device))
+skills.append(get_frame_prediction(env_name, device))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
