@@ -40,6 +40,9 @@ def parse_args():
     parser.add_argument("--seed", type=int, required=False,
                         help="Seed to be used for reproducibility. If not provided, a random seed will be used.")
 
+    parser.add_argument("--use-expert", help="if True, loads saved skills models on PPO agent dataset rather then random",
+                        type=str, choices=["True", "False"], default="False")
+
     args = parser.parse_args()
 
     return args

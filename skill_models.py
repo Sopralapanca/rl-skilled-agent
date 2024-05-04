@@ -30,9 +30,13 @@ def state_rep_input_trans(x: Tensor):
     return F.interpolate(x, (160, 210), mode='bilinear', align_corners=True)
 
 
-def get_state_rep_uns(game, device):
+def get_state_rep_uns(game, device, expert=False):
     input_transformation_function = state_rep_input_trans
-    model_path = "skills/models/" + game.lower() + "-state-rep.pt"
+    if expert:
+        model_path = "skills/models/" + game.lower() + "-state-rep-expert.pt"
+    else:
+        model_path = "skills/models/" + game.lower() + "-state-rep.pt"
+
     # n = Namespace()
     # setattr(n, 'feature_size', 512)
     # setattr(n, 'no_downsample', True)
@@ -53,9 +57,12 @@ def autoencoder_input_trans(x: Tensor):
     # x is of shape 32x4x84x84, because there are 4 frame stacked, pick only the last frame and return a tensor of shape 32x1x84x84
     x = x[:, -1:, :, :]
     return x.float()
-def get_autoencoder(game, device):
-    #model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
-    model_path = "skills/autoencoders/" + game.lower() + "-nature-encoder.pt"
+def get_autoencoder(game, device, expert=False):
+    if expert:
+        model_path = "skills/models/" + game.lower() + "-nature-encoder-expert.pt"
+    else:
+        model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+
     model = Autoencoder().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()
@@ -68,9 +75,12 @@ def imgcompletion_input_trans(x: Tensor):
     # x is of shape 32x4x84x84, because there are 4 frame stacked, pick only the last frame and return a tensor of shape 32x1x84x84
     x = x[:, -1:, :, :]
     return x.float()
-def get_image_completion(game, device):
-    #model_path = "skills/models/" + game.lower() + "-image-completion.pt"
-    model_path = "skills/image_completion/" + game.lower() + "-image-completion.pt"
+def get_image_completion(game, device, expert=False):
+    if expert:
+        model_path = "skills/models/" + game.lower() + "-image-completion-expert.pt"
+    else:
+        model_path = "skills/models/" + game.lower() + "-image-completion.pt"
+
     model = ImageCompletionModel().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()
@@ -81,9 +91,12 @@ def get_image_completion(game, device):
 
 def framepred_input_trans(x: Tensor):
     return x.float()
-def get_frame_prediction(game, device):
-    #model_path = "skills/models/" + game.lower() + "-frame-prediction.pt"
-    model_path = "skills/frame_prediction/" + game.lower() + "-frame-prediction.pt"
+def get_frame_prediction(game, device, expert=False):
+    if expert:
+        model_path = "skills/models/" + game.lower() + "-frame-prediction-expert.pt"
+    else:
+        model_path = "skills/models/" + game.lower() + "-frame-prediction.pt"
+
     model = FramePredictionModel().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()
@@ -137,10 +150,14 @@ def obj_key_input_trans(x: Tensor):
     return x.unsqueeze(1)
 
 
-def get_object_keypoints_encoder(game, device, load_only_model=False):
+def get_object_keypoints_encoder(game, device, load_only_model=False, expert=False):
     input_transformation_function = obj_key_input_trans
-    #model_path = "skills/models/" + game.lower() + "-obj-key.pt"
-    model_path = "skills/object_keypoints/" + game.lower() + "-obj-key.pt"
+
+    if expert:
+        model_path = "skills/models/" + game.lower() + "-obj-key-expert.pt"
+    else:
+        model_path = "skills/models/" + game.lower() + "-obj-key.pt"
+
     e = Encoder(1)
     k = KeyNet(1, 4)
     r = RefineNet(1)
@@ -166,10 +183,13 @@ def get_object_keypoints_encoder(game, device, load_only_model=False):
                  adapter.encoder if adapter else None)
 
 
-def get_object_keypoints_keynet(game, device, load_only_model=False):
+def get_object_keypoints_keynet(game, device, load_only_model=False, expert=False):
     input_transformation_function = obj_key_input_trans
-    #model_path = "skills/models/" + game.lower() + "-obj-key.pt"
-    model_path = "skills/object_keypoints/" + game.lower() + "-obj-key.pt"
+    if expert:
+        model_path = "skills/models/" + game.lower() + "-obj-key-expert.pt"
+    else:
+        model_path = "skills/models/" + game.lower() + "-obj-key.pt"
+
     e = Encoder(1)
     k = KeyNet(1, 4)
     r = RefineNet(1)
@@ -208,9 +228,14 @@ def vid_obj_seg_input_trans(x: Tensor):
     return norm_s.permute(1, 0, 2, 3)
 
 
-def get_video_object_segmentation(game, device, load_only_model=False):
-    #model_path = "skills/models/" + game.lower() + "-vid-obj-seg.pt"
-    model_path = "skills/video_object_segmentation/" + game.lower() + "-vid-obj-seg.pt"
+def get_video_object_segmentation(game, device, load_only_model=False, expert=False):
+    if expert:
+        model_path = "skills/models/" + game.lower() + "-vid-obj-seg-expert.pt"
+    else:
+        model_path = "skills/models/" + game.lower() + "-vid-obj-seg.pt"
+
+
+
     model = VideoObjectSegmentationModel(device)
     model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
     model.eval()

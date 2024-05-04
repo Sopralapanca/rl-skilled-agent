@@ -413,6 +413,7 @@ class DotProductAttentionExtractor(FeaturesExtractor):
                  features_dim: int = 256,
                  skills: List[Skill] = None,
                  game: str = "pong",
+                 expert: bool = False,
                  device="cpu"):
         """
         :param observation_space: Gymnasium observation space
@@ -441,7 +442,11 @@ class DotProductAttentionExtractor(FeaturesExtractor):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device), nn.ReLU())
             self.mlp_layers.append(seq_layer)
 
-        model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+        if expert:
+            model_path = "skills/models/" + game.lower() + "-nature-encoder-expert.pt"
+        else:
+            model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+
         model = Autoencoder().to(device)
         model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
         model.eval()
@@ -513,6 +518,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
                  features_dim: int = 256,
                  skills: List[Skill] = None,
                  game: str = "pong",
+                 expert: bool = False,
                  device="cpu"):
         """
         :param observation_space: Gymnasium observation space
@@ -543,8 +549,11 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             self.mlp_layers.append(seq_layer)
 
         # for the context
-        #model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
-        model_path = "skills/autoencoders/" + game.lower() + "-nature-encoder.pt"
+        if expert:
+            model_path = "skills/models/" + game.lower() + "-nature-encoder-expert.pt"
+        else:
+            model_path = "skills/models/" + game.lower() + "-nature-encoder.pt"
+
         model = Autoencoder().to(device)
         model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
         model.eval()

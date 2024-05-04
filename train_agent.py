@@ -1,5 +1,5 @@
 # general imports
-import torch
+import torch as th
 import yaml
 import numpy as np
 import random
@@ -28,17 +28,17 @@ from utils.args import parse_args
 # ---------------------------------- MAIN ----------------------------------
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
+version = "2.1 experts"
 
 args = parse_args()
 
+seed = None
 if args.seed is not None:
     seed = args.seed
-else:
-    seed = np.random.randint(0, 100000)
 
-tf.random.set_seed(seed)
-np.random.seed(seed)
-random.seed(seed)
+    tf.random.set_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 skilled_agent = args.use_skill == "True"
 
@@ -62,7 +62,7 @@ config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
 
-version = "2.0 seeds"
+
 tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}']
 
 string = "pi:"
@@ -89,14 +89,17 @@ vec_env = make_atari_env(game_id, n_envs=config["n_envs"], seed=seed)
 vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
 
+
+expert = args.use_expert == "True"
 skills = []
-skills.append(get_state_rep_uns(env_name, device))
-skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=True))
-skills.append(get_object_keypoints_keynet(env_name, device, load_only_model=True))
-skills.append(get_video_object_segmentation(env_name, device, load_only_model=True))
-# skills.append(get_autoencoder(env_name, device))
-skills.append(get_image_completion(env_name, device))
-skills.append(get_frame_prediction(env_name, device))
+skills.append(get_state_rep_uns(env_name, device, expert=expert))
+skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=True, expert=expert))
+skills.append(get_object_keypoints_keynet(env_name, device, load_only_model=True, expert=expert))
+skills.append(get_video_object_segmentation(env_name, device, load_only_model=True, expert=expert))
+
+# skills.append(get_autoencoder(env_name, device, expert=expert))
+# skills.append(get_image_completion(env_name, device, expert=expert))
+# skills.append(get_frame_prediction(env_name, device, expert=expert))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -168,6 +171,7 @@ if skilled_agent:
         features_dim = args.fd
         tb_log_name += "_dpae"
         f_ext_kwargs["game"] = env_name
+        f_ext_kwargs["expert"] = expert
         tags.append(f"fixed_dim:{features_dim}")
 
     if args.extractor == "wsharing_attention_ext":
@@ -176,6 +180,7 @@ if skilled_agent:
         features_dim = args.fd
         tb_log_name += "_dpae"
         f_ext_kwargs["game"] = env_name
+        f_ext_kwargs["expert"] = expert
         tags.append(f"fixed_dim:{features_dim}")
 
     if args.extractor == "reservoir_concat_ext":
