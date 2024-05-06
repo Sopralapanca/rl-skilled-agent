@@ -57,7 +57,7 @@ with open(f'configs/{env}.yaml', 'r') as file:
     if "_" in env_name:
         env_name = env_name.replace("_", "")
 
-config["f_ext_kwargs"]["device"] = device
+config["f_ext_kwargs"]["device"] = device #do not comment this, it is the parameter passed to the feature extractor
 config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
@@ -97,9 +97,9 @@ skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=Tru
 skills.append(get_object_keypoints_keynet(env_name, device, load_only_model=True, expert=expert))
 skills.append(get_video_object_segmentation(env_name, device, load_only_model=True, expert=expert))
 
-# skills.append(get_autoencoder(env_name, device, expert=expert))
-# skills.append(get_image_completion(env_name, device, expert=expert))
-# skills.append(get_frame_prediction(env_name, device, expert=expert))
+skills.append(get_autoencoder(env_name, device, expert=expert))
+skills.append(get_image_completion(env_name, device, expert=expert))
+skills.append(get_frame_prediction(env_name, device, expert=expert))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -209,7 +209,7 @@ if skilled_agent:
             'pi': config["net_arch_pi"],
             'vf': config["net_arch_vf"]
         },
-        #activation_fn=th.nn.ReLU,
+        activation_fn=th.nn.ReLU,
 
     )
 else:
