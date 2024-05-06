@@ -33,7 +33,7 @@ if not torch.cuda.is_available() and device != "cpu":
     device = "cpu"
 
 #data_path = f"../.././data/{ENV}"
-data_path = f"../.././data2/{ENV}"
+data_path = f"../.././data_expert/{ENV}"
 NUM_EPS = len(os.listdir(data_path))
 img_sz = 84
 batch_size = 32
@@ -45,7 +45,7 @@ loader = DataLoader(dataset_ts, batch_size, num_workers=8)
 
 # Initialize the autoencoder model
 model = FramePredictionModel().to(device)
-model.load_state_dict(torch.load("./breakout-frame-prediction.pt"))
+model.load_state_dict(torch.load("../models/breakout-frame-prediction-expert.pt"))
 
 frames, new_frame = next(iter(loader))
 

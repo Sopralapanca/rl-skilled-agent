@@ -4,7 +4,7 @@ from dataset import Dataset
 import torch
 import os
 import numpy as np
-from model import Autoencoder
+from model import SegmentationModel
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -33,6 +33,7 @@ if not torch.cuda.is_available() and device != "cpu":
 
 #data_path = f"../.././data/{ENV}"
 data_path = f"../.././data2/{ENV}"
+segmented_data_path = f"../.././segmented_data/{ENV}"
 NUM_EPS = len(os.listdir(data_path))
 img_sz = 84
 batch_size = 32
@@ -41,29 +42,34 @@ eps = np.arange(start=1, stop=NUM_EPS + 1)
 np.random.shuffle(eps)
 train_idxs = eps
 
-dataset = Dataset(data_path, train_idxs, img_sz)
+dataset = Dataset(data_path, segmented_data_path, train_idxs)
 val_load = DataLoader(dataset, batch_size, num_workers=8, shuffle=False)
 
 # Initialize the autoencoder model
-model = Autoencoder().to(device)
+model = SegmentationModel().to(device)
 #model.load_state_dict(torch.load("../models/" + save_name + "-nature-encoder.pt"))
-model.load_state_dict(torch.load("./" + save_name + "-nature-encoder.pt"))
+model.load_state_dict(torch.load("./" + save_name + "-bin-seg.pt"))
 
-imgs = next(iter(val_load))
+imgs, segs = next(iter(val_load))
 imgs = imgs.to(device)
+segs = segs.to(device)
 
 with torch.no_grad():
     model.eval()
     output = model(imgs)
-    for out, img in zip(output[:15], imgs[:15]):
-        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
+    for out, img, seg in zip(output[:15], imgs[:15], segs[:15]):
+        fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
 
-        axes[0].imshow(out[0].cpu(), cmap='gray')
-        axes[0].set_title("Reconstructed Image")
+        axes[0].imshow(img[0].cpu(), cmap='gray')
+        axes[0].set_title("Original Image")
         axes[0].axis('off')
 
-        axes[1].imshow(img[0].cpu(), cmap='gray')
+        axes[1].imshow(seg[0].cpu(), cmap='gray')
         axes[1].set_title("Ground Truth Image")
         axes[1].axis('off')
+
+        axes[2].imshow(out[0].cpu(), cmap='gray')
+        axes[2].set_title("Segmented Image")
+        axes[2].axis('off')
 
         plt.show()

@@ -209,7 +209,7 @@ if skilled_agent:
             'pi': config["net_arch_pi"],
             'vf': config["net_arch_vf"]
         },
-        activation_fn=th.nn.ReLU,
+        #activation_fn=th.nn.ReLU,
 
     )
 else:
