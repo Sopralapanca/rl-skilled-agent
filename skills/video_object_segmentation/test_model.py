@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from model import VideoObjectSegmentationModel
 from dataset import Dataset
 
-model_path = "./breakout-vid-obj-seg.pt"
+model_path = ".././models/breakout-vid-obj-seg.pt"
 env = "BreakoutNoFrameskip-v4"
 batch_size = 64
 H = W = 84
@@ -15,7 +15,8 @@ model = VideoObjectSegmentationModel("cpu")
 model.load_state_dict(torch.load(model_path, map_location="cpu"))
 model.eval()
 
-dataset = Dataset(env=env, batch_size=batch_size, num_frames=num_frames, H=H, W=W)
+data_path = f"../../data_expert/{env}/*"
+dataset = Dataset(batch_size, num_frames, env, data_path)
 inp = dataset.get_batch("train")
 inp = torch.cat([torch.unsqueeze(inp[:, 0, :, :], 1), torch.unsqueeze(inp[:, 0, :, :], 1)], 1)
 x0_ = model(inp)

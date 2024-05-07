@@ -6,13 +6,12 @@ import torch
 from PIL import Image
 
 class Dataset():
-    def __init__(self, batch_size, num_frames, env, H=84, W=84):
+    def __init__(self, batch_size, num_frames, env, data_path, H=84, W=84):
         self.batch_size = batch_size
         self.num_frames = num_frames
         self.H = H
         self.W = W
-        #self.data_path = f'data/{env}/*'
-        self.data_path = f"../../data2/{env}/*"
+        self.data_path = data_path
         #print('data path is {}'.format(self.data_path))
 
         self.episode_paths = sorted(glob.glob(self.data_path))

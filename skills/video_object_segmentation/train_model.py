@@ -39,7 +39,8 @@ wandb.config.update({
         "max_grad_norm": max_grad_norm
     })
 
-data = Dataset(batch_size, num_frames, env)
+data_path = f"../../data2/{env}/*"
+data = Dataset(batch_size, num_frames, env, data_path)
 
 model = VideoObjectSegmentationModel(device=device)
 model.to(device)

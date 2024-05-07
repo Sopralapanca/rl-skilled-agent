@@ -13,13 +13,13 @@ import torch
 
 ENV = "BreakoutNoFrameskip-v4"
 #model_path = "./saved_models/"+ENV+".pt"
-model_path = "./breakout-obj-key.pt"
+model_path = ".././models/breakout-obj-key-expert.pt"
 
 batch_size = 32
 image_channels = 1
 k = 4 # number of keypoints, the same as in train_model.py
 #data_path = f"../../data/{ENV}"
-data_path = f"../../data2/{ENV}"
+data_path = f"../../data_expert/{ENV}"
 
 
 encoder = Encoder(image_channels)

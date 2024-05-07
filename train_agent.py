@@ -218,7 +218,7 @@ else:
         sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
         monitor_gym=True,  # auto-upload the videos of agents playing the game
         name=f"{config['f_ext_name']}__{config['game']}",
-        group=f"{config['game']}-seeds",
+        group=f"{config['game']}",
         tags=tags
         # save_code = True,  # optional
     )
@@ -298,7 +298,7 @@ else:
     eval_callback = EvalCallback(
         vec_eval_env,
         n_eval_episodes=100,
-        best_model_save_path=f"models/{run.id}-{seed}",
+        best_model_save_path=f"models/{run.id}",
         log_path=gamelogs,
         eval_freq=5000 * config["n_envs"],
         verbose=0
