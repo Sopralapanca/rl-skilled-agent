@@ -14,7 +14,7 @@ from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
     CNNConcatExtractor, CombineExtractor, \
-    SelfAttentionExtractor, DotProductAttentionExtractor, WeightSharingAttentionExtractor, SelfAttentionExtractor2, \
+    DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
     ReservoirConcatExtractor
 
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
@@ -28,7 +28,7 @@ from utils.args import parse_args
 # ---------------------------------- MAIN ----------------------------------
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
-version = "2.1 experts"
+version = "2.0 seeds"
 
 args = parse_args()
 
@@ -97,9 +97,9 @@ skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=Tru
 skills.append(get_object_keypoints_keynet(env_name, device, load_only_model=True, expert=expert))
 skills.append(get_video_object_segmentation(env_name, device, load_only_model=True, expert=expert))
 
-skills.append(get_autoencoder(env_name, device, expert=expert))
-skills.append(get_image_completion(env_name, device, expert=expert))
-skills.append(get_frame_prediction(env_name, device, expert=expert))
+# skills.append(get_autoencoder(env_name, device, expert=expert))
+# skills.append(get_image_completion(env_name, device, expert=expert))
+# skills.append(get_frame_prediction(env_name, device, expert=expert))
 
 f_ext_kwargs = config["f_ext_kwargs"]
 sample_obs = vec_env.observation_space.sample()
@@ -144,26 +144,6 @@ if skilled_agent:
         ext = CombineExtractor(vec_env.observation_space, skills=skills, device=device,
                                num_linear_skills=f_ext_kwargs["num_linear_skills"])
         features_dim = ext.get_dimension(sample_obs)
-
-    if args.extractor == "self_attention_ext":
-        config["f_ext_name"] = "self_attention_ext"
-        config["f_ext_class"] = SelfAttentionExtractor
-        tb_log_name += "_sae"
-        f_ext_kwargs["fixed_dim"] = args.fd
-        f_ext_kwargs["n_heads"] = args.heads
-        tags.append(f"heads:{f_ext_kwargs['n_heads']}")
-        tags.append(f"fixed_dim:{f_ext_kwargs['fixed_dim']}")
-        features_dim = len(skills) * f_ext_kwargs["fixed_dim"]
-
-    if args.extractor == "self_attention_ext2":
-        config["f_ext_name"] = "self_attention_ext2"
-        config["f_ext_class"] = SelfAttentionExtractor2
-        tb_log_name += "_sae"
-        f_ext_kwargs["fixed_dim"] = args.fd
-        f_ext_kwargs["n_heads"] = args.heads
-        tags.append(f"heads:{f_ext_kwargs['n_heads']}")
-        tags.append(f"fixed_dim:{f_ext_kwargs['fixed_dim']}")
-        features_dim = args.fd
 
     if args.extractor == "dotproduct_attention_ext":
         config["f_ext_name"] = "dotproduct_attention_ext"
@@ -230,7 +210,7 @@ if debug:
                 verbose=0,
                 device=device,
                 )
-    model.learn(1000)
+    model.learn(10)
 else:
     run = wandb.init(
         project="sb3-skillcomp",
@@ -238,7 +218,7 @@ else:
         sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
         monitor_gym=True,  # auto-upload the videos of agents playing the game
         name=f"{config['f_ext_name']}__{config['game']}",
-        group=config['game'],
+        group=f"{config['game']}-seeds",
         tags=tags
         # save_code = True,  # optional
     )
@@ -318,7 +298,7 @@ else:
     eval_callback = EvalCallback(
         vec_eval_env,
         n_eval_episodes=100,
-        best_model_save_path=f"models/{run.id}",
+        best_model_save_path=f"models/{run.id}-{seed}",
         log_path=gamelogs,
         eval_freq=5000 * config["n_envs"],
         verbose=0
