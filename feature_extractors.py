@@ -1,3 +1,6 @@
+import sys
+sys.path.append('skills')
+
 import torch
 import torch as th
 import torch.nn as nn
@@ -56,6 +59,8 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         for el in skill_out:
             if el.ndim == 4:
                 self.num_channels += el.shape[1]
+
+
 
     def preprocess_input(self, observations: th.Tensor, mode: int = 0) -> [th.Tensor]:
         """
@@ -376,6 +381,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         """
         super().__init__(observation_space, features_dim, skills, device)
 
+
         self.device = device
         sample = observation_space.sample()  # 4x84x84
         sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
@@ -415,6 +421,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         # for the weights sharing attention
         self.weights = nn.Sequential(nn.Linear((2 * features_dim), 1, device=device), nn.ReLU())
 
+        self.att_weights = None
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print("forward observation shape", observations.shape)
         skill_out = self.preprocess_input(observations)
@@ -427,8 +434,6 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))
         encoded_frame = self.encoder_seq_layer(encoded_frame)  # query
 
-        # consider skills as tokens in a sequence
-        # so first fix the dimension of each skill output
         for i in range(len(skill_out)):
             seq_layer = self.mlp_layers[i]
             x = skill_out[i]
@@ -442,9 +447,11 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             weight = self.weights(concatenated)
             weights.append(weight)
 
-        weights = th.stack(weights, 1)  # batch_size x num_skills x 1 (perchè x 1?)
-        #weights = weights.squeeze(2)
+        weights = th.stack(weights, 1)
         weights = th.softmax(weights, 1)
+
+        self.att_weights = weights
+
 
         # now stack the skill outputs to obtain a sequence of tokens
         stacked_skills = th.stack(skill_out, 0).permute(1, 0, 2)

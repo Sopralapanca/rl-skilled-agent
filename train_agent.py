@@ -210,7 +210,10 @@ if debug:
                 verbose=0,
                 device=device,
                 )
-    model.learn(10)
+    model.learn(1000)
+
+
+
 else:
     run = wandb.init(
         project="sb3-skillcomp",

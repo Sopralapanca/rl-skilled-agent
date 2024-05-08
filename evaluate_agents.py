@@ -14,7 +14,7 @@ from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
 from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
     CNNConcatExtractor, CombineExtractor, \
-    SelfAttentionExtractor, DotProductAttentionExtractor, WeightSharingAttentionExtractor, SelfAttentionExtractor2, \
+    DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
     ReservoirConcatExtractor
 
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
