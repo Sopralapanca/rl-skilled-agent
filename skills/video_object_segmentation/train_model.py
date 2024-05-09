@@ -39,7 +39,9 @@ wandb.config.update({
         "max_grad_norm": max_grad_norm
     })
 
-data_path = f"../../data2/{env}/*"
+data_path = f"../../data_expert/{env}/*"
+env_name = env.split("No")[0]
+env_name = env_name.lower()
 data = Dataset(batch_size, num_frames, env, data_path)
 
 model = VideoObjectSegmentationModel(device=device)
@@ -76,8 +78,7 @@ for i in range(steps):
         print(f"Ep: {i} new best val_loss : {val_loss}")
         # torch.save(model.state_dict(), f"model_{i}.pt")
         # torch.save(model.state_dict(), os.path.join(wandb.run.dir, 'model.pt'))
-        torch.save(model.state_dict(), './breakout-vid-obj-seg.pt') # attenzione cambia nome
-
+        torch.save(model.state_dict(), f'../models/{env_name}-vid-obj-seg.pt')
     # if i % 100 == 0:
     #     print(f"Step: {i:5d} - TLoss: {tr_loss.item():.8f} - VLoss: {val_loss.item():.8f} - BestV: {best_val_loss:.8f}")
 

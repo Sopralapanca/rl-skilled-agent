@@ -81,10 +81,9 @@ obs = vec_env.reset()
 if ENV_NAME.lower() in atari_py.list_games():
     vec_env.render("rgb_array")
 
-#SAVE_DIR = "../data/" + ENV_NAME
-SAVE_DIR = "../data2/" + ENV_NAME
+SAVE_DIR = "../data_expert/" + ENV_NAME
 
-model = PPO.load("../models/ddjyu7ba/model.zip")
+model = PPO.load("../models/tu5sjcvw/best_model.zip")
 
 # Create a directory data with subdirectory "breakout" using os to store the frames
 if not os.path.exists(SAVE_DIR):
