@@ -1,26 +1,15 @@
 # general imports
-import torch
 import yaml
 import numpy as np
 import random
 import os
 
 # testing imports
-import wandb
-from rl_zoo3.utils import linear_schedule
 from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 from stable_baselines3 import PPO
-from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
-    CNNConcatExtractor, CombineExtractor, \
-    DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
-    ReservoirConcatExtractor
-
-from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold, \
-    StopTrainingOnNoModelImprovement
 from stable_baselines3.common.evaluation import evaluate_policy
-from wandb.integration.sb3 import WandbCallback
 import tensorflow as tf
 from stable_baselines3.common.vec_env import VecVideoRecorder
 
@@ -38,7 +27,7 @@ device = f"cuda:{3}"
 eval_episodes = 1000
 
 df = pd.DataFrame(columns=["env", "agent", "seed", "mean_reward", "std_reward"])
-f"./models/630m4glh/best_model.zip"
+
 d = {"Pong": {"PPO": "sco059rf",
               "wsharing_attention_ext": "630m4glh",
               "reservoir_concat_ext": "ijaap571",
@@ -92,3 +81,12 @@ for seed in seeds:
 
 
 df.to_csv("eval_results.csv")
+
+# load_path = f"./models/arjriyht/best_model.zip"
+# vec_env = make_atari_env("MsPacmanNoFrameskip-v4", n_envs=1)
+# vec_env = VecFrameStack(vec_env, n_stack=4)
+# vec_env = VecTransposeImage(vec_env)
+# model = PPO.load(path=load_path, env=vec_env, device="cuda:2")  # don't need to pass policy_kwargs
+# mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=10)
+# print(f"Mean reward: {mean_reward:.2f} +/- {std_reward:.2f}")
+

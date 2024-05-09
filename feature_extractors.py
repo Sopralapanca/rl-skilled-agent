@@ -421,7 +421,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         # for the weights sharing attention
         self.weights = nn.Sequential(nn.Linear((2 * features_dim), 1, device=device), nn.ReLU())
 
-        self.att_weights = None
+        self.att_weights = {}
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print("forward observation shape", observations.shape)
         skill_out = self.preprocess_input(observations)
@@ -450,8 +450,9 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         weights = th.stack(weights, 1)
         weights = th.softmax(weights, 1)
 
-        self.att_weights = weights
-
+        # save attention weights to plot them in evaluation
+        for i, s in enumerate(self.skills):
+            self.att_weights[s.name] = [w[i] for w in weights]
 
         # now stack the skill outputs to obtain a sequence of tokens
         stacked_skills = th.stack(skill_out, 0).permute(1, 0, 2)

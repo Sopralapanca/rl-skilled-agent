@@ -1,10 +1,11 @@
 from stable_baselines3.common.env_util import make_atari_env
-from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
+from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage, DummyVecEnv
 import matplotlib.pyplot as plt
 import argparse
 import atari_py
-
+import os
 from stable_baselines3 import PPO
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong, Breakoout, etc.",
@@ -24,34 +25,104 @@ if ENV_NAME.lower() in atari_py.list_games():
     ENV_NAME = ENV_NAME.replace('_', '')
     ENV_NAME = ENV_NAME+"NoFrameskip-v4"
     vec_env = make_atari_env(ENV_NAME, n_envs=N_ENVS)
+    action_meanings = vec_env.envs[0].unwrapped.get_action_meanings()
+    action_space = vec_env.action_space
+
     vec_env = VecFrameStack(vec_env, n_stack=FRAME_STACK)
     vec_env = VecTransposeImage(vec_env)
 else:
     raise NotImplementedError(ENV_NAME + " not implemented yet, try CartPole-v1 or one atari game")
+
+
+SAVE_DIR = "./attention_data/" + ENV_NAME
+# Create a directory data with subdirectory "breakout" using os to store the frames
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
+
 
 obs = vec_env.reset()
 
 if ENV_NAME.lower() in atari_py.list_games():
     vec_env.render("rgb_array")
 
-model_path = "y7gry5qu" #INSERIRE
-model = PPO.load(f"./models/{model_path}/best_model.zip")
-
-
-for i in range(1000):
+model_path = "arjriyht" #INSERIRE
+model = PPO.load(f"./models/{model_path}/best_model.zip", device="cuda:2")
+offset = 1/len(action_meanings)
+done = False
+i = 0
+for i in tqdm(range(1000)):
     action, _states = model.predict(obs) # returns a list of actions
 
-    # weights = model.policy.features_extractor.att_weights.cpu().numpy()
-    # print(weights)
+    weights = model.policy.features_extractor.att_weights
+
+    values = [item for sublist in weights.values() for item in sublist]
+    values = [v.item() for v in values]
 
     last_frame = obs[:, -1, :, :]
 
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    fig, ax = plt.subplots(1, 3, figsize=(13, 5), gridspec_kw={'width_ratios': [1, 1, 0.2]})
+    fig.suptitle(f"Attention Visualization Step: {i}", fontsize=17)
     ax[0].imshow(last_frame[0], cmap='gray')
-    ax[1].imshow(last_frame[0], cmap='gray')
-    plt.show()
+    ax[0].set_title('Last frame', fontsize=15)
+    ax[0].axis('off')
+    ax[1].bar(weights.keys(), values)
+    ax[1].set_title('Attention Weights', fontsize=15)
+
+    # Plot the list of names in a new subplot on the right
+    ax[2].set_title('Chosen Action', fontsize=15)  # Title for the subplot
+
+    vertical_offset = 0.1
+    horizontal_offset = 0.5
+    for j, a in enumerate(action_meanings):
+        if action[0] == j:
+            ax[2].text(horizontal_offset, 1 - vertical_offset, a, fontsize=15, ha='center', color="black")
+        else:
+            ax[2].text(horizontal_offset, 1 - vertical_offset, a, fontsize=14, ha='center', color="gray")
+        vertical_offset += offset  # Adjust this value to control vertical spacing
+
+    ax[2].axis('off')
+
+    #save the figure
+    plt.savefig(f"{SAVE_DIR}/{i}.png")
+    plt.close()
+
     new_obs, rewards, dones, infos = vec_env.step(action)  # we need to pass an array of actions in step, one action for each environment
     obs = new_obs
-    break
+
 obs = vec_env.reset()
 vec_env.close()
+
+
+# import glob
+# from PIL import Image
+# import re
+# import math
+# from pathlib import Path
+#
+# SAVE_DIR = "./attention_data/MsPacmanNoFrameskip-v4"
+#
+# # get all files in SAVE_DIR and list it in order
+# files = glob.glob(f"{SAVE_DIR}/*.png")
+# frames = [Image.open(image) for image in files[:900]]
+#
+# frame_one = frames[0]
+# frame_one.save("./attention_data/MsPacmanNoFrameskip-v4/attention.gif", format="GIF", append_images=frames,
+#                save_all=True, duration=1000, loop=0)
+
+# import cv2
+# import os
+#
+# SAVE_DIR = "./attention_data/MsPacmanNoFrameskip-v4/"
+# video_name = './attention_data/MsPacmanNoFrameskip-v4/video.avi'
+#
+# images = [img for img in os.listdir(SAVE_DIR) if img.endswith(".png")]
+# frame = cv2.imread(os.path.join(SAVE_DIR, images[0]))
+# height, width, layers = frame.shape
+#
+# video = cv2.VideoWriter(video_name, 0, 1, (width,height))
+#
+# for image in images:
+#     video.write(cv2.imread(os.path.join(SAVE_DIR, image)))
+#
+# cv2.destroyAllWindows()
+# video.release()
