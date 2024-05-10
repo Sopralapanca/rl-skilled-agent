@@ -28,7 +28,7 @@ from utils.args import parse_args
 # ---------------------------------- MAIN ----------------------------------
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
-version = "2.0 seeds"
+
 
 args = parse_args()
 
@@ -62,6 +62,12 @@ config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
 
+expert = args.use_expert == "True"
+
+if expert:
+    version = "2.1 experts"
+else:
+    version = "2.0 seeds"
 
 tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}']
 
@@ -90,7 +96,7 @@ vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
 
 
-expert = args.use_expert == "True"
+
 skills = []
 skills.append(get_state_rep_uns(env_name, device, expert=expert))
 skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=True, expert=expert))
