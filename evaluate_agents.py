@@ -92,11 +92,16 @@ for seed in seeds:
         load_path = f"./models/{agents[agent]}/best_model.zip"
 
         if agent != "PPO":
+            if env_name == "Breakout":
+                expert = True
+            else:
+                expert = False
+
             skills = []
-            skills.append(get_state_rep_uns(vec_env_name, device, expert=False))
-            skills.append(get_object_keypoints_encoder(vec_env_name, device, load_only_model=True, expert=False))
-            skills.append(get_object_keypoints_keynet(vec_env_name, device, load_only_model=True, expert=False))
-            skills.append(get_video_object_segmentation(vec_env_name, device, load_only_model=True, expert=False))
+            skills.append(get_state_rep_uns(vec_env_name, device, expert=expert))
+            skills.append(get_object_keypoints_encoder(vec_env_name, device, load_only_model=True, expert=expert))
+            skills.append(get_object_keypoints_keynet(vec_env_name, device, load_only_model=True, expert=expert))
+            skills.append(get_video_object_segmentation(vec_env_name, device, load_only_model=True, expert=expert))
 
             sample_obs = vec_env.observation_space.sample()
             sample_obs = torch.tensor(sample_obs).to(device)
