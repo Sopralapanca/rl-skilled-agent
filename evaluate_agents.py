@@ -24,7 +24,6 @@ from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor
     DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
     ReservoirConcatExtractor
 import argparse
-
 # ---------------------------------- MAIN ----------------------------------
 parser = argparse.ArgumentParser()
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
@@ -36,10 +35,11 @@ args = parser.parse_args()
 env_name = args.env
 device = f"cuda:{args.device}"
 
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
-n_seeds = 1
+n_seeds = 10
 seeds = [np.random.randint(0, 100000) for i in range(n_seeds)]
-eval_episodes = 1
+eval_episodes = 100
 
 results_dir = "./results"
 if not os.path.exists(results_dir):
@@ -58,6 +58,12 @@ if env_name == "Pong":
               "reservoir_concat_ext": "025abyrl",
               "cnn_concat_ext": "yyt0d5xr",
               }
+elif env_name == "Ms_Pacman":
+    agents = {"PPO": "8l5cbixu",
+              "wsharing_attention_ext": "xbmyz15p",
+              "reservoir_concat_ext": "88rmd7an",
+              "cnn_concat_ext": "0vm9cdpz",
+              }
 
 if not os.path.exists(results_dir + "/" + env_name):
     os.makedirs(results_dir + "/" + env_name)
@@ -67,23 +73,30 @@ for seed in seeds:
         tf.random.set_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
-        vec_env = make_atari_env(f"{env_name}NoFrameskip-v4", n_envs=8, seed=seed)
+
+        if "_" in env_name:
+            vec_env_name = env_name.replace("_", "")
+        else:
+            vec_env_name = env_name
+
+        vec_env = make_atari_env(f"{vec_env_name}NoFrameskip-v4", n_envs=1, seed=seed)
         vec_env = VecFrameStack(vec_env, n_stack=4)
         vec_env = VecTransposeImage(vec_env)
-        # vec_env = VecVideoRecorder(vec_env,
-        #                            f"{results_dir}/{env_name}_{seed}",
-        #                            record_video_trigger=lambda x: x % 2000 == 0,
-        #                            video_length=200,
-        #                            )
+        vec_env = VecVideoRecorder(vec_env,
+                                   f"{results_dir}/{env_name}/",
+                                   record_video_trigger=lambda x: x % 2000 == 0,
+                                   video_length=10000,
+                                   name_prefix=f"{agent}_{seed}"
+                                   )
 
         load_path = f"./models/{agents[agent]}/best_model.zip"
 
         if agent != "PPO":
             skills = []
-            skills.append(get_state_rep_uns(env_name, device, expert=False))
-            skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=True, expert=False))
-            skills.append(get_object_keypoints_keynet(env_name, device, load_only_model=True, expert=False))
-            skills.append(get_video_object_segmentation(env_name, device, load_only_model=True, expert=False))
+            skills.append(get_state_rep_uns(vec_env_name, device, expert=False))
+            skills.append(get_object_keypoints_encoder(vec_env_name, device, load_only_model=True, expert=False))
+            skills.append(get_object_keypoints_keynet(vec_env_name, device, load_only_model=True, expert=False))
+            skills.append(get_video_object_segmentation(vec_env_name, device, load_only_model=True, expert=False))
 
             sample_obs = vec_env.observation_space.sample()
             sample_obs = torch.tensor(sample_obs).to(device)
@@ -91,8 +104,6 @@ for seed in seeds:
 
             with open(f'configs/{env_name.lower()}.yaml', 'r') as file:
                 config = yaml.safe_load(file)["config"]
-                if "_" in env_name:
-                    env_name = env_name.replace("_", "")
 
             config["f_ext_kwargs"]["device"] = device
 
@@ -106,8 +117,11 @@ for seed in seeds:
             config["f_ext_name"] = agent
             if agent == "wsharing_attention_ext":
                 config["f_ext_class"] = WeightSharingAttentionExtractor
-                features_dim = 1024
-                config["game"] = env_name
+                config["game"] = vec_env_name
+                if env_name == "Pong":
+                    features_dim = 1024
+                if env_name == "Ms_Pacman":
+                    features_dim = 256
 
             elif agent == "reservoir_concat_ext":
                 config["f_ext_class"] = ReservoirConcatExtractor
@@ -123,7 +137,7 @@ for seed in seeds:
             f_ext_kwargs = config["f_ext_kwargs"]
 
             if agent == "wsharing_attention_ext":
-                f_ext_kwargs["game"] = env_name
+                f_ext_kwargs["game"] = vec_env_name
                 f_ext_kwargs["expert"] = False if env_name != "Breakout" else True
 
             elif agent == "reservoir_concat_ext":
