@@ -26,156 +26,171 @@ from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor
 import argparse
 
 # ---------------------------------- MAIN ----------------------------------
-parser = argparse.ArgumentParser()
-parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
-                    type=str, required=True, choices=['Pong', 'Ms_Pacman', 'Breakout'])
-parser.add_argument("--device", help="Integer number of a device to use (0, 1, 2, 3), or cpu",
-                    type=str, default="cpu", required=False, choices=["cpu", "0", "1", "2", "3"])
-args = parser.parse_args()
-
-env_name = args.env
-device = f"cuda:{args.device}"
+device = f"cuda:2"
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
 n_seeds = 5
 seeds = [np.random.randint(0, 100000) for i in range(n_seeds)]
-eval_episodes = 100
+eval_episodes = 20
 
 results_dir = "./results"
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)
 
-path = results_dir + "/eval_results.csv"
+path = results_dir + "/eval_results2.csv"
 if os.path.isfile(path):
     df = pd.read_csv(path, index_col=0)
 
 else:
     df = pd.DataFrame(columns=["env", "agent", "seed", "mean_reward", "std_reward"])
 
-if env_name == "Pong":
-    agents = {"PPO": "k24cn512",
-              "wsharing_attention_ext": "vwll3bv1",
-              "reservoir_concat_ext": "025abyrl",
-              "cnn_concat_ext": "yyt0d5xr",
-              }
-elif env_name == "Ms_Pacman":
-    agents = {"PPO": "8l5cbixu",
-              "wsharing_attention_ext": "xbmyz15p",
-              "reservoir_concat_ext": "88rmd7an",
-              "cnn_concat_ext": "0vm9cdpz",
-              }
+d = {"Pong":
+         {"PPO": "k24cn512",
+          "wsharing_attention_ext": "vwll3bv1",
+          "reservoir_concat_ext": "025abyrl",
+          "cnn_concat_ext": "yyt0d5xr",
+          },
+     "Ms_Pacman": {"PPO": "8l5cbixu",
+                   "wsharing_attention_ext": "xbmyz15p",
+                   "reservoir_concat_ext": "88rmd7an",
+                   "cnn_concat_ext": "0vm9cdpz",
+                   },
 
-elif env_name == "Breakout":
-    agents = {"PPO": ["ycp3r13u", "cuda:0"],
-              "wsharing_attention_ext": ["ba5ow0zz", "cuda:1"],
-              "fixed_lin_concat_ext": ["mdmh29il", "cuda:3"],
-              "cnn_concat_ext": ["zl8boshh", "cuda:2"]
-              }
+     "Breakout": {"PPO": ["ycp3r13u", "cuda:0"],
+                  "wsharing_attention_ext": ["ckd8d160", "cuda:1"],
+                  "fixed_lin_concat_ext": ["gy9a4wow", "cuda:1"],
+                  "cnn_concat_ext": ["6qqnn3ce", "cuda:1"]
+                  },
 
-if not os.path.exists(results_dir + "/" + env_name):
-    os.makedirs(results_dir + "/" + env_name)
+     "Breakout-Policy": {
+                    "wsharing_attention_ext": ["j934tseo", "cuda:2"],
+                    "fixed_lin_concat_ext": ["g1bfh8y9", "cuda:3"],
+                    "cnn_concat_ext": ["zl8boshh", "cuda:2"],
+                    },
+
+     "Breakout-Expert": {
+                    "wsharing_attention_ext": ["12n3bzj9", "cuda:3"],
+                    "fixed_lin_concat_ext": ["mdmh29il", "cuda:3"],
+                    "cnn_concat_ext": ["oh2n2o7g", "cuda:1"],
+                    },
+
+     "Breakout-Expert_Policy": {
+                    "wsharing_attention_ext": ["ba5ow0zz", "cuda:1"],
+                    "fixed_lin_concat_ext": ["npa2880u", "cuda:1"],
+                    "cnn_concat_ext": ["0mcyd522", "cuda:1"],
+                    },
+     }
+
+path = results_dir + "/eval_results2.csv"
 
 for seed in seeds:
-    for agent in agents.keys():
-        tf.random.set_seed(seed)
-        np.random.seed(seed)
-        random.seed(seed)
+    for env in d.keys():
 
-        if "_" in env_name:
-            vec_env_name = env_name.replace("_", "")
+        if os.path.isfile(path):
+            df = pd.read_csv(path, index_col=0)
         else:
-            vec_env_name = env_name
+            df = pd.DataFrame(columns=["env", "agent", "seed", "mean_reward", "std_reward"])
 
-        vec_env = make_atari_env(f"{vec_env_name}NoFrameskip-v4", n_envs=1, seed=seed)
-        vec_env = VecFrameStack(vec_env, n_stack=4)
-        vec_env = VecTransposeImage(vec_env)
-        vec_env = VecVideoRecorder(vec_env,
-                                   f"{results_dir}/{env_name}/",
-                                   record_video_trigger=lambda x: x % 2000 == 0,
-                                   video_length=10000,
-                                   name_prefix=f"{agent}_{seed}"
-                                   )
+        env_name = env.split("-")[0]
+        agents = d[env]
 
-        load_path = f"./models/{agents[agent]}/best_model.zip"
+        if not os.path.exists(results_dir + "/" + env_name):
+            os.makedirs(results_dir + "/" + env_name)
 
-        if agent != "PPO" and env_name != "Breakout":
+        for agent in agents.keys():
+            tf.random.set_seed(seed)
+            np.random.seed(seed)
+            random.seed(seed)
 
-            skills = []
-            skills.append(get_state_rep_uns(vec_env_name, device, expert=False))
-            skills.append(get_object_keypoints_encoder(vec_env_name, device, load_only_model=True, expert=False))
-            skills.append(get_object_keypoints_keynet(vec_env_name, device, load_only_model=True, expert=False))
-            skills.append(get_video_object_segmentation(vec_env_name, device, load_only_model=True, expert=False))
-
-            sample_obs = vec_env.observation_space.sample()
-            sample_obs = torch.tensor(sample_obs).to(device)
-            sample_obs = sample_obs.unsqueeze(0)
-
-            with open(f'configs/{env_name.lower()}.yaml', 'r') as file:
-                config = yaml.safe_load(file)["config"]
-
-            config["f_ext_kwargs"]["device"] = device
-
-            config["net_arch_pi"] = [256]
-            config["net_arch_vf"] = [256]
-
-            config["f_ext_name"] = agent
-            if agent == "wsharing_attention_ext":
-                config["f_ext_class"] = WeightSharingAttentionExtractor
-                config["game"] = vec_env_name
-                if env_name == "Pong":
-                    features_dim = 1024
-                if env_name == "Ms_Pacman":
-                    features_dim = 256
-
-            elif agent == "reservoir_concat_ext":
-                config["f_ext_class"] = ReservoirConcatExtractor
-                ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
-                input_features_dim = ext.get_dimension(sample_obs)
-                features_dim = 1024
-
-            elif agent == "cnn_concat_ext":
-                ext = CNNConcatExtractor(vec_env.observation_space, skills=skills, device=device)
-                features_dim = ext.get_dimension(sample_obs)
-                config["f_ext_class"] = CNNConcatExtractor
-
-            f_ext_kwargs = config["f_ext_kwargs"]
-
-            if agent == "wsharing_attention_ext":
-                f_ext_kwargs["game"] = vec_env_name
-                f_ext_kwargs["expert"] = False if env_name != "Breakout" else True
-
-            elif agent == "reservoir_concat_ext":
-                f_ext_kwargs["input_features_dim"] = input_features_dim
-
-            elif agent == "cnn_concat_ext":
-                f_ext_kwargs["num_conv_layers"] = 2
-
-            f_ext_kwargs["skills"] = skills
-            f_ext_kwargs["features_dim"] = features_dim
-
-            policy_kwargs = dict(
-                features_extractor_class=config["f_ext_class"],
-                features_extractor_kwargs=f_ext_kwargs,
-                net_arch={
-                    'pi': config["net_arch_pi"],
-                    'vf': config["net_arch_vf"]
-                }
-            )
-
-            custom_objects = {"policy_kwargs": policy_kwargs}
-            model = PPO.load(path=load_path, env=vec_env, device=device,
-                             custom_objects=custom_objects)  # don't need to pass policy_kwargs
-
-        else:
-            if env_name == "Breakout":
-                print(f"Agent:{agent}")
-                model_path = f"./models/{agents[agent][0]}/best_model.zip"
-                model = PPO.load(path=model_path, env=vec_env, device=agents[agent][1])  # don't need to pass policy_kwargs
+            if "_" in env_name:
+                vec_env_name = env_name.replace("_", "")
             else:
-                model = PPO.load(path=load_path, env=vec_env, device=device)  # don't need to pass policy_kwargs
+                vec_env_name = env_name
 
-        mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=eval_episodes)
-        print(f"Agent:{agent} Seed: {seed} Mean reward: {mean_reward:.2f} +/- {std_reward:.2f}")
-        df.loc[len(df.index)] = [env_name, agent, seed, mean_reward, std_reward]
+            vec_env = make_atari_env(f"{vec_env_name}NoFrameskip-v4", n_envs=1, seed=seed)
+            vec_env = VecFrameStack(vec_env, n_stack=4)
+            vec_env = VecTransposeImage(vec_env)
 
-df.to_csv(path)
+            load_path = f"./models/{agents[agent]}/best_model.zip"
+
+            if agent != "PPO" and env_name != "Breakout":
+
+                skills = []
+                skills.append(get_state_rep_uns(vec_env_name, device, expert=False))
+                skills.append(get_object_keypoints_encoder(vec_env_name, device, load_only_model=True, expert=False))
+                skills.append(get_object_keypoints_keynet(vec_env_name, device, load_only_model=True, expert=False))
+                skills.append(get_video_object_segmentation(vec_env_name, device, load_only_model=True, expert=False))
+
+                sample_obs = vec_env.observation_space.sample()
+                sample_obs = torch.tensor(sample_obs).to(device)
+                sample_obs = sample_obs.unsqueeze(0)
+
+                with open(f'configs/{env_name.lower()}.yaml', 'r') as file:
+                    config = yaml.safe_load(file)["config"]
+
+                config["f_ext_kwargs"]["device"] = device
+
+                config["net_arch_pi"] = [256]
+                config["net_arch_vf"] = [256]
+
+                config["f_ext_name"] = agent
+                if agent == "wsharing_attention_ext":
+                    config["f_ext_class"] = WeightSharingAttentionExtractor
+                    config["game"] = vec_env_name
+                    if env_name == "Pong":
+                        features_dim = 1024
+                    if env_name == "Ms_Pacman":
+                        features_dim = 256
+
+                elif agent == "reservoir_concat_ext":
+                    config["f_ext_class"] = ReservoirConcatExtractor
+                    ext = LinearConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+                    input_features_dim = ext.get_dimension(sample_obs)
+                    features_dim = 1024
+
+                elif agent == "cnn_concat_ext":
+                    ext = CNNConcatExtractor(vec_env.observation_space, skills=skills, device=device)
+                    features_dim = ext.get_dimension(sample_obs)
+                    config["f_ext_class"] = CNNConcatExtractor
+
+                f_ext_kwargs = config["f_ext_kwargs"]
+
+                if agent == "wsharing_attention_ext":
+                    f_ext_kwargs["game"] = vec_env_name
+                    f_ext_kwargs["expert"] = False if env_name != "Breakout" else True
+
+                elif agent == "reservoir_concat_ext":
+                    f_ext_kwargs["input_features_dim"] = input_features_dim
+
+                elif agent == "cnn_concat_ext":
+                    f_ext_kwargs["num_conv_layers"] = 2
+
+                f_ext_kwargs["skills"] = skills
+                f_ext_kwargs["features_dim"] = features_dim
+
+                policy_kwargs = dict(
+                    features_extractor_class=config["f_ext_class"],
+                    features_extractor_kwargs=f_ext_kwargs,
+                    net_arch={
+                        'pi': config["net_arch_pi"],
+                        'vf': config["net_arch_vf"]
+                    }
+                )
+
+                custom_objects = {"policy_kwargs": policy_kwargs}
+                model = PPO.load(path=load_path, env=vec_env, device=device,
+                                 custom_objects=custom_objects)  # don't need to pass policy_kwargs
+
+            else:
+                if env_name == "Breakout":
+                    model_path = f"./models/{agents[agent][0]}/best_model.zip"
+                    model = PPO.load(path=model_path, env=vec_env,
+                                     device=agents[agent][1])  # don't need to pass policy_kwargs
+                else:
+                    model = PPO.load(path=load_path, env=vec_env, device=device)  # don't need to pass policy_kwargs
+
+            mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=eval_episodes)
+            print(f"Env:{env} Agent:{agent} Seed:{seed} Mean reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+            df.loc[len(df.index)] = [env, agent, seed, mean_reward, std_reward]
+
+        df.to_csv(path)
