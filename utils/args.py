@@ -43,6 +43,10 @@ def parse_args():
     parser.add_argument("--use-expert", help="if True, loads saved skills models on PPO agent dataset rather then random",
                         type=str, choices=["True", "False"], default="False")
 
+    parser.add_argument("--alg",
+                        help="Learning algorithm to use PPO or DQN",
+                        type=str, choices=["PPO", "DQN"], default="PPO")
+
     args = parser.parse_args()
 
     return args

@@ -24,6 +24,7 @@ from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor
     DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
     ReservoirConcatExtractor
 import argparse
+
 # ---------------------------------- MAIN ----------------------------------
 parser = argparse.ArgumentParser()
 parser.add_argument("--env", help="Name of the environment to use i.e. Pong",
@@ -35,9 +36,8 @@ args = parser.parse_args()
 env_name = args.env
 device = f"cuda:{args.device}"
 
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
-n_seeds = 10
+n_seeds = 5
 seeds = [np.random.randint(0, 100000) for i in range(n_seeds)]
 eval_episodes = 100
 
@@ -63,6 +63,13 @@ elif env_name == "Ms_Pacman":
               "wsharing_attention_ext": "xbmyz15p",
               "reservoir_concat_ext": "88rmd7an",
               "cnn_concat_ext": "0vm9cdpz",
+              }
+
+elif env_name == "Breakout":
+    agents = {"PPO": ["ycp3r13u", "cuda:0"],
+              "wsharing_attention_ext": ["ba5ow0zz", "cuda:1"],
+              "fixed_lin_concat_ext": ["mdmh29il", "cuda:3"],
+              "cnn_concat_ext": ["zl8boshh", "cuda:2"]
               }
 
 if not os.path.exists(results_dir + "/" + env_name):
@@ -91,17 +98,13 @@ for seed in seeds:
 
         load_path = f"./models/{agents[agent]}/best_model.zip"
 
-        if agent != "PPO":
-            if env_name == "Breakout":
-                expert = True
-            else:
-                expert = False
+        if agent != "PPO" and env_name != "Breakout":
 
             skills = []
-            skills.append(get_state_rep_uns(vec_env_name, device, expert=expert))
-            skills.append(get_object_keypoints_encoder(vec_env_name, device, load_only_model=True, expert=expert))
-            skills.append(get_object_keypoints_keynet(vec_env_name, device, load_only_model=True, expert=expert))
-            skills.append(get_video_object_segmentation(vec_env_name, device, load_only_model=True, expert=expert))
+            skills.append(get_state_rep_uns(vec_env_name, device, expert=False))
+            skills.append(get_object_keypoints_encoder(vec_env_name, device, load_only_model=True, expert=False))
+            skills.append(get_object_keypoints_keynet(vec_env_name, device, load_only_model=True, expert=False))
+            skills.append(get_video_object_segmentation(vec_env_name, device, load_only_model=True, expert=False))
 
             sample_obs = vec_env.observation_space.sample()
             sample_obs = torch.tensor(sample_obs).to(device)
@@ -112,12 +115,8 @@ for seed in seeds:
 
             config["f_ext_kwargs"]["device"] = device
 
-            if env_name == "Breakout":
-                config["net_arch_pi"] = [1024, 512, 256]
-                config["net_arch_vf"] = [1024, 512, 256]
-            else:
-                config["net_arch_pi"] = [256]
-                config["net_arch_vf"] = [256]
+            config["net_arch_pi"] = [256]
+            config["net_arch_vf"] = [256]
 
             config["f_ext_name"] = agent
             if agent == "wsharing_attention_ext":
@@ -154,31 +153,26 @@ for seed in seeds:
             f_ext_kwargs["skills"] = skills
             f_ext_kwargs["features_dim"] = features_dim
 
-            if env_name == "Breakout":
-                policy_kwargs = dict(
-                    features_extractor_class=config["f_ext_class"],
-                    features_extractor_kwargs=f_ext_kwargs,
-                    net_arch={
-                        'pi': config["net_arch_pi"],
-                        'vf': config["net_arch_vf"]
-                    },
-                    activation_fn=th.nn.ReLU,
-                )
-            else:
-                policy_kwargs = dict(
-                    features_extractor_class=config["f_ext_class"],
-                    features_extractor_kwargs=f_ext_kwargs,
-                    net_arch={
-                        'pi': config["net_arch_pi"],
-                        'vf': config["net_arch_vf"]
-                    }
-                )
+            policy_kwargs = dict(
+                features_extractor_class=config["f_ext_class"],
+                features_extractor_kwargs=f_ext_kwargs,
+                net_arch={
+                    'pi': config["net_arch_pi"],
+                    'vf': config["net_arch_vf"]
+                }
+            )
+
             custom_objects = {"policy_kwargs": policy_kwargs}
             model = PPO.load(path=load_path, env=vec_env, device=device,
                              custom_objects=custom_objects)  # don't need to pass policy_kwargs
 
         else:
-            model = PPO.load(path=load_path, env=vec_env, device=device)  # don't need to pass policy_kwargs
+            if env_name == "Breakout":
+                print(f"Agent:{agent}")
+                model_path = f"./models/{agents[agent][0]}/best_model.zip"
+                model = PPO.load(path=model_path, env=vec_env, device=agents[agent][1])  # don't need to pass policy_kwargs
+            else:
+                model = PPO.load(path=load_path, env=vec_env, device=device)  # don't need to pass policy_kwargs
 
         mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=eval_episodes)
         print(f"Agent:{agent} Seed: {seed} Mean reward: {mean_reward:.2f} +/- {std_reward:.2f}")

@@ -11,7 +11,7 @@ from rl_zoo3.utils import linear_schedule
 from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, DQN
 from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
     CNNConcatExtractor, CombineExtractor, \
     DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
@@ -41,8 +41,9 @@ if args.seed is not None:
     random.seed(seed)
 
 skilled_agent = args.use_skill == "True"
+alg = args.alg
 
-tb_log_name = "PPO" if not skilled_agent else "SPPO"
+tb_log_name = alg if not skilled_agent else "S"+alg
 debug = args.debug == "True"
 
 device = f"cuda:{args.device}" if args.device != "cpu" else "cpu"
@@ -52,10 +53,15 @@ if not torch.cuda.is_available() and device != "cpu":
 
 env = args.env.lower()
 env_name = args.env
-with open(f'configs/{env}.yaml', 'r') as file:
-    config = yaml.safe_load(file)["config"]
-    if "_" in env_name:
-        env_name = env_name.replace("_", "")
+if alg == "DQN":
+    with open("configs/atari_dqn.yaml", 'r') as file:
+        config = yaml.safe_load(file)["config"]
+else:
+    with open(f'configs/{env}.yaml', 'r') as file:
+        config = yaml.safe_load(file)["config"]
+
+if "_" in env_name:
+    env_name = env_name.replace("_", "")
 
 config["f_ext_kwargs"]["device"] = device #do not comment this, it is the parameter passed to the feature extractor
 config["game"] = env_name
@@ -69,7 +75,7 @@ if expert:
 else:
     version = "2.0 seeds"
 
-tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}']
+tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}', f'alg:{alg}']
 
 string = "pi:"
 for el in config["net_arch_pi"]:
@@ -188,34 +194,60 @@ f_ext_kwargs["skills"] = skills
 f_ext_kwargs["features_dim"] = features_dim
 
 if skilled_agent:
-    policy_kwargs = dict(
-        features_extractor_class=config["f_ext_class"],
-        features_extractor_kwargs=f_ext_kwargs,
-        net_arch={
-            'pi': config["net_arch_pi"],
-            'vf': config["net_arch_vf"]
-        },
-        #activation_fn=th.nn.ReLU,
+    if alg == "PPO":
+        policy_kwargs = dict(
+            features_extractor_class=config["f_ext_class"],
+            features_extractor_kwargs=f_ext_kwargs,
+            net_arch={
+                'pi': config["net_arch_pi"],
+                'vf': config["net_arch_vf"]
+            },
+            #activation_fn=th.nn.ReLU,
 
-    )
+        )
+    if alg == "DQN":
+        policy_kwargs = dict(
+            features_extractor_class=config["f_ext_class"],
+            features_extractor_kwargs=f_ext_kwargs,
+        )
 else:
     policy_kwargs = None
 
 if debug:
-    model = PPO("CnnPolicy",
-                vec_env,
-                learning_rate=linear_schedule(config["learning_rate"]),
-                n_steps=128,
-                n_epochs=4,
-                batch_size=config["batch_size"],
-                clip_range=linear_schedule(config["clip_range"]),
-                normalize_advantage=config["normalize"],
-                ent_coef=config["ent_coef"],
-                vf_coef=config["vf_coef"],
-                policy_kwargs=policy_kwargs,
-                verbose=0,
-                device=device,
-                )
+    if alg == "PPO":
+        model = PPO("CnnPolicy",
+                    vec_env,
+                    learning_rate=linear_schedule(config["learning_rate"]),
+                    n_steps=128,
+                    n_epochs=4,
+                    batch_size=config["batch_size"],
+                    clip_range=linear_schedule(config["clip_range"]),
+                    normalize_advantage=config["normalize"],
+                    ent_coef=config["ent_coef"],
+                    vf_coef=config["vf_coef"],
+                    policy_kwargs=policy_kwargs,
+                    verbose=0,
+                    device=device,
+                    )
+
+    if alg == "DQN":
+        model = DQN("CnnPolicy",
+                    vec_env,
+                    buffer_size=config["buffer_size"],
+                    learning_rate=config["learning_rate"],
+                    batch_size=config["batch_size"],
+                    learning_starts=config["learning_starts"],
+                    target_update_interval=config["target_update_interval"],
+                    train_freq=config["train_freq"],
+                    gradient_steps=config["gradient_steps"],
+                    exploration_fraction=config["exploration_fraction"],
+                    exploration_final_eps=config["exploration_final_eps"],
+                    optimize_memory_usage=config["optimize_memory_usage"],
+                    policy_kwargs=policy_kwargs,
+                    verbose=0,
+                    device=device,
+                    )
+
     model.learn(1000)
 
 
@@ -240,21 +272,57 @@ else:
     vec_eval_env = VecFrameStack(vec_eval_env, n_stack=config["n_stacks"])
     vec_eval_env = VecTransposeImage(vec_eval_env)
 
-    model = PPO("CnnPolicy",
-                vec_env,
-                learning_rate=linear_schedule(config["learning_rate"]),
-                n_steps=config["n_steps"],
-                n_epochs=config["n_epochs"],
-                batch_size=config["batch_size"],
-                clip_range=linear_schedule(config["clip_range"]),
-                normalize_advantage=config["normalize"],
-                ent_coef=config["ent_coef"],
-                vf_coef=config["vf_coef"],
-                tensorboard_log=gamelogs,
-                policy_kwargs=policy_kwargs,
-                verbose=0,
-                device=device,
-                )
+    # model = PPO("CnnPolicy",
+    #             vec_env,
+    #             learning_rate=linear_schedule(config["learning_rate"]),
+    #             n_steps=config["n_steps"],
+    #             n_epochs=config["n_epochs"],
+    #             batch_size=config["batch_size"],
+    #             clip_range=linear_schedule(config["clip_range"]),
+    #             normalize_advantage=config["normalize"],
+    #             ent_coef=config["ent_coef"],
+    #             vf_coef=config["vf_coef"],
+    #             tensorboard_log=gamelogs,
+    #             policy_kwargs=policy_kwargs,
+    #             verbose=0,
+    #             device=device,
+    #             )
+
+    if alg == "PPO":
+        model = PPO("CnnPolicy",
+                    vec_env,
+                    learning_rate=linear_schedule(config["learning_rate"]),
+                    n_steps=128,
+                    n_epochs=4,
+                    batch_size=config["batch_size"],
+                    clip_range=linear_schedule(config["clip_range"]),
+                    normalize_advantage=config["normalize"],
+                    ent_coef=config["ent_coef"],
+                    vf_coef=config["vf_coef"],
+                    policy_kwargs=policy_kwargs,
+                    tensorboard_log=gamelogs,
+                    verbose=0,
+                    device=device,
+                    )
+
+    if alg == "DQN":
+        model = DQN("CnnPolicy",
+                    vec_env,
+                    buffer_size=config["buffer_size"],
+                    learning_rate=config["learning_rate"],
+                    batch_size=config["batch_size"],
+                    learning_starts=config["learning_starts"],
+                    target_update_interval=config["target_update_interval"],
+                    train_freq=config["train_freq"],
+                    gradient_steps=config["gradient_steps"],
+                    exploration_fraction=config["exploration_fraction"],
+                    exploration_final_eps=config["exploration_final_eps"],
+                    optimize_memory_usage=config["optimize_memory_usage"],
+                    policy_kwargs=policy_kwargs,
+                    tensorboard_log=gamelogs,
+                    verbose=0,
+                    device=device,
+                    )
 
     # model.learn(config["n_timesteps"], tb_log_name=tb_log_name)
 
