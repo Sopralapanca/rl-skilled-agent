@@ -1,0 +1,105 @@
+% RLC main.tex Version 2024.4
+\documentclass[10pt]{article} % For LaTeX2e
+
+
+% If accepted, instead use the following line for the camera-ready submission:
+%\usepackage[accepted]{rlc}
+% To de-anonymize and remove mentions to RLC (for example, for posting to preprint servers), instead use the following:
+% \usepackage[preprint]{rlc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Recommended (but not required) packages
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amssymb}            % Defines common symbols like \mathbb R
+\usepackage{mathtools}          % Extends amsmath, providing common math tools
+\usepackage{mathrsfs}           % Enables \mathscr, which can work in cases that \mathcal does not
+%\mathtoolsset{showonlyrefs}     % Only number equations that are referenced (optional)
+\usepackage{graphicx}           % For including images
+\usepackage{subcaption}         % Allows for the use of subfigures and subcaptions
+\usepackage[space]{grffile}     % For spaces in image names
+\usepackage{url}                % For displaying urls
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Title Page Specification
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \title{Combining Foundational Models as Feature Extractors}
+\title{Combining Foundational Models for Enhanced Feature Representation}
+% \title{Enhanced Feature Representation via Foundational Models in Reinforcement Learning}
+
+% Authors must not appear in the submitted version. They should be hidden
+% as long as the tmlr package is used without the [accepted] or [preprint] options.
+% Non-anonymous submissions will be rejected without review.
+
+% \author{Philip S. Thomas  \\
+%     pthomas@cs.umass.edu \\
+%     College of Information and Computer Sciences\\
+%     University of Massachusetts
+%     \And
+%     Glen Berseth \\
+%     glen.berseth@mila.quebec\\
+%     Mila, Universit\'e de Montr\'eal \\
+%     CIFAR Canada AI Chair}
+
+% The \author macro works with any number of authors. Use \AND 
+% to separate the names and addresses of multiple authors.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Begin document, create title and abstract
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\include{chapters/Frontespizio}
+\include{chapters/abstract}
+
+\tableofcontents
+
+% Rimuovere se non si vuole la tabella delle figure
+%\listoffigures
+
+\include{chapters/introduction}
+
+\include{chapters/background}
+
+\include{chapters/related_works}
+
+
+\include{chapters/methodology}
+
+\include{chapters/experiments_and_results}
+
+\include{chapters/conclusions}
+
+
+\subsubsection*{Acknowledgments}
+\label{sec:ack}
+Use unnumbered third level headings for the acknowledgments. All acknowledgments, including those to funding agencies, go at the end of the paper. Only add this information once your submission is accepted and deanonymized. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% NOTE: THIS MARKS THE END OF THE "MAIN TEXT"
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Bibliography
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliography{main}
+\bibliographystyle{plain}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Appendices
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+
+\section{The first appendix}
+\label{sec:appendix1}
+This is an example of an appendix. 
+
+
+\section{The second appendix}
+\label{sec:appendix2}
+This is an example of a second appendix. If there is only a single section in the appendix, you may simply call it ``Appendix'' as follows:
+
+\section*{Appendix}
+% No label, since this can't be referenced meaningfully with \ref{}.
+This format should only be used if there is a single appendix (unlike in this document).
+
+\end{document}

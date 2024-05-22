@@ -1,0 +1,24 @@
+%! Author = giaco
+%! Date = 16/05/2024
+
+\section{Introduction}
+\label{sec:introduction}
+
+
+In recent years, Reinforcement Learning (RL) \cite{sutton1998introduction} algorithms have improved more and more, achieving amazing results in many tasks.
+Recent studies, made significant progress in various research areas like competitive and strategic games \cite{mnih2013playing}, \cite{badia2020agent57}, \cite{vinyals2019grandmaster}, robotics \cite{bousmalis2023robocat} and chemistry \cite{varadi2022alphafold}.
+Most of this work has benefited from developments in Deep Learning (DL) techniques, thus creating the Deep Reinforcement Learning paradigm (DRL) \cite{zhang2020deep}.
+In particular, many methods manage to outperform human players in the majority of Atari games in the Arcade Learning Environment \cite{bellemare13arcade}.
+These methods work on images, particularly game frames, and despite their effectiveness, they consist of training a model from scratch every time to solve one specific task and therefore require a lot of interaction with the environment to perform well, much more than a human.
+Usually in the RL setting, agents are fed as input the raw representation of the state, without any additional information on the elements that characterize it, nor meaningful representation. In the learning process, agents, given the input, learn how to solve the task while indirectly learning how to compute a representation of the input features. These representations though, are \textit{reward-oriented}, hence they are not general and robust, but they are overfitted to be optimal for the current task. This leads to weak representation that as soon the task objective changes, it becomes sub-optimal and agents are not able to easily adapt. So the better the representation of the state the better the agent will perform.
+On the other hand, humans, in the course of their lives, acquire skills and can immediately recognize important objects in an image, distinguish objects in the foreground from those in the background, read, or even predict the next frame after seeing the last moments.
+Using these prior skills, when they are in the presence of new environments, humans, through little interaction with it, can understand what effects their actions will have and thus can focus more on learning a good policy to solve the task rather than learning about the environment.
+Following this idea, we propose an approach where the RL agent is equipped with a set of skills in the form of pre-trained computer vision models. These models are capable of extracting different information from the game frames.
+The aim of this study is, therefore, to understand which skills to equip the agent with, and how to combine these skills together to help the agent focus on the policy learning part rather than the representation learning part.
+We tested our methods against an agent trained via the Proximal Policy Optimization (PPO) algorithm \cite{schulman2017proximal}.
+
+
+%mancano due parole sui risultati ottenuti
+INSERIRE QUALCHE FRASE SUI RISULTATI OTTENUTI
+
+The work is organized in this way: Sec. \ref{sec:related_work} provides information about related works on equipping an agent with skills. Sec. \ref{sec:method} shows information about our approach. Sec. \ref{sec:experiments} provides the experiments that we conducted to test our method. Sec. \ref{sec:results} shows the results and finally Sec. \ref{sec:conclusions} provides the conclusions of the work and discusses possible future extensions.
