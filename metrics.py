@@ -1,7 +1,6 @@
 import pandas as pd
-import numpy as np
 
-df = pd.read_csv("./results/eval_results2.csv", index_col=0)
+df = pd.read_csv("./results/eval_results4.csv", index_col=0)
 
 # Group by 'env' first, then by 'agent'
 grouped = df.groupby(['env', 'agent'])
