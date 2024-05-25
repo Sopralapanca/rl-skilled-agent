@@ -102,7 +102,6 @@ vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
 
 
-
 skills = []
 skills.append(get_state_rep_uns(env_name, device, expert=expert))
 skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=True, expert=expert))
@@ -394,10 +393,14 @@ else:
     )
     run.finish()
 
+
 # print("net_arch:", model.policy.net_arch)
 # print("share_feature_extractor:", model.policy.share_features_extractor)
 # print("feature_extractor:", model.policy.features_extractor)
-# print("num_skills:", len(model.policy.features_extractor.skills))
-# for s in model.policy.features_extractor.skills:
-#     print(s.name, "is training", s.skill_model.training)
+#
+# if skilled_agent:
+#     print("num_skills:", len(model.policy.features_extractor.skills))
+#     for s in model.policy.features_extractor.skills:
+#         print(s.name, "is training", s.skill_model.training)
+#
 # print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))
