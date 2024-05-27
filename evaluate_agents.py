@@ -26,8 +26,7 @@ from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor
 import argparse
 
 # ---------------------------------- MAIN ----------------------------------
-device = f"cuda:0"
-
+device = "cuda:2"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
 n_seeds = 5
 seeds = [np.random.randint(0, 100000) for i in range(n_seeds)]
@@ -44,43 +43,43 @@ if os.path.isfile(path):
 else:
     df = pd.DataFrame(columns=["env", "agent", "seed", "mean_reward", "std_reward"])
 
-d = {"Pong":
-         {"PPO": "k24cn512",
-          "wsharing_attention_ext": "vwll3bv1",
-          "reservoir_concat_ext": "025abyrl",
-          "cnn_concat_ext": "yyt0d5xr",
-          },
-     "Ms_Pacman": {"PPO": "8l5cbixu",
-                   "wsharing_attention_ext": "xbmyz15p",
-                   "reservoir_concat_ext": "88rmd7an",
-                   "cnn_concat_ext": "0vm9cdpz",
-                   },
+d = {
+    # "Pong":
+    #      {"PPO": "k24cn512",
+    #       "wsharing_attention_ext": "vwll3bv1",
+    #       "reservoir_concat_ext": "025abyrl",
+    #       "cnn_concat_ext": "yyt0d5xr",
+    #       },
+    # "Ms_Pacman": {"PPO": "8l5cbixu",
+    #            "wsharing_attention_ext": "xbmyz15p",
+    #            "reservoir_concat_ext": "88rmd7an",
+    #            "cnn_concat_ext": "0vm9cdpz",
+    #            },
 
-     "Breakout": {"PPO": "ycp3r13u", #["ycp3r13u", "cuda:0"],
-                  "wsharing_attention_ext": "ckd8d160", #["ckd8d160", "cuda:1"],
-                  "fixed_lin_concat_ext": "gy9a4wow", #["gy9a4wow", "cuda:1"],
-                  "cnn_concat_ext": "6qqnn3ce" #["6qqnn3ce", "cuda:1"]
-                  },
+    "Breakout": {"PPO": ["01v1cwww", "5jb6tuoo", "16jzci1z"],  #"ycp3r13u"
+                 "wsharing_attention_ext": ["jv6j5upf", "2zw7ox2c", "dbjc29fy"],  #"ckd8d160",
+                 # "fixed_lin_concat_ext": "gy9a4wow",
+                 # "cnn_concat_ext": "6qqnn3ce"
+                 },
 
-     "Breakout-Policy": {
-                    "wsharing_attention_ext": "j934tseo", #["j934tseo", "cuda:2"],
-                    "fixed_lin_concat_ext": "g1bfh8y9", #["g1bfh8y9", "cuda:3"],
-                    "cnn_concat_ext": "zl8boshh" #["zl8boshh", "cuda:2"],
-                    },
+    "Breakout-Policy": {
+        "wsharing_attention_ext": ["trl9zgvt", "1l26vwat", "v4pnpue5"],  #"j934tseo"
+        # "fixed_lin_concat_ext": "g1bfh8y9", #["g1bfh8y9", "cuda:3"],
+        # "cnn_concat_ext": "zl8boshh" #["zl8boshh", "cuda:2"],
+    },
 
-     "Breakout-Expert": {
-                    "wsharing_attention_ext": "12n3bzj9", #["12n3bzj9", "cuda:3"],
-                    "fixed_lin_concat_ext": "mdmh29il", #["mdmh29il", "cuda:3"],
-                    "cnn_concat_ext": "oh2n2o7g" #["oh2n2o7g", "cuda:1"],
-                    },
+    "Breakout-Expert": {
+        "wsharing_attention_ext": ["34i1meeg", "h763hmxr", "645m7wq9"],  #"12n3bzj9"
+        # "fixed_lin_concat_ext": "mdmh29il", #["mdmh29il", "cuda:3"],
+        # "cnn_concat_ext": "oh2n2o7g" #["oh2n2o7g", "cuda:1"],
+    },
 
-     "Breakout-Expert_Policy": {
-                    "wsharing_attention_ext": "ba5ow0zz", #["ba5ow0zz", "cuda:1"],
-                    "fixed_lin_concat_ext": "npa2880u", #["npa2880u", "cuda:1"],
-                    "cnn_concat_ext": "0mcyd522", #["0mcyd522", "cuda:1"],
-                    },
-     }
-
+    "Breakout-Expert_Policy": {
+        "wsharing_attention_ext": ["e5x2bp6w", "c6y9rvdu", "b59ggnda"]  #"ba5ow0zz"
+        # "fixed_lin_concat_ext": "npa2880u", #["npa2880u", "cuda:1"],
+        # "cnn_concat_ext": "0mcyd522", #["0mcyd522", "cuda:1"],
+    },
+}
 
 for seed in seeds:
     for env in d.keys():
@@ -110,8 +109,8 @@ for seed in seeds:
             vec_env = VecFrameStack(vec_env, n_stack=4)
             vec_env = VecTransposeImage(vec_env)
 
-            load_path = f"./models/{agents[agent]}/best_model.zip"
 
+            models = agents[agent]
             if agent != "PPO":
                 if "Expert" in env:
                     expert = True
@@ -163,7 +162,7 @@ for seed in seeds:
                 elif agent == "fixed_lin_concat_ext":
                     config["f_ext_class"] = FixedLinearConcatExtractor
                     ext = FixedLinearConcatExtractor(observation_space=vec_env.observation_space, skills=skills,
-                                                     device=device,fixed_dim=512)
+                                                     device=device, fixed_dim=512)
                     features_dim = ext.get_dimension(sample_obs)
 
                 f_ext_kwargs = config["f_ext_kwargs"]
@@ -183,7 +182,6 @@ for seed in seeds:
 
                 elif agent == "fixed_lin_concat_ext":
                     f_ext_kwargs["fixed_dim"] = 512
-
 
                 f_ext_kwargs["skills"] = skills
                 f_ext_kwargs["features_dim"] = features_dim
@@ -209,14 +207,21 @@ for seed in seeds:
                     )
                 custom_objects = {"policy_kwargs": policy_kwargs}
 
-                model = PPO.load(path=load_path, env=vec_env, device=device,
-                                 custom_objects=custom_objects)  # don't need to pass policy_kwargs
+                for m in models:
+                    load_path = f"./models/{m}/best_model.zip"
+                    model = PPO.load(path=load_path, env=vec_env, device=device,
+                                     custom_objects=custom_objects)  # don't need to pass policy_kwargs
+                    mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=eval_episodes)
+                    print(f"Env:{env} Agent:{agent} Seed:{seed} Mean reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+                    df.loc[len(df.index)] = [env, agent, seed, mean_reward, std_reward]
 
             else:
-                model = PPO.load(path=load_path, env=vec_env, device=device)  # don't need to pass policy_kwargs
+                for m in models:
+                    load_path = f"./models/{m}/best_model.zip"
+                    model = PPO.load(path=load_path, env=vec_env, device=device)  # don't need to pass policy_kwargs
 
-            mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=eval_episodes)
-            print(f"Env:{env} Agent:{agent} Seed:{seed} Mean reward:{mean_reward:.2f} +/- {std_reward:.2f}")
-            df.loc[len(df.index)] = [env, agent, seed, mean_reward, std_reward]
+                    mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=eval_episodes)
+                    print(f"Env:{env} Agent:{agent} Seed:{seed} Mean reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+                    df.loc[len(df.index)] = [env, agent, seed, mean_reward, std_reward]
 
         df.to_csv(path)
