@@ -422,6 +422,10 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         self.weights = nn.Sequential(nn.Linear((2 * features_dim), 1, device=device), nn.ReLU())
 
         self.att_weights = {}
+
+        self.embeddings_values = []
+        self.adapted_embeddings_values = []
+
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print("forward observation shape", observations.shape)
         skill_out = self.preprocess_input(observations)
@@ -434,13 +438,19 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))
         encoded_frame = self.encoder_seq_layer(encoded_frame)  # query
 
+        self.embeddings_values = []
+        self.adapted_embeddings_values = []
+
         for i in range(len(skill_out)):
             seq_layer = self.mlp_layers[i]
             x = skill_out[i]
             if len(x.shape) > 2:
                 x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
 
+
+            self.embeddings_values.append(x)
             skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
+            self.adapted_embeddings_values.append(skill_out[i])
 
             concatenated = th.cat([encoded_frame, skill_out[i]], 1)
 

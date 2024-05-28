@@ -26,10 +26,11 @@ from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor
 import argparse
 
 # ---------------------------------- MAIN ----------------------------------
-device = "cuda:2"
+device = "cuda:3"
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
-n_seeds = 5
-seeds = [np.random.randint(0, 100000) for i in range(n_seeds)]
+#n_seeds = 5
+#seeds = [np.random.randint(0, 100000) for i in range(n_seeds)]
+seeds = [47695, 32558, 94088, 71782, 66638]
 eval_episodes = 20
 
 results_dir = "./results"
