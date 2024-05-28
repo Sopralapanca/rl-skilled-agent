@@ -111,8 +111,8 @@ while not done:
     new_obs, rewards, dones, infos = vec_env.step(action)  # we need to pass an array of actions in step, one action for each environment
     obs = new_obs
 
-    done = episode_terminated(infos)
-    #done = dones[0]
+    #done = episode_terminated(infos)
+    done = dones[0]
 
     print("Step:", i)
     i = i + 1
