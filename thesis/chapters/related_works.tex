@@ -5,8 +5,10 @@
 \label{sec:related_work}
 The concept of helping an RL agent by providing information already processed by other models rather than learning from scratch to extract important features is not new.
 Most of the works apply a single model that pre-processes the input and then learns the actual policy.
-\cite{goel2018unsupervised} proposed an unsupervised technique for deep reinforcement learning that automatically detects moving objects given recent frames of Atari games. The learned representation is used instead of the raw frame to focus the policy of the agent on the moving objects.
-The work of \cite{kulkarni2019unsupervised} provided an unsupervised method to learn object representations in terms of keypoints given video frames. They then used keypoints as inputs to policies instead of RGB observations.
+\cite{goel2018unsupervised} proposed an unsupervised technique for deep reinforcement learning that automatically detects moving objects given recent frames of Atari games.
+The learned representation is used instead of the raw frame to focus the policy of the agent on the moving objects.
+The work of \cite{kulkarni2019unsupervised} provided an unsupervised method to learn object representations in terms of keypoints given video frames.
+They then used keypoints as inputs to policies instead of RGB observations.
 \cite{anand2019unsupervised} introduced a method that learns state representations on Atari games. ESTENDERE UN PO.
 \cite{montalvo2023exploiting} used a semantic segmentation model to transform Super Mario Bros frames from their original domain to a simplified semantic domain, and then trained the reinforcement learning algorithm with these simplified images.
 All these methods process the input in one way and do not consider combining several methods that extract different features.

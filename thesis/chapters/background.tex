@@ -22,19 +22,22 @@ There are several types of machine learning, each with its own characteristics a
 Some of the main types of ML algorithms are Supervised Machine Learning, Unsupervised Machine Learning, Semi-Supervised Machine Learning and finally Reinforcement Learning.
 We will talk about the different kind of learning algorithm in the following subsection, while since RL is the focus of this work we will provide information about RL in a proper section.
 
-\subsubsection{Supervised Machine Learning}
+\subsubsection{Supervised Learning}
 \label{subsubsec:supervised_ml}
-Supervised learning is a type of machine learning where the model is trained on a labeled dataset.
+Supervised Learning is a type of machine learning where the model is trained on a labeled dataset.
 In this context, \textit{labeled} means that each training example is paired with an output label.
 The goal of supervised learning is to learn a mapping from inputs to outputs that can be used to predict the output for new, unseen inputs.
 
 
 There are two main categories of supervised learning that are:
 \begin{itemize}
-    \item Classification - The goal is to predict a discrete label. For example, classifying emails as spam or not spam, or recognizing handwritten digits. Classification algorithms learn to map the input features to one of the predefined classes.
+    \item Classification - The goal is to predict a discrete label.
+    For example, classifying emails as spam or not spam, or recognizing handwritten digits.
+    Classification algorithms learn to map the input features to one of the predefined classes.
 
-
-    \item Regression - The goal is to predict a continuous value. For example, predicting the price of a house given its features, or the temperature for a given day. Regression algorithms learn to map the input features to a continuous numerical value.
+    \item Regression - The goal is to predict a continuous value.
+    For example, predicting the price of a house given its features, or the temperature for a given day.
+    Regression algorithms learn to map the input features to a continuous numerical value.
 
 \end{itemize}
 
@@ -51,23 +54,41 @@ Unlike supervised learning, unsupervised learning doesn’t involve providing th
 The primary goal of Unsupervised learning is often to discover hidden patterns, similarities, or clusters within the data, which can then be used for various purposes, such as data exploration, visualization, dimensionality reduction, and more.
 
 %advantages and disadvantages
-A specific type of unsupervised learning that was used in the development of this theis is the \textbf{Self-Supervised Learning}.
-Self-Supervised learning consists of
-
-is a type of unsupervised learning where the data itself provides the supervision.
 
 
-\subsubsection{Semi-Supervised Machine Learning}
+
+
+
+
+\subsubsection{Self-Supervised Machine Learning}
 \label{sec:semisupervised_ml}
+Self-Supervised learning is a type of ML technique that falls in between supervised and unsupervised learning.
+When in presence of a large amount of unlabeled data, self-supervised learning can be used to learn useful representations of the data.
+In fact, the model is trained on a task using the data itself as the target, rather than relying on human-labeled data.
 
+
+
+Self-Supervised learning is a powerful technique that can be used to learn useful representations of the data, and it can be used as a pre-training step for supervised learning tasks.
+Self-Supervised learning model were used in the development of this thesis as we will see in section INSERT.
+
+%insert citation of example of self-supervised learning
 
 \section{Reinforcement Learning}
 \label{sec:rl}
 Reinforcement Learning (RL) is a subfield of machine learning that focuses on training agents to make sequences of decisions in an environment to maximize a reward signal.
+It works in a way that mimics the trial-and-error learning process that humans use to achieve their goals.
 
+Specifically, we formalize the RL problem as a Markov Decision Process (MDP), which is a tuple $(S, A, P, R, \gamma)$, where:
+\begin{itemize}
+    \item $S$ is the set of states that the agent can be in.
+    \item $A$ is the set of actions that the agent can take.
+    \item $P$ is the transition probability function, which defines the probability of transitioning from one state to another given an action.
+    \item $R$ is the reward function, which defines the reward that the agent receives when transitioning from one state to another.
+    \item $\gamma$ is the discount factor, which determines the importance of future rewards.
+\end{itemize}
 
-
-
+The goal of the agent is to learn a policy $\pi$ that maps states to actions in a way that maximizes the expected cumulative reward.
+The policy can be deterministic or stochastic, and it can be represented as a table, a function, or a neural network.
 
 
 
@@ -77,16 +98,35 @@ Reinforcement Learning (RL) is a subfield of machine learning that focuses on tr
 
 \section{Deep Learning}
 \label{sec:dl}
-
-An ANN is an Artificial Intelligence method that is inspired by the way the human brain works.
+\subsection{Neural Networks}
+A Neural Network (NN) is an Artificial Intelligence method that is inspired by the way the human brain works.
 Every neural network, consists of layers of interconnected nodes, which are called neurons.
 We have an input layer, which is responsible for receiving the input data, one or more hidden layers, that are responsible for processing the data in a way that encodes the information in a latent space, and finally an output layer, which is responsible for producing the output information.
-Also, each neuron can be equipped with non-linear activation functions like ReLU, TanH, ... INSERIRE, that are used to introduce non-linearity in the model.
+Also, each neuron can be equipped with non-linear activation functions like ReLU, TanH, ... INSERT, that are used to introduce non-linearity in the model.
 This allows the model to learn more complex patterns in the data rather than linear ones.
 
 Neurons are connected to each other through edges, which are weighted connections that are learned during the training process.
-To learn this weights the backpropagation algorithm is used to train the neural network.
+The process of learning the weights relies on the backpropagation algorithm that consists of two main steps: forward pass and backward pass.
+In the forward pass, the input data is passed through the network, and the output is computed.
+In the backward pass, the error is computed, and the weights are updated using the gradient descent algorithm.
+
+
+\subsection{Deep Learning}
+%talk about deep learning and convolutional neural networks
+Deep Learning is a subfield of machine learning that focuses on training neural networks with many layers.
+Deep Learning has been successful in many fields, including computer vision, natural language processing, and reinforcement learning.
+One of the most successful architectures in deep learning is the Convolutional Neural Network (CNN), which is widely used in computer vision tasks.
+CNNs are composed of convolutional layers, pooling layers, and fully connected layers.
+Convolutional layers are responsible for extracting features from the input data, while pooling layers are used to reduce the dimensionality of the data.
+Fully connected layers are used to make the final predictions based on the extracted features.
 
 
 
+\subsection{Deep Reinforcement Learning}
+% talk about DQN and PPO
 
+In this section, we talk about the combination of deep learning and reinforcement learning, which is called Deep Reinforcement Learning (DRL).
+DRL has been successful in many tasks, including playing video games, controlling robots, and optimizing complex systems.
+One of the most successful DRL algorithms is the Deep Q-Network (DQN), which uses a neural network to approximate the Q-function in Q-learning.
+DQN has been successful in many tasks, including playing Atari games, and it has been extended to many other algorithms, including Double DQN, Dueling DQN, and Rainbow DQN.
+Another successful DRL algorithm is Proximal Policy Optimization (PPO), which uses a neural network to approximate the policy in policy gradient methods.
