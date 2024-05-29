@@ -9,8 +9,3 @@ grouped = df.groupby(['env', 'agent'])
 result = grouped.agg({'mean_reward': 'mean', 'std_reward': 'std'}).reset_index()
 print(result)
 
-envs = df['env'].unique()
-for env in envs:
-    df_env = df[(df['env'] == env)]
-    seeds = df_env['seed'].unique()
-    print(f"{env}:{seeds}")

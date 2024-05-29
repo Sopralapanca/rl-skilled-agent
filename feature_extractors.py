@@ -60,6 +60,7 @@ class FeaturesExtractor(BaseFeaturesExtractor):
             if el.ndim == 4:
                 self.num_channels += el.shape[1]
 
+        self.tmp = []
 
 
     def preprocess_input(self, observations: th.Tensor, mode: int = 0) -> [th.Tensor]:
@@ -75,6 +76,8 @@ class FeaturesExtractor(BaseFeaturesExtractor):
             with th.no_grad():
                 so = skill.input_adapter(observations)
                 so = skill.skill_output(skill.skill_model, so)
+
+            self.tmp.append(so)
 
             if mode == 0:
                 if skill.name == "state_rep_uns":
@@ -428,7 +431,10 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print("forward observation shape", observations.shape)
+
+        self.tmp = []
         skill_out = self.preprocess_input(observations)
+
         weights = []
 
         with torch.no_grad():
