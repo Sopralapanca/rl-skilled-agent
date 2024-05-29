@@ -1,31 +1,92 @@
 %! Author = giaco
 %! Date = 16/05/2024
 
-\section{Background}
+\chapter{Background}
 \label{sec:background}
 In this section, we provide a brief overview of the main concepts that are necessary to understand the work presented in this thesis.
-First of all, we start by introducing the concept of neural networks and deep learning in \ref{sec:dl}, which is the foundation of most of the models used in this work.
-Then, we introduce reinforcement learning in \ref{sec:rl}, which is instead the main focus of this work.
-In this section, we provide a brief overview of the main concepts that are necessary to understand the work presented in this thesis. We will talk about model free reinforcement learning,
+First of all, we start by introducing the concept of Machine Learning (ML) in~\ref{sec:machine_learning}, and we will provide different types of machine learning algorithms.
+Then, in~\ref{sec:rl} we will talk in depth about one specific kind of learning, i.e.\ Reinforcement Learning, which is instead the main focus of this work.
+Finally, in~\ref{sec:dl} we introduce the concepts of Neural Networks and Deep Learning, and how they are used in Reinforcement Learning settings.
 
-\subsection{Deep Learning}
-\label{sec:dl}
-A neural network is an artificial intelligence method that is inspired by the way the human brain works.
-Every neural network, consists of layers of interconnected nodes, which are called neurons.
-We have an input layer, which is responsible for receiving the input data, one or more hidden layers, that are responsible for processing the data in a way that encodes the information in a latent space, and finally an output layer, which is responsible for producing the output data.
-Neurons are connected to each other through edges, which are weighted connections that are learned during the training process.
+\section{Machine Learning}
+\label{sec:machine_learning}
+%inserire immagine AI-ML-DL
+% prendi immagini da qui https://www.geeksforgeeks.org/types-of-machine-learning/
 
-Non-linear activation functions are used to introduce non-linearity in the model, which allows the model to learn complex patterns in the data.
+Machine learning is the branch of Artificial Intelligence that focuses on developing models and algorithms that let computers learn from data and improve from previous experience without being explicitly programmed for every task.
+In simple words, ML teaches the systems to think and understand like humans by learning from the data.
 
-Backpropagation is the algorithm used to train the neural network.
+ML finds application in many fields, including natural language processing, computer vision, speech recognition, email filtering, medicine and many more
 
-%In a fully connected
-%All the neurons in a layer are connected to all the neurons in the next layer.
-%
-%
-%is used to recognize patterns in data.
+There are several types of machine learning, each with its own characteristics and applications.
+Some of the main types of ML algorithms are Supervised Machine Learning, Unsupervised Machine Learning, Semi-Supervised Machine Learning and finally Reinforcement Learning.
+We will talk about the different kind of learning algorithm in the following subsection, while since RL is the focus of this work we will provide information about RL in a proper section.
 
-\subsection{Reinforcement Learning}
+\subsubsection{Supervised Machine Learning}
+\label{subsubsec:supervised_ml}
+Supervised learning is a type of machine learning where the model is trained on a labeled dataset.
+In this context, \textit{labeled} means that each training example is paired with an output label.
+The goal of supervised learning is to learn a mapping from inputs to outputs that can be used to predict the output for new, unseen inputs.
+
+
+There are two main categories of supervised learning that are:
+\begin{itemize}
+    \item Classification - The goal is to predict a discrete label. For example, classifying emails as spam or not spam, or recognizing handwritten digits. Classification algorithms learn to map the input features to one of the predefined classes.
+
+
+    \item Regression - The goal is to predict a continuous value. For example, predicting the price of a house given its features, or the temperature for a given day. Regression algorithms learn to map the input features to a continuous numerical value.
+
+\end{itemize}
+
+%vantaggi e svantaggi
+Supervised Learning models can have high accuracy as they are trained on labelled data, but sometimes, they need a huge amount of data to perform well.
+Also, they can be used as pre-trained models, which saves time and resources when developing new models from scratch.
+
+It has some limitations though, in fact, it may struggle with unseen or unexpected patterns that are not present in the training data, and it can be time-consuming when in presence of huge amount of data in the training set.
+
+\subsubsection{Unsupervised Machine Learning}
+\label{subsubsec:unsupervised_ml}
+Unsupervised learning is a type of ML technique in which an algorithm discovers patterns and relationships using unlabeled data.
+Unlike supervised learning, unsupervised learning doesn’t involve providing the algorithm with labeled target outputs.
+The primary goal of Unsupervised learning is often to discover hidden patterns, similarities, or clusters within the data, which can then be used for various purposes, such as data exploration, visualization, dimensionality reduction, and more.
+
+%advantages and disadvantages
+A specific type of unsupervised learning that was used in the development of this theis is the \textbf{Self-Supervised Learning}.
+Self-Supervised learning consists of
+
+is a type of unsupervised learning where the data itself provides the supervision.
+
+
+\subsubsection{Semi-Supervised Machine Learning}
+\label{sec:semisupervised_ml}
+
+
+\section{Reinforcement Learning}
 \label{sec:rl}
 Reinforcement Learning (RL) is a subfield of machine learning that focuses on training agents to make sequences of decisions in an environment to maximize a reward signal.
+
+
+
+
+
+
+
+
+
+
+
+\section{Deep Learning}
+\label{sec:dl}
+
+An ANN is an Artificial Intelligence method that is inspired by the way the human brain works.
+Every neural network, consists of layers of interconnected nodes, which are called neurons.
+We have an input layer, which is responsible for receiving the input data, one or more hidden layers, that are responsible for processing the data in a way that encodes the information in a latent space, and finally an output layer, which is responsible for producing the output information.
+Also, each neuron can be equipped with non-linear activation functions like ReLU, TanH, ... INSERIRE, that are used to introduce non-linearity in the model.
+This allows the model to learn more complex patterns in the data rather than linear ones.
+
+Neurons are connected to each other through edges, which are weighted connections that are learned during the training process.
+To learn this weights the backpropagation algorithm is used to train the neural network.
+
+
+
 
