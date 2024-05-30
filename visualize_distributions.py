@@ -17,8 +17,8 @@ import moviepy.video.io.ImageSequenceClip
 
 N_ENVS = 1
 FRAME_STACK = 4
-ENV_NAME = "Pong"
-model_path = "vwll3bv1"  # ATTENZIONE CAMBIA MODELLO
+ENV_NAME = "Ms_Pacman"
+model_path = "xbmyz15p"  # ATTENZIONE CAMBIA MODELLO
 device = "cuda:0"
 
 # Create the environment
@@ -92,7 +92,7 @@ while not done:
         linear_emb[j] = lin.flatten().cpu().numpy()
 
 
-    fig, ax = plt.subplots(nrows=1, ncols=5, figsize=(35, 6))
+    fig, ax = plt.subplots(nrows=1, ncols=5, figsize=(40, 6))
 
     fig.suptitle(f"WSA Visualization - Step: {i}", fontsize=17)
     ax[0].imshow(last_frame[0], cmap='gray')
@@ -130,8 +130,10 @@ while not done:
     obs = new_obs
 
     #done = episode_terminated(infos)
-    done = dones[0]
+    #done = dones[0]
 
+    if infos[0].get("lives") == 0:
+        break
     print("Step:", i)
     i = i + 1
 
