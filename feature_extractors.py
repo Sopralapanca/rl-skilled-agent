@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('skills')
 
 import torch
@@ -53,6 +54,9 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         sample = th.from_numpy(sample) / 255
         sample = sample.to(device)
 
+        self.skills_embeddings = []
+        self.skills_name = []
+
         skill_out = self.preprocess_input(sample, mode=mode)
 
         self.num_channels = 0
@@ -60,7 +64,6 @@ class FeaturesExtractor(BaseFeaturesExtractor):
             if el.ndim == 4:
                 self.num_channels += el.shape[1]
 
-        self.tmp = []
 
 
     def preprocess_input(self, observations: th.Tensor, mode: int = 0) -> [th.Tensor]:
@@ -77,7 +80,7 @@ class FeaturesExtractor(BaseFeaturesExtractor):
                 so = skill.input_adapter(observations)
                 so = skill.skill_output(skill.skill_model, so)
 
-            self.tmp.append(so)
+            self.skills_embeddings.append(so)
 
             if mode == 0:
                 if skill.name == "state_rep_uns":
@@ -91,6 +94,7 @@ class FeaturesExtractor(BaseFeaturesExtractor):
                     adapter = self.adapters[skill.name]
                     so = adapter(so)
 
+            self.skills_name.append(skill.name)
             #print(skill.name, so.shape)
             skill_out.append(so)
 
@@ -228,7 +232,7 @@ class CombineExtractor(FeaturesExtractor):
                  num_linear_skills=0,
                  device="cpu",
                  mode=1):
-        super().__init__(observation_space, features_dim, skills, device,mode)
+        super().__init__(observation_space, features_dim, skills, device, mode)
 
         """
         :param observation_space: Gymnasium observation space
@@ -384,7 +388,6 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         """
         super().__init__(observation_space, features_dim, skills, device)
 
-
         self.device = device
         sample = observation_space.sample()  # 4x84x84
         sample = np.expand_dims(sample, axis=0)  # 1x4x84x84
@@ -413,6 +416,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         model = Autoencoder().to(device)
         model.load_state_dict(torch.load(model_path, map_location=device), strict=True)
         model.eval()
+
         self.encoder = model.encoder
         x = sample[:, -1:, :, :]
         with torch.no_grad():
@@ -426,13 +430,13 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
 
         self.att_weights = {}
 
-        self.embeddings_values = []
-        self.adapted_embeddings_values = []
+        self.spatial_adapters = []
+        self.linear_adapters = []
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print("forward observation shape", observations.shape)
 
-        self.tmp = []
+        self.skills_embeddings = []
         skill_out = self.preprocess_input(observations)
 
         weights = []
@@ -444,8 +448,9 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             encoded_frame = th.reshape(encoded_frame, (x.size(0), -1))
         encoded_frame = self.encoder_seq_layer(encoded_frame)  # query
 
-        self.embeddings_values = []
-        self.adapted_embeddings_values = []
+        self.spatial_adapters = []
+        self.linear_adapters = []
+
 
         for i in range(len(skill_out)):
             seq_layer = self.mlp_layers[i]
@@ -453,10 +458,9 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             if len(x.shape) > 2:
                 x = th.reshape(x, (x.size(0), -1))  # flatten the skill out
 
-
-            self.embeddings_values.append(x)
+            self.spatial_adapters.append(x)
             skill_out[i] = seq_layer(x)  # pass through a mlp layer to reduce and fix the dimension
-            self.adapted_embeddings_values.append(skill_out[i])
+            self.linear_adapters.append(skill_out[i])
 
             concatenated = th.cat([encoded_frame, skill_out[i]], 1)
 

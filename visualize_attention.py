@@ -86,6 +86,7 @@ while not done:
     ax[0].imshow(last_frame[0], cmap='gray')
     ax[0].set_title('Last frame', fontsize=15)
     ax[0].axis('off')
+
     ax[1].bar(weights_label, values)
     ax[1].set_title('Attention Weights', fontsize=15)
     ax[1].set_ylim([0, 1])
