@@ -13,9 +13,15 @@
 \usepackage{subcaption}         % Allows for the use of subfigures and subcaptions
 \usepackage[space]{grffile}     % For spaces in image names
 \usepackage{url}                % For displaying urls
-\usepackage{biblatex}
-\usepackage{amstex}
+\usepackage{amsmath}
+\usepackage[hidelinks, urlcolor=blue]{hyperref}
+\usepackage[parfill]{parskip}   % no indentation between paragraphs
 
+\usepackage{natbib}
+\bibliographystyle{abbrvnat}
+\setcitestyle{authoryear,open={(},close={)}} %Citation-related commands
+%\addbibresource{main.bib}
+%\bibliographystyle{plain}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Begin document, create title and abstract
@@ -44,19 +50,13 @@
 \include{chapters/conclusions}
 
 
+\bibliography{main}
+
 \subsubsection*{Acknowledgments}
 \label{sec:ack}
 Use unnumbered third level headings for the acknowledgments. All acknowledgments, including those to funding agencies, go at the end of the paper. Only add this information once your submission is accepted and deanonymized. 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% NOTE: THIS MARKS THE END OF THE "MAIN TEXT"
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Bibliography
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\bibliography{main}
-\bibliographystyle{plain}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Appendices

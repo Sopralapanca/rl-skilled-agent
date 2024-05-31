@@ -1,5 +1,14 @@
 \begin{abstract}
-In this work, we present a technique for deep reinforcement learning that, through the use of different state representations, is able to combine different features in order to create an enhanced feature rapresentation.
-Instead of directly learning a policy from raw input, the agent uses pre-trained foundational models which are capable of extracting features of various forms.
+
+TODO - EXTEND
+
+Reinforcement Learning (RL) focuses on maximizing the cumulative reward obtained via agent's interaction with a specific environment. Usually, the go-to approach to tackle this problem is to learn from scratch an end-to-end mapping between the observation and action spaces to define agents' behaviors.
+On the other hand, Foundational Models (FMs) can share insightful representations of the world ready to be leveraged by agents. Different FMs learn disparate latent embeddings, also coming from different modalities. How to effectively combine these representations is still an open and understudied question.
+In this work, we propose Weight Sharing Attention (WSA) to combine embeddings of different FMs to shape an enriched state representation. We compare several combination modes showing that, without fine-tuning of hyperparameters, WSA obtains comparable performance with state-of-the-art methods on different Atari games. Furthermore, we demonstrate and analyse one of the principal challenges and limitations of this approach: the issue of out of distribution data.
+
+
+
+%In this work, we present a technique for deep reinforcement learning that, through the use of different state representations, is able to combine different features in order to create an enhanced feature rapresentation.
+%Instead of directly learning a policy from raw input, the agent uses pre-trained foundational models which are capable of extracting features of various forms.
 
 \end{abstract}
