@@ -70,10 +70,7 @@ config["net_arch_vf"] = args.vf
 
 expert = args.use_expert == "True"
 
-if expert:
-    version = "2.1 experts"
-else:
-    version = "2.0 seeds"
+version = "3.0 norelu_both"
 
 tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}', f'alg:{alg}']
 

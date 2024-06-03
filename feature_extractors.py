@@ -28,17 +28,17 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         self.__vobj_seg_adapter = nn.Sequential(
             nn.Conv2d(20, 16, 1),
             nn.Conv2d(16, 16, 5, 5),
-            nn.ReLU()
+            #nn.ReLU()
         )
         self.__kpt_enc_adapter = nn.Sequential(
             nn.Conv2d(128, 32, 1),
             nn.Conv2d(32, 32, 6),
-            nn.ReLU()
+            #nn.ReLU()
         )
         self.__kpt_key_adapter = nn.Sequential(
             nn.Conv2d(4, 16, 1),
             nn.Conv2d(16, 16, 6),
-            nn.ReLU()
+            #nn.ReLU()
         )
         self.adapters = {
             "obj_key_enc": self.__kpt_enc_adapter,
@@ -404,7 +404,9 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         # for the skills
         self.mlp_layers = nn.ModuleList()
         for i in range(len(skill_out)):
-            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device), nn.ReLU())
+            seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device),
+                                      #nn.ReLU()
+                                      )
             self.mlp_layers.append(seq_layer)
 
         # for the context
