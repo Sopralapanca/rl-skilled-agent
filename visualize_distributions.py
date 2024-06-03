@@ -17,9 +17,9 @@ import moviepy.video.io.ImageSequenceClip
 
 N_ENVS = 1
 FRAME_STACK = 4
-ENV_NAME = "Ms_Pacman"
-model_path = "xbmyz15p"  # ATTENZIONE CAMBIA MODELLO
-device = "cuda:0"
+ENV_NAME = "Breakout"
+model_path = "ba5ow0zz"  # ATTENZIONE CAMBIA MODELLO
+device = "cuda:1"
 
 # Create the environment
 if ENV_NAME.lower() in atari_py.list_games():
