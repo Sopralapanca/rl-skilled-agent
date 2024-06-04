@@ -28,17 +28,17 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         self.__vobj_seg_adapter = nn.Sequential(
             nn.Conv2d(20, 16, 1),
             nn.Conv2d(16, 16, 5, 5),
-            #nn.ReLU()
+            nn.ReLU()
         )
         self.__kpt_enc_adapter = nn.Sequential(
             nn.Conv2d(128, 32, 1),
             nn.Conv2d(32, 32, 6),
-            #nn.ReLU()
+            nn.ReLU()
         )
         self.__kpt_key_adapter = nn.Sequential(
             nn.Conv2d(4, 16, 1),
             nn.Conv2d(16, 16, 6),
-            #nn.ReLU()
+            nn.ReLU()
         )
         self.adapters = {
             "obj_key_enc": self.__kpt_enc_adapter,
