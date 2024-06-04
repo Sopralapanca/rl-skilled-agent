@@ -176,6 +176,8 @@ Fig. \ref{fig:cnn} shows a picture of a CNN architecture.
 
 \section{Reinforcement Learning}
 \label{sec:rl}
+
+\subsection{Introduction}
 % inserire reward hypothesis?
 Reinforcement Learning is a paradigm of ML works in a way that mimics the trial-and-error learning process that humans use to achieve their goals.
 The principle elements that comprise RL are the agent, the environment, and the reward signal.
@@ -279,41 +281,123 @@ And the Bellman Optimality Equation to find the optimal action-value function as
     q_*(s, a) = R_s^a + \gamma \sum_{s'} P_{s, s'}^a v_*(s') = R_s^a + \gamma \sum_{s'} P_{s, s'}^a \max_{a'} q_*(s', a')
 \end{equation}
 
-Solving the Bellman Equations means finding the optimal policy, there exist several iterative algorithms to solve them, and they can be divided into two main categories: model-based and model-free.
+Solving the Bellman Equations means finding the optimal policy, there exist several iterative algorithms to solve them.
+In the following sections, we will explore briefly model-based and model-free RL algorithms, we will talk about how to approximate the value functions and the policy using neural networks.
+We will also talk about some of the most famous RL algorithms, including Q-learning, Deep Q-Learning and Proximal Policy Optimization.
 
 
-
+\subsection{Model Based Reinforcement Learning}\label{subsec:model-based-reinforcement-learning}
 % model based -> value iteration, policy iteration
-% model free -> Q-learning,
+Model-based RL is more like planning, agents builds a model of the environment and then uses it to plan its actions.
+Model-based RL algorithms are based on the Bellman Equations and include algorithms like Policy Iteration and Value Iteration.
 
+Policy Iteration is an iterative algorithm that computes the optimal policy by iteratively applying the Bellman Expectation Equation.
+It alternates between policy evaluation, which computes the value function for a given policy using the Bellman Expectation Equation, and policy improvement, which computes the optimal policy given the value function acting greedily i.e.\ choosing the action that maximizes the action-value function in a given state.
+It is guaranteed to converge to the optimal policy, but it is computationally expensive.
 
-%deep reinforcement learning ->
-    %-> value function approx DQN
-    %-> policy function approx piccola intro
-    %-> policy gradient methods
+Value Iteration instead is an iterative algorithm that computes the optimal value function by iteratively applying the Bellman Optimality Equation.
+At each iteration, it computes the value function for all states and actions, and it is guaranteed to converge to the optimal value function.
 
-
-\subsection{Model Based}
+Both Policy Iteration and Value Iteration uses dynamic programming approaches to solve the Bellman Equations.
 
 \subsection{Model Free}
+\labedl{subsec:model-free-reinforcement-learning}
+In the model-free approach, a model of the environment is not needed.
+Agents learn the optimal policy without explicitly learning the dynamics of the environment so there is no knowledge of the transition probabilities and the reward function.
+Agents learn by interacting with the environment and observing the rewards.
+Model-free RL algorithms can be used for two tasks: prediction and control.
+Prediction is the task of estimating the value function of an unknown MDP, while control is the task of finding the optimal policy.
+We will explore now the control problem, and we will talk about an approach to solve it, i.e.\ Q-learning.
 
-\subsection{Q Learning}
 
-\subsection{Proximal Policy Optimization}
+Model-free control RL algorithms can be divided into two main categories: on-policy and off-policy algorithms.
+On-policy means that the agent learns the policy $\pi$ while following the current policy, so it learns from experience sampled from $\pi$ .
+Off-policy means that the agent learns the policy $\pi$ while following a different policy $\mu$.
+This is very helpful in the context of \textit{learning from imitation} or reusing experiences.
+
+In the context of Off-policy learning, a well-known algorithm is Q-learning.
+Q-learning learns the optimal action-value function by iteratively applying the Bellman Optimality Equation.
+Since a model of the environment is not known, it is not possible to compute the expected value of the next state, so Q-learning uses the concept of Temporal Difference (TD) learning, which consists of updating the action-value function by taking the difference between the current estimate and the target estimate.
+This is called \textit{TD error}.
+The target, in this case, is defined as the immediate reward plus the maximum action-value function of the next state.
+This is because we act greedily, so we choose the action that maximizes the action-value function in the next state.
+
+In Eq. \ref{eq:q_learning} we show the Q-learning update rule where the TD error is multiplied by the learning rate $\alpha$ and added to the current estimate.
+
+\begin{equation} \label{eq:q_learning}
+    Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha [R_{t+1} + \gamma Q(S_{t+1}, a) - Q(S_t, A_t)]
+\end{equation}
+
+We report also the pseudocode of the Q-learning algorithm in Algorithm \ref{alg:q_learning}.
+
+
+\begin{algorithm}
+\caption{Q-Learning Algorithm}\label{alg:q_learning}
+\begin{algorithmic}
+\State Initialize $Q(s, a)$,  $\forall s \in S, a \in A$ arbitrarily and $Q(\text{terminal state}, \cdot) = 0$
+\For{each episode}
+    \State Initialize $S$
+    \For{each step of the episode}
+        \State Choose $A$ from $S$ using policy derived from $Q$
+        \State Take action $A$, observe $R$, $S'$
+        \State $Q(S, A) \leftarrow Q(S, A) + \alpha [R + \gamma \max_{a'} Q(S', a') - Q(S, A)]$
+        \State $S \leftarrow S'$
+    \EndFor
+\State Until S is terminal
+\EndFor
 
 
 
 
-
-
+\end{algorithmic}
+\end{algorithm}
 
 
 
 \section{Deep Reinforcement Learning}
-% talk about DQN and PPO
-
-In this section, we talk about the combination of deep learning and reinforcement learning, which is called Deep Reinforcement Learning (DRL).
+\label{sec:drl}
+Till now we have seen how to solve the RL problem using tabular methods, i.e. the value function  scores and the policy are represented as tables.
+These methods are intractable when the state space is large or continuous.
+In this section we will talk about how value functions and policies can be predicted using neural networks as universal function approximators.
+The combination of deep learning and reinforcement learning is called Deep Reinforcement Learning (DRL).
 DRL has been successful in many tasks, including playing video games, controlling robots, and optimizing complex systems.
-One of the most successful DRL algorithms is the Deep Q-Network (DQN), which uses a neural network to approximate the Q-function in Q-learning.
-DQN has been successful in many tasks, including playing Atari games, and it has been extended to many other algorithms, including Double DQN, Dueling DQN, and Rainbow DQN.
-Another successful DRL algorithm is Proximal Policy Optimization (PPO), which uses a neural network to approximate the policy in policy gradient methods.
+Both prediction and control problems can be approximated.
+We will make distinctions between value function approximation and policy function approximation, and we will talk about policy gradient methods, providing an overview of two of the most famous DRL algorithms, i.e.\ Deep Q-Network (DQN) and Proximal Policy Optimization (PPO).
+
+
+\subsection{Value Function Approximation}
+In the context of DRL, the value function can be approximated using different types of approaches, including linear function approximation, decision tree and in particular neural networks.
+
+The goal is to find a parameter vector \textbf{w} that minimizes the MSE between the predicted value $\hat{v}(s,\textbf{w})$ function and the true value function $v_\pi(s)$.
+This can be done using the gradient descent algorithm, and can be done in a batch or online way.
+The convergence though is not guaranteed for all algorithms and depends on the choice of the value function approximator (linear or non-linear).
+
+Regarding batch methods, a well-known algorithm is the Deep Q-Learning.
+It is based on the Q-learning algorithm, but it uses neural networks to approximate the action-value function
+Also, it uses the concept of experience replay and \epsilon-greedy policy.
+Going in order, actions are chosen using a \epsilon-greedy policy, which means that with probability \epsilon the agent chooses a random action, and with probability 1-\epsilon the agent chooses the action that maximizes the action-value function.
+The experience replay consists of storing the agent's experiences in a replay buffer \textit{D}.
+The buffer will contain the agent's transitions, which are tuples of $(s, a, r, s')$, where $s$ is the initial state, $a$ is the action taken, $r$ is the reward received, and $s'$ is the next state.
+To update the action-value function, the agent samples a batch of transitions from the replay buffer and uses them to compute the TD error. %(q learning targets)
+
+The loss function is defined as the mean squared error between the predicted action-value function and the target action-value function.
+
+
+
+
+
+
+
+
+
+%Also if the state space is large approximate it using feature vector states $\phi(s)$.
+
+
+
+
+
+
+
+
+%As we did in Sec.~\ref{subsec:model-based-reinforcement-learning}, we focus on control problems, since in this theis a control algorithm is used.
+
