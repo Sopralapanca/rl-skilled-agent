@@ -401,15 +401,16 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
                 skill_out[i] = th.reshape(skill_out[i],
                                           (skill_out[i].size(0), -1))  # flatten skill out to take the dimension
 
-        # for the skills
+        # ---------- for the skill ---------- #
         self.mlp_layers = nn.ModuleList()
         for i in range(len(skill_out)):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device),
-                                      #nn.ReLU()
+                                      nn.ReLU(),
+                                      nn.Dropout(p=0.1)
                                       )
             self.mlp_layers.append(seq_layer)
 
-        # for the context
+        # ----------for the context ---------- #
         if expert:
             model_path = "skills/models/" + game.lower() + "-nature-encoder-expert.pt"
         else:
@@ -425,13 +426,18 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             z = self.encoder(x)
             z = th.reshape(z, (z.size(0), -1))
             self.input_size = z.shape[-1]
-        self.encoder_seq_layer = nn.Sequential(nn.Linear(self.input_size, features_dim, device=device), nn.ReLU())
+        self.encoder_seq_layer = nn.Sequential(
+            nn.Linear(self.input_size, features_dim, device=device),
+            nn.ReLU(),
+            nn.Dropout(p=0.1)
+        )
 
-        # for the weights sharing attention
+        # ---------- for WSA ---------- #
         self.weights = nn.Sequential(nn.Linear((2 * features_dim), 1, device=device), nn.ReLU())
 
-        self.att_weights = {}
+        # ---------- saving info ---------- #
 
+        self.att_weights = {}
         self.spatial_adapters = []
         self.linear_adapters = []
 
