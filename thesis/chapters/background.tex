@@ -392,10 +392,37 @@ In the formula, $D$ is the replay buffer, $\textbf{w}$ are the weights of the ne
     L(\textbf{w}) = \E_{(s, a, r, s') \sim D_i} [(r + \gamma \max_{a'} Q(s', a', \textbf{w}^-) - Q(s, a, \textbf{w}))^2]
 \end{equation}
 
+The pseudocode of the DQN algorithm is reported in Algorithm \ref{alg:dqn}.
+
+\begin{algorithm}
+\caption{Deep Q-Learning Algorithm}\label{alg:dqn}
+\begin{algorithmic}
+\State Initialize replay buffer $D$
+\State Initialize online network $Q$ with random weights $\textbf{w}$
+\State Initialize target network $Q^-$ with weights $\textbf{w}^- = \textbf{w}$
+\For{each episode}
+    \State Initialize $S$
+    \For{each step of the episode}
+        \State Choose $A$ from $S$ using $\epsilon$-greedy policy
+        \State Take action $A$, observe $R$, $S'$
+        \State Store transition $(S, A, R, S')$ in $D$
+        \State Sample random minibatch of transitions $(s, a, r, s')$ from $D$
+        \State Compute target $y = r + \gamma \max_{a'} Q(s', a', \textbf{w}^-)$
+        \State Compute loss $L = (y - Q(s, a, \textbf{w}))^2$
+        \State Update weights $\textbf{w}$ by minimizing the loss
+        \State Every $C$ steps, update target network weights $\textbf{w}^- = \textbf{w}$
+        \State $S \leftarrow S'$
+    \EndFor
+\State Until S is terminal
+\EndFor
+\end{algorithmic}
+\end{algorithm}
 
 
 
-\subsection{Policy Function Approximation and Policy Gradients}\label{subsec:policy_function_approximation_and_policy_gradients}
+
+
+\subsection{Policy Gradients}\label{subsec:policy_gradients}
 As we have seen, the value function can be approximated using neural networks, but also the policy can be approximated using neural networks.
 The goal is, given a policy $\pi(a|s, \textbf{w})$, to find the parameter vector $\textbf{w}$ that maximizes the expected return.
 First of all, in Eq. \ref{eq:obj_function} we define the objective function that we want to maximize, where $\pi_w$ is the policy parameterized by $\textbf{w}$, and $S_O$ is the initial state.
@@ -413,17 +440,57 @@ In the formula, $\nabla_{\textbf{w}} \log \pi(a|s, \textbf{w})$ is the score fun
 \end{equation}
 
 
-We still need to define how to compute the score function.
-Softmax Policy or Gaussian Policy are two common choices.
+To compute the score function, Softmax Policy or Gaussian Policy are two common choices.
 
 Policy Gradient methods are effective, but they can be unstable.
-In fact, they need a high amount of samples to converge, and they can suffer from high variance.
-In this context, Natural Policy Gradients tries to solve this issue.
-For a parameterized policy $\pi(a|s, \textbf{w})$, we have a distribution over actions.
-Small changes in the policy parameters can lead to large changes in the policy distribution and so in choosing actions.
+In fact, they need a high amount of samples to converge, and they can suffer from high variance, meaning that, for a parameterized policy $\pi(a|s, \textbf{w})$ which returns a distribution over actions, small changes in the policy parameters can lead to large changes in the policy distribution and so in choosing actions.
 The changes need to be controlled, so we need to regulate the gradient of the policy.
-One algorithm that uses Natural Policy Gradients is Proximal Policy Optimization (PPO).
-PPO works by ...
+In this context, Natural Policy Gradients tries to solve this issue.
+This in simple words means that we want to find the direction in the parameter space that maximizes the expected return, but we want to do it in a way that the changes in the policy are small.
 
 
+One algorithm that uses Natural Policy Gradients is Proximal Policy Optimization (PPO), which works by clipping the policy gradient, so it limits the change in the policy parameters.
+The PPO algorithm is based on the idea of alternating between sampling data from the environment and updating the policy.
+Its architecture is composed of two neural networks:
+
+\begin{itemize}
+    \item \textbf{Policy Network} - It is a network that takes the state of the environment as input and outputs the probability distribution over actions.
+    It represents the behavior of the agent.
+    \item \textbf{Value Network} - It is a network that takes the state of the environment as input and outputs the value function, so an estimate of the expected return that the agent can achieve starting from a given state.
+    Including the value function in the PPO algorithm helps to reduce the variance of the policy gradient.
+\end{itemize}
+
+The objective function of PPO changes with respect to the objective function of the policy gradient defined in Eq. \ref{eq:obj_function} in a way that it includes a penalty term that clips the policy gradient.
+It is defined in Eq. \ref{eq:ppo_objective}, where $r_t(\textbf{w})$ is the probability ratio between the new policy and the old policy, $A_t$ is the advantage function, which is a measure of how good an action is compared to the average action, $\epsilon$ is a hyperparameter that controls the clipping of the policy gradient.
+
+\begin{equation} \label{eq:ppo_objective}
+    L(\textbf{w}) = \E_t [\min(r_t(\textbf{w})A_t, \text{clip}(r_t(\textbf{w}), 1-\epsilon, 1+\epsilon)A_t)] \\ \\
+    r_t(\textbf{w}) = \frac{\pi(a_t|s_t, \textbf{w})}{\pi(a_t|s_t, \textbf{w}_{\text{old}})}
+\end{equation}
+
+The pseudocode of the PPO algorithm is reported in Algorithm \ref{alg:ppo}.
+
+
+
+In the development of this thesis, we used the PPO algorithm to train the agent and to validate our approach we test the method also with the DQN algorithm.
+
+
+
+\begin{algorithm}
+\caption{Proximal Policy Optimization Algorithm}\label{alg:ppo}
+\begin{algorithmic}
+\State Initialize policy network $\pi(a|s, \textbf{w})$ and value network $V(s, \textbf{w})$
+\For{each iteration}
+    \For{each epoch}
+        \State Collect a batch of data by running the policy in the environment
+        \State Compute the advantage function $A_t$
+        \State Compute the probability ratio $r_t(\textbf{w})$
+        \State Compute the clipped objective function $L(\textbf{w})$
+        \State Compute the value function loss $L_v(\textbf{w})$
+        \State Update the policy network by minimizing $L(\textbf{w})$
+        \State Update the value network by minimizing $L_v(\textbf{w})$
+    \EndFor
+\EndFor
+\end{algorithmic}
+\end{algorithm}
 
