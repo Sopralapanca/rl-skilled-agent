@@ -2,14 +2,16 @@
 
 TODO - EXTEND
 
-%Reinforcement Learning consists on maximizing the cumulative reward obtained by an agent interacting with the environment.
-%Standard approaches learn an end-to-end mapping from observations to action spaces which define the agent's behavior.
-% On the other hand, Foundational Models learns different representations of the world which can be used by agents to accelerate the learning process.
-% In this thesis we studied how to combine these representations to create an enhanced state representation.
-% Specifically we propose a technique called Weight Sharing Attention (WSA) which combines embeddings of different Foundational Models, and we compare different combination modes.
-%We tested our approach on different Atari games, and we analyzed the issue of out of distribution data and how to mitigate it.
-%We showed that, without fine-tuning of hyperparameters, WSA obtains comparable performance with state-of-the-art methods.
-%This method is effective and could allow life-long learning agents to adapt to different scenarios over time.
+Reinforcement Learning (RL) aim to learn agent behavioural policies by maximizing the  cumulative reward obtained by interacting with the environment.
+Standard RL approaches learn an end-to-end mapping from observations to action spaces which define the agent's behavior.
+On the other hand, Foundational Models learns different representations of the world which can be used by agents to accelerate the learning process.
+In this thesis, we study how to combine these representations to create an enhanced state representation.
+Specifically, we propose a technique called Weight Sharing Attention (WSA) which combines embeddings of different Foundational Models, and we empirically assess its performance against alternative combination modules.
+We tested our approach on different Atari games, and we analyzed the issue of out-of-distribution data and how to mitigate it.
+We showed that, without fine-tuning of hyperparameters, WSA obtains comparable performance with state-of-the-art methods.
+This method is effective and could allow life-long learning agents to adapt to different scenarios over time.
+
+
 
 %via agent's interaction with a specific environment. Usually, the go-to approach to tackle this problem is to learn from scratch an end-to-end mapping between the observation and action spaces to define agents' behaviors.
 %On the other hand, Foundational Models (FMs) can share insightful representations of the world ready to be leveraged by agents. Different FMs learn disparate latent embeddings, also coming from different modalities. How to effectively combine these representations is still an open and understudied question.

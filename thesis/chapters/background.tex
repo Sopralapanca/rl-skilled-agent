@@ -356,7 +356,7 @@ We report also the pseudocode of the Q-learning algorithm in Algorithm \ref{alg:
 
 \section{Deep Reinforcement Learning}
 \label{sec:drl}
-Till now we have seen how to solve the RL problem using tabular methods, i.e. the value function  scores and the policy are represented as tables.
+Till now we have seen how to solve the RL problem using tabular methods, i.e.\ the value function scores and the policy are represented as tables.
 These methods are intractable when the state space is large or continuous.
 In this section we will talk about how value functions and policies can be predicted using neural networks as universal function approximators.
 The combination of deep learning and reinforcement learning is called Deep Reinforcement Learning (DRL).
@@ -365,39 +365,65 @@ Both prediction and control problems can be approximated.
 We will make distinctions between value function approximation and policy function approximation, and we will talk about policy gradient methods, providing an overview of two of the most famous DRL algorithms, i.e.\ Deep Q-Network (DQN) and Proximal Policy Optimization (PPO).
 
 
-\subsection{Value Function Approximation}
+\subsection{Value Function Approximation}\label{subsec:value-function-approximation}
 In the context of DRL, the value function can be approximated using different types of approaches, including linear function approximation, decision tree and in particular neural networks.
 
-The goal is to find a parameter vector \textbf{w} that minimizes the MSE between the predicted value $\hat{v}(s,\textbf{w})$ function and the true value function $v_\pi(s)$.
+The goal is to find a parameter vector \textbf{w} that minimizes the MSE between the predicted value function $\hat{v}(s,\textbf{w})$ and the true value function $v_\pi(s)$.
 This can be done using the gradient descent algorithm, and can be done in a batch or online way.
 The convergence though is not guaranteed for all algorithms and depends on the choice of the value function approximator (linear or non-linear).
 
 Regarding batch methods, a well-known algorithm is the Deep Q-Learning.
 It is based on the Q-learning algorithm, but it uses neural networks to approximate the action-value function
-Also, it uses the concept of experience replay and \epsilon-greedy policy.
-Going in order, actions are chosen using a \epsilon-greedy policy, which means that with probability \epsilon the agent chooses a random action, and with probability 1-\epsilon the agent chooses the action that maximizes the action-value function.
-The experience replay consists of storing the agent's experiences in a replay buffer \textit{D}.
+Also, it uses the concept of experience replay and $\epsilon$-greedy policy.
+Going in order, actions are chosen using a $\epsilon$-greedy policy, which means that with probability $\epsilon$ the agent chooses a random action, and with probability 1-$\epsilon$ the agent acts greedily and chooses the action that maximizes the action-value function.
+
+The experience replay instead, consists of storing the agent's experiences in a replay buffer, which we call \textit{D}.
 The buffer will contain the agent's transitions, which are tuples of $(s, a, r, s')$, where $s$ is the initial state, $a$ is the action taken, $r$ is the reward received, and $s'$ is the next state.
-To update the action-value function, the agent samples a batch of transitions from the replay buffer and uses them to compute the TD error. %(q learning targets)
+To update the action-value function, the agent samples a batch of transitions from the replay buffer, this transitions represent the ground truth, and are used to compute the TD error. %(q learning targets)
 
-The loss function is defined as the mean squared error between the predicted action-value function and the target action-value function.
+The neural network involved in the DQN algorithm are two, the online network and the target network.
+The online network is used to predict the action-value function, while the target network is used to compute the target action-value function.
 
-
-
-
-
-
+The loss function is defined in Eq. \ref{eq:dqn_loss} and it is the MSE between the predicted action-value function and the target action-value function.
+In the formula, $D$ is the replay buffer, $\textbf{w}$ are the weights of the neural network, and in specific $\textbf{w}^-)$ are the weights of the target network, which are updated less frequently than the weights of the online network.
 
 
-
-%Also if the state space is large approximate it using feature vector states $\phi(s)$.
-
+\begin{equation} \label{eq:dqn_loss}
+    L(\textbf{w}) = \E_{(s, a, r, s') \sim D_i} [(r + \gamma \max_{a'} Q(s', a', \textbf{w}^-) - Q(s, a, \textbf{w}))^2]
+\end{equation}
 
 
 
 
+\subsection{Policy Function Approximation and Policy Gradients}\label{subsec:policy_function_approximation_and_policy_gradients}
+As we have seen, the value function can be approximated using neural networks, but also the policy can be approximated using neural networks.
+The goal is, given a policy $\pi(a|s, \textbf{w})$, to find the parameter vector $\textbf{w}$ that maximizes the expected return.
+First of all, in Eq. \ref{eq:obj_function} we define the objective function that we want to maximize, where $\pi_w$ is the policy parameterized by $\textbf{w}$, and $S_O$ is the initial state.
+
+\begin{equation} \label{eq:obj_function}
+    J(\textbf{w}) = \E_{\pi_w}[\sum_{t=0}^{\infty} \gamma^t R_t | S_0 = s]
+\end{equation}
+
+According to the policy gradient theorem, the gradient of the objective function can be expressed as the expected value of the gradient of the log-probability of the action multiplied by the return.
+So we can write the policy gradient as in Eq. \ref{eq:policy_gradient}.
+In the formula, $\nabla_{\textbf{w}} \log \pi(a|s, \textbf{w})$ is the score function.
+
+\begin{equation} \label{eq:policy_gradient}
+    \nabla_{\textbf{w}} J(\textbf{w}) = \E_{\pi_w}[\nabla_{\textbf{w}} \log \pi(a|s, \textbf{w}) Q^{\pi}(s, a, \textbf{w})]
+\end{equation}
 
 
+We still need to define how to compute the score function.
+Softmax Policy or Gaussian Policy are two common choices.
 
-%As we did in Sec.~\ref{subsec:model-based-reinforcement-learning}, we focus on control problems, since in this theis a control algorithm is used.
+Policy Gradient methods are effective, but they can be unstable.
+In fact, they need a high amount of samples to converge, and they can suffer from high variance.
+In this context, Natural Policy Gradients tries to solve this issue.
+For a parameterized policy $\pi(a|s, \textbf{w})$, we have a distribution over actions.
+Small changes in the policy parameters can lead to large changes in the policy distribution and so in choosing actions.
+The changes need to be controlled, so we need to regulate the gradient of the policy.
+One algorithm that uses Natural Policy Gradients is Proximal Policy Optimization (PPO).
+PPO works by ...
+
+
 
