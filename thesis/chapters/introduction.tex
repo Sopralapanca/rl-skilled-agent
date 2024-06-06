@@ -3,33 +3,37 @@
 
 \chapter{Introduction}
 \label{sec:introduction}
-Reinforcement Learning (RL) \citep{sutton1998introduction} is one of the basic paradigms of Machine Learning (ML). It consists of having an agent learn the optimal behavior in a dynamic environment to maximize the cumulative reward.
+Reinforcement Learning \citep{sutton1998introduction} is one of the paradigms of Machine Learning (ML). It consists of having an agent learn the optimal behavior in an environment that can change over time to maximize the cumulative reward that it obtains as a consequence of its actions.
 In particular, RL mimics how we, as humans, learn.
-It formulates the learning process as a sequence of interactions with the environment and RL algorithms use a reward-and-punishment paradigm as they process data.
-Agents learn to solve a specific task based on their experiences with the world, they learn from the feedback of each action and self-discover the best processing paths to achieve final outcomes.
+It formulates the learning process as a sequence of interactions with the environment and uses a trial-and-error approach to process data.
+Agents learn to solve a specific task based on their experiences with the world, they learn from the feedback of each action and discover the best way to achieve their goal.
 
 Over the past decades, RL algorithms have increasingly improved, achieving amazing results in many tasks and being adopted in new fields.
-For example, RL can be applied in many real-world scenarios, some of them are applications like recommendation systems where RL agents can customize suggestions to individual users based on their interactions, or for financial predictions where RL algorithms can optimize long-term returns by considering transaction costs and adapting to market shifts, and finally, it can be used in industry automation to teach robots to act more efficiently than humans or for self-driving cars and many other applications.
-To name a few important works that are noteworthy throughout the history of RL \citet{watkins1992q} introduced \textbf{Q-Learning}, which is an RL algorithm to learn the value of an action in a particular state and has become one of the most well-known and widely used RL algorithms.
-\citep{sutton1999policy} instead, introduced policy gradient methods that are very useful, especially in scenarios involving continuous action spaces.
+For example, RL can be applied in many real-world scenarios, some of them are applications like recommendation systems where RL agents can customize suggestions to individual users based on their interactions, or for financial predictions where RL algorithms can optimize long-term returns by considering transaction costs and adapting to market shifts. 
+Finally, it can be used in industry automation to teach robots to act more efficiently than humans or for self-driving cars and many other applications.
 
-Instead, regarding some achievements in the field of RL that are more related to the topics that will be developed in this thesis we begin discussing it from the first pioneering works of \citet{mnih2013playing, mnih2015human}, which started to explore the use of deep neural networks in games, specifically using the Arcade Learning Environment (ALE) \citep{bellemare2013atari}.
-As a result of these works, although based on problems that may seem as basic as those in video games, new development perspectives have been created and an increasing interest has turned toward Deep Reinforcement Learning (DLR).
-In fact, DLR has produced substantial advancements in various research fields and applications, such as games, beating all Atari games at super-human performance with a single algorithm \citep{agent57} or defeating pro players in games like GO, StarCraft II and DOTA \citep{alphago, starcraft, dota}, but also in robotics \citep{rlrob, bousmalis2023robocat} and lastly toward general agents for 3D environments including different data modalities \citep{sima2024}.
+%To name a few important works that are noteworthy throughout the history of RL, \citet{watkins1992q} introduced \textbf{Q-Learning}, which is an RL algorithm to learn the value of an action in a particular state and has become one of the most well-known and widely used RL algorithms.
+%\citep{sutton1999policy} instead, introduced policy gradient methods that are very useful, especially in scenarios involving continuous action spaces.
+
+Some recent achievements in RL that are related to the topics that will be developed in this thesis are
+the works of \citet{mnih2013playing, mnih2015human}, which started to explore the use of deep neural networks in games, specifically using the Arcade Learning Environment (ALE) \citep{bellemare2013atari}.
+As a result of these works, although based on problems that may seem as basic as those in video games, new development perspectives have been created and an increasing interest has turned toward Deep Reinforcement Learning (DRL).
+In fact, DRL has produced substantial advancements in various research fields and applications, such as games as already mentioned, beating all Atari games at super-human performance with a single algorithm \citep{agent57} or defeating pro players in games like GO, StarCraft II and DOTA \citep{alphago, starcraft, dota}, but also in robotics \citep{rlrob, bousmalis2023robocat} and lastly toward general agents for 3D environments including different data modalities \citep{sima2024}.
 
 Discussing some of the problems highlighted in this thesis concerning the current algorithms in the literature, in a typical RL setting, agents receive as input the raw representation of the state, without any additional information on the elements that characterize it.
-Learning, which comprises creating a map from input to action space, i.e. creating a policy,  for an RL agent consists of training a model from scratch every time to solve one specific task and, therefore, requires a lot of interaction with the environment to perform well, much more than a human.
-End-to-end solutions for the learning process, implicitly hide a significant effort related to understanding how to process the input representations in the best possible way.
-While one of the promises of deep learning algorithms is to automatically construct well-tuned features, such representation might not emerge from the training of deep RL agents. 
-Agents learn how to solve the task while indirectly learning how to process and extract useful information from the input features. 
-While this approach has been the solution for several works, it adds an additional layer of complexity to RL algorithms eventually requiring significant computational resources.
+Learning, which comprises creating a map from input to action space, i.e. creating a policy,  for an RL agent consists of training a model from scratch every time to solve one specific task and, therefore, requires a lot of interaction with the environment to perform well, much more than the number of actions a human would need.
+End-to-end solutions for the learning process implicitly hide a significant effort related to understanding how to process the input representations in the best possible way.
+While one of the promises of deep learning algorithms is to automatically construct well-tuned representations, the same might not emerge from the training of deep RL agents. 
+This is because agents learn how to solve the task while indirectly learning how to process and extract useful information from the input features. 
+While this approach has been the solution for several works, it adds a layer of complexity to RL algorithms eventually requiring significant computational resources.
 
 Several works analyze the differences between the learning process of humans and RL agents, highlighting how prior knowledge can influence the learning curve \citep{lake2017building, dubey2018investigating}.
 Agents, in the same way as humans, can define the learning pattern by incrementally improving their abilities.
 Learning for humans, however, consists of acquiring new skills and incrementally improving those already known, leveraging prior knowledge, and adapting strategies based on experience.
-In new environments with few interactions, humans can make use of their prior abilities to distinguish new elements or read guidelines for example, and understand the effects of their actions. This allows them to focus mostly on learning a good policy, rather than also learning how to interpret the environment. 
-The idea behind this thesis is therefore to provide RL agents with abilities in the same way as humans and aims to study a way to encode skills and incorporate prior knowledge into an RL agent using a basic skill set with which it should be equipped
-In this way, we can focus on \texttt{how} RL agents can exploit prior knowledge provided by FMs and focus the learning process on the actual policy.
+In new environments with few interactions, humans can make use of their prior abilities to accomplish basic tasks like distinguishing new elements or reading guidelines.
+Humans can understand the effects of their actions and this allows them to focus mostly on learning a good policy, rather than also learning how to interpret the environment. 
+The idea behind this thesis is, therefore, to provide RL agents with abilities, just like humans, and aims to study a way to encode skills in such a way to incorporate prior knowledge into an RL agent.
+In this way, we can focus on how RL agents can exploit prior knowledge provided their abilities and focus the learning process on the actual policy.
 
 In the development of this thesis, we will then try to answer two questions:
 \begin{itemize}
@@ -42,13 +46,13 @@ FMs refer to large-scale, pre-trained models that serve as a base for various do
 Examples of FMs, can be \citet{brown2020language, devlin2018bert, he2016deep}
 They are trained on extensive datasets in a self-supervised fashion, enabling them to learn rich and generalizable representations that can be fine-tuned or adapted for specific applications. 
 These representations can be leveraged in RL to accelerate the learning process and improve performance on complex tasks. Using FMs' knowledge, RL agents can achieve higher efficiency and effectiveness, even in environments with sparse rewards or limited data. 
-As for the latter question, instead, this thesis aims to study how different FM embeddings can be \texttt{combined} in several ways to compute a rich and informative representation of the environment. 
+As for the latter question, instead, this thesis aims to study how different FM embeddings can be combined in several ways to compute a rich and informative representation of the environment. 
 
 
 In short, we will use relatively small models, but all the work can be scaled without additional effort, and we propose, among the other ways of combining information, Weight Sharing Attention (WSA) as a combination module to incorporate different encodings coming from several FMs.
-We run experiments across 3 different Atari games (\texttt{Pong}, \texttt{MsPacman}, and \texttt{Breakout}) studying the behavior of 7 different combination modules.
+We executed experiments across three different Atari games that are \textit{Pong}, \textit{MsPacman}, and \textit{Breakout} and we studied the behavior of 7 different combination modules.
 WSA achieves comparable performance with end-to-end solutions, while also adding scalability and explainability to RL agents.
 We show that without any fine-tuning of hyperparameters, our methodology can achieve competitive results with established RL end-to-end solutions. Moreover, we prove and address the problem of out-of-distribution data, which presents itself as one of the main challenges for these approaches. 
 
 
-The thesis is organized in this way: Ch.\ref{sec:background} will introduce and explain all the techniques that are adopted in this work. Ch. \ref{sec:related_work} provides information about related works and current state-of-the-art. Ch. \ref{sec:method} shows information about our approach. Ch. \ref{sec:experiments} provides the experiments that we conducted to test our method. Ch. \ref{sec:results} shows the results and finally Sec. \ref{sec:conclusions} provides the conclusions of the work and discusses possible future extensions.
+The thesis is organized in this way: Ch.\ref{sec:background} will introduce and explain all the techniques that are adopted in this work. Ch. \ref{sec:related_work} provides information about related works and current state-of-the-art. Ch. \ref{sec:method} shows information about our approach. Ch. \ref{sec:experiments} provides the experiments that we conducted to test our method. Ch. \ref{sec:results} shows the results and finally Ch. \ref{sec:conclusions} provides the conclusions of the work and discusses possible future extensions.
