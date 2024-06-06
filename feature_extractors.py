@@ -394,6 +394,8 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         sample = th.from_numpy(sample) / 255
         sample = sample.to(device)
 
+        dropout_p = 0.2
+
         skill_out = self.preprocess_input(sample)
 
         for i in range(len(skill_out)):
@@ -406,7 +408,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         for i in range(len(skill_out)):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device),
                                       nn.ReLU(),
-                                      nn.Dropout(p=0.1)
+                                      nn.Dropout(p=dropout_p)
                                       )
             self.mlp_layers.append(seq_layer)
 
@@ -429,7 +431,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         self.encoder_seq_layer = nn.Sequential(
             nn.Linear(self.input_size, features_dim, device=device),
             nn.ReLU(),
-            nn.Dropout(p=0.1)
+            nn.Dropout(p=dropout_p)
         )
 
         # ---------- for WSA ---------- #
