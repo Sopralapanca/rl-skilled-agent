@@ -394,7 +394,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         sample = th.from_numpy(sample) / 255
         sample = sample.to(device)
 
-        dropout_p = 0.2
+        dropout_p = 0.3
 
         skill_out = self.preprocess_input(sample)
 

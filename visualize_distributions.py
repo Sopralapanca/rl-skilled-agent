@@ -17,9 +17,10 @@ import moviepy.video.io.ImageSequenceClip
 
 N_ENVS = 1
 FRAME_STACK = 4
-ENV_NAME = "Breakout"
-model_path = "ba5ow0zz"  # ATTENZIONE CAMBIA MODELLO
-device = "cuda:1"
+ENV_NAME = "Pong"
+model_path = "u428hnd3"  # ATTENZIONE CAMBIA MODELLO
+device = "cuda:3"
+info = "_dropout_0.1"
 
 # Create the environment
 if ENV_NAME.lower() in atari_py.list_games():
@@ -35,7 +36,7 @@ else:
     raise NotImplementedError(ENV_NAME + " not implemented yet, try CartPole-v1 or one atari game")
 
 
-SAVE_DIR = "./distributions_data/" + ENV_NAME
+SAVE_DIR = "./distributions_data/" + ENV_NAME + info
 # Create a directory data with subdirectory "breakout" using os to store the frames
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
