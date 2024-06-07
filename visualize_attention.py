@@ -30,9 +30,9 @@ args = parser.parse_args()
 N_ENVS = 1
 FRAME_STACK = 4
 ENV_NAME = args.env  # "Pong"
-model_path = "tpuvto1j"  # ATTENZIONE CAMBIA MODELLO
-device = "cuda:2"
-info = "_dropout_0.2"
+model_path = "zvhk2k81"  # ATTENZIONE CAMBIA MODELLO
+device = "cuda:3"
+info = "_dropout_0.3"
 
 
 # Create the environment
