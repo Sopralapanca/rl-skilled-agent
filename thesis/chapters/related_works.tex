@@ -5,7 +5,7 @@
 \label{ch:related_work}
 In this chapter, we provide an overview of the most relevant works in the field of RL and FM\@.
 We start by focusing on the FMs which has been recently proposed to improve the performance of RL agents in Sec. \ref{sec:fm_rl}.
-Then, in Sec. \ref{sec:fm_rl_combination}, we discuss the most recent works that combine FM with RL and present the main contributions of this thesis.
+Then, in Sec. \ref{sec:fm_rl_combination}, we discuss the most recent works that combine FM with RL\@.
 
 \section{Foundational Models \& Reinforcement Learning}\label{sec:fm_rl}
 The idea of improving RL agents feature representation by providing information already processed by other models is not new.
@@ -24,7 +24,9 @@ For example, \citet{bramlage2022generalized} proposed a method that use self-att
 In order to be effective, these representations should be as general as possible without having any bias with respect to the task the agent should solve.
 Other works try to overcome this problem by presenting methodologies to build representations that are reward free - meaning they are unbiased with respect to the task \citep{stooke2021decoupling} - or by adding auxiliaries objectives to help shape the latent representation \citep{lan2023bootstrapped}.
 
-
+%rephrase - check better
+Recently, Large Language Models (LLMs) have been used to improve the performance of RL agents too.
+An example is the work of \citet{lifshitz2024steve} which creates an instruction-tuned Video Pre-trained model that follows the instruction of a text and video encoder.
 
 
 
@@ -32,14 +34,11 @@ Other works try to overcome this problem by presenting methodologies to build re
 %Agents learn how to perform task composing different enriched elements instead of having to learn the state space from scratch.
 
 
-
-
-%aggiungere chi utilizza gli LLM?
-
+\section{Combining Foundational Models and Reinforcement Learning}\label{sec:fm_rl_combination}
 
 
 
-
+% https://arxiv.org/pdf/2102.06177 possibile lavoro per combinare + cose
 
 %How to combine multiple latent features in a single representation is still an open problem. There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation. To the best of our knowledge, \citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
 %They showcase that combining pre-trained models and trained-from-scratch components leads to better performing agents. Unfortunately, due to the large scale of their work, there is no particular attention towards how FMs' representations are combined. In this work, we aim to focus on how to combine pre-trained models while preserving agents' performance, proposing Weight Sharing Attention (WSA) as an effective and scalable solution.
