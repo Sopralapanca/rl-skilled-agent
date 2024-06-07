@@ -2,18 +2,78 @@
 %! Date = 16/05/2024
 
 \chapter{Related Work}
-\label{sec:related_work}
-The concept of helping an RL agent by providing information already processed by other models rather than learning from scratch to extract important features is not new.
-Most of the works apply a single model that pre-processes the input and then learns the actual policy.
-\cite{goel2018unsupervised} proposed an unsupervised technique for deep reinforcement learning that automatically detects moving objects given recent frames of Atari games.
-The learned representation is used instead of the raw frame to focus the policy of the agent on the moving objects.
-The work of \cite{kulkarni2019unsupervised} provided an unsupervised method to learn object representations in terms of keypoints given video frames.
-They then used keypoints as inputs to policies instead of RGB observations.
-\cite{anand2019unsupervised} introduced a method that learns state representations on Atari games. ESTENDERE UN PO.
-\cite{montalvo2023exploiting} used a semantic segmentation model to transform Super Mario Bros frames from their original domain to a simplified semantic domain, and then trained the reinforcement learning algorithm with these simplified images.
-All these methods process the input in one way and do not consider combining several methods that extract different features.
+\label{ch:related_work}
+In this chapter, we provide an overview of the most relevant works in the field of RL and FM\@.
+We start by focusing on the FMs which has been recently proposed to improve the performance of RL agents in Sec. \ref{sec:fm_rl}.
+Then, in Sec. \ref{sec:fm_rl_combination}, we discuss the most recent works that combine FM with RL and present the main contributions of this thesis.
 
-To the best of our knowledge, the first attempt to combine different types of features extracted from different models in RL is in \cite{raad2024scaling} where they provided a framework called SIMA that combines information coming from text encoding, image encoding, and video prediction encoding using transformers architectures to select keyboard and mouse actions in a variety of 3D games. \cite{obando2024mixtures} instead combines different embeddings using a mixture of experts approach.
+\section{Foundational Models \& Reinforcement Learning}\label{sec:fm_rl}
+The idea of improving RL agents feature representation by providing information already processed by other models is not new.
+Most of the works apply a single model that pre-processes the input data and then learns the actual policy.
+In specific, some work focused on feature representation that can be detached from the learning process by having a module that is able to extract relevant information.
+Some example can be the work of \citet{shah2021rrl} that uses a pre-trained ResNet for representation learning, or the work of \citet{yuan2022pre} that uses a pre-trained encoder to extract features from the input data.
+
+Several approaches exploit FMs to learn from collected data a general representation by applying different self-supervised methodologies, which can also be fine-tuned during the learning of the policy.
+To name a few, we mention \citet{anand2019unsupervised} who proposed a method to learn state representations on Atari games, \citet{kulkarni2019unsupervised} who provided an unsupervised method to learn object representations in terms of keypoints given video frames, \citet{goel2018unsupervised} who proposed an unsupervised technique for DLR that automatically detects moving objects given recent frames of Atari games, \citet{montalvo2023exploiting} that used a semantic segmentation model to transform Super Mario Bros frames from their original domain to a simplified semantic domain, and then trained the RL algorithm with these simplified images, \citet{xiao2022masked} that pre-trains an encoder by masking the input images and then fine-tunes it on a small amount of task-specific data.
+Some works use human labeled data for eye-tracking \citep{zhang2020atari} to improve the performance of the agent, like the work of \citet{thammineni2023selective} which predicts a human eye-gaze map from input game frames, and use this data to augment the agent's observations.
+
+Other works uses different attention mechanisms to improve the performance of the agent.
+For example, \citet{bramlage2022generalized} proposed a method that use self-attention mechanism to detect task-relevant features in the input data.
+\citet{blakeman2022selective} instead proposed a method that uses an attention mechanism to select a subset of existing representations.
+
+In order to be effective, these representations should be as general as possible without having any bias with respect to the task the agent should solve.
+Other works try to overcome this problem by presenting methodologies to build representations that are reward free - meaning they are unbiased with respect to the task \citep{stooke2021decoupling} - or by adding auxiliaries objectives to help shape the latent representation \citep{lan2023bootstrapped}.
+
+
+
+
+
+% questa dopo
+%Agents learn how to perform task composing different enriched elements instead of having to learn the state space from scratch.
+
+
+
+
+%aggiungere chi utilizza gli LLM?
+
+
+
+
+
+
+%How to combine multiple latent features in a single representation is still an open problem. There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation. To the best of our knowledge, \citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
+%They showcase that combining pre-trained models and trained-from-scratch components leads to better performing agents. Unfortunately, due to the large scale of their work, there is no particular attention towards how FMs' representations are combined. In this work, we aim to focus on how to combine pre-trained models while preserving agents' performance, proposing Weight Sharing Attention (WSA) as an effective and scalable solution.
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%The concept of helping an RL agent by providing information already processed by other models rather than learning from scratch to extract important features is not new.
+%Most of the works apply a single model that pre-processes the input and then learns the actual policy.
+%\cite{goel2018unsupervised} proposed an unsupervised technique for deep reinforcement learning that automatically detects moving objects given recent frames of Atari games.
+%The learned representation is used instead of the raw frame to focus the policy of the agent on the moving objects.
+%The work of \cite{kulkarni2019unsupervised} provided an unsupervised method to learn object representations in terms of keypoints given video frames.
+%They then used keypoints as inputs to policies instead of RGB observations.
+%\cite{anand2019unsupervised} introduced a method that learns state representations on Atari games. ESTENDERE UN PO.
+%\cite{montalvo2023exploiting} used a semantic segmentation model to transform Super Mario Bros frames from their original domain to a simplified semantic domain, and then trained the reinforcement learning algorithm with these simplified images.
+%All these methods process the input in one way and do not consider combining several methods that extract different features.
+%
+%To the best of our knowledge, the first attempt to combine different types of features extracted from different models in RL is in \cite{raad2024scaling} where they provided a framework called SIMA that combines information coming from text encoding, image encoding, and video prediction encoding using transformers architectures to select keyboard and mouse actions in a variety of 3D games. \cite{obando2024mixtures} instead combines different embeddings using a mixture of experts approach.
 
 % ADD
 % https://proceedings.neurips.cc/paper_files/paper/2022/hash/548a482d4496ce109cddfbeae5defa7d-Abstract-Conference.html
