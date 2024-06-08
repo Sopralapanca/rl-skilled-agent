@@ -35,13 +35,34 @@ An example is the work of \citet{lifshitz2024steve} which creates an instruction
 
 
 \section{Combining Foundational Models and Reinforcement Learning}\label{sec:fm_rl_combination}
+There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation.
+Different works define the skills an agent should have as policies and then tries to combine them.
+An exampl is the work of \citet{sahni2017learning} where the skills are trained separately using a reward function only relevant to the skill.
 
+
+How to combine multiple latent features in a single representation is still an open problem.
+
+
+
+
+In the context of multi-task learning, \citet{sodhani2021multi} proposed a method where a mixture of encoders extract different features from the input data.
+Then they use an attention mechanism considering the embedding coming from a LLM which receive in input the metadata of different tasks as context to produce the final representation.
+
+
+
+
+
+
+
+To the best of our knowledge, \citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
+They showcase that combining pre-trained models and trained-from-scratch components leads to better performing agents.
+Unfortunately, due to the large scale of their work, there is no particular attention towards how FMs' representations are combined.
+In this work, we aim to focus on how to combine pre-trained models while preserving agents' performance, proposing Weight Sharing Attention (WSA) as an effective and scalable solution.
 
 
 % https://arxiv.org/pdf/2102.06177 possibile lavoro per combinare + cose
 
-%How to combine multiple latent features in a single representation is still an open problem. There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation. To the best of our knowledge, \citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
-%They showcase that combining pre-trained models and trained-from-scratch components leads to better performing agents. Unfortunately, due to the large scale of their work, there is no particular attention towards how FMs' representations are combined. In this work, we aim to focus on how to combine pre-trained models while preserving agents' performance, proposing Weight Sharing Attention (WSA) as an effective and scalable solution.
+
 %
 %
 %
