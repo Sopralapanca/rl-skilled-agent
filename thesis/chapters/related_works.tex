@@ -1,7 +1,7 @@
 %! Author = giaco
 %! Date = 16/05/2024
 
-\chapter{Related Work}
+\chapter{Related Works}
 \label{ch:related_work}
 In this chapter, we provide an overview of the most relevant works in the field of RL and FM\@.
 We start by focusing on the FMs which has been recently proposed to improve the performance of RL agents in Sec. \ref{sec:fm_rl}.
@@ -37,64 +37,18 @@ An example is the work of \citet{lifshitz2024steve} which creates an instruction
 \section{Combining Foundational Models and Reinforcement Learning}\label{sec:fm_rl_combination}
 There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation.
 Different works define the skills an agent should have as policies and then tries to combine them.
-An exampl is the work of \citet{sahni2017learning} where the skills are trained separately using a reward function only relevant to the skill.
-
+An example is the work of \citet{sahni2017learning} where the skills are trained separately using a reward function only relevant to the skill.
 
 How to combine multiple latent features in a single representation is still an open problem.
-
-
-
-
-In the context of multi-task learning, \citet{sodhani2021multi} proposed a method where a mixture of encoders extract different features from the input data.
+Some works use a mixture of experts approach to combine different embeddings.
+For example, in the context of multi-task learning, \citet{sodhani2021multi} proposed a method where a mixture of encoders extract different features from the input data.
 Then they use an attention mechanism considering the embedding coming from a LLM which receive in input the metadata of different tasks as context to produce the final representation.
-
-
-
-
-
-
+While \citet{obando2024mixtures} proposed a method that uses a mixture of experts to extract features from the encoded state of the environment and then combine them to produce the final representation.
+All of these works are focused on combining different embeddings, but they do not consider the case where the embeddings come from different pre-trained models, like FMs, which extract information from different domains i.e.\ images, text, video, etc, and how to combine them to improve the performance of the agent.
 
 To the best of our knowledge, \citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
 They showcase that combining pre-trained models and trained-from-scratch components leads to better performing agents.
 Unfortunately, due to the large scale of their work, there is no particular attention towards how FMs' representations are combined.
-In this work, we aim to focus on how to combine pre-trained models while preserving agents' performance, proposing Weight Sharing Attention (WSA) as an effective and scalable solution.
 
-
-% https://arxiv.org/pdf/2102.06177 possibile lavoro per combinare + cose
-
-
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%
-%The concept of helping an RL agent by providing information already processed by other models rather than learning from scratch to extract important features is not new.
-%Most of the works apply a single model that pre-processes the input and then learns the actual policy.
-%\cite{goel2018unsupervised} proposed an unsupervised technique for deep reinforcement learning that automatically detects moving objects given recent frames of Atari games.
-%The learned representation is used instead of the raw frame to focus the policy of the agent on the moving objects.
-%The work of \cite{kulkarni2019unsupervised} provided an unsupervised method to learn object representations in terms of keypoints given video frames.
-%They then used keypoints as inputs to policies instead of RGB observations.
-%\cite{anand2019unsupervised} introduced a method that learns state representations on Atari games. ESTENDERE UN PO.
-%\cite{montalvo2023exploiting} used a semantic segmentation model to transform Super Mario Bros frames from their original domain to a simplified semantic domain, and then trained the reinforcement learning algorithm with these simplified images.
-%All these methods process the input in one way and do not consider combining several methods that extract different features.
-%
-%To the best of our knowledge, the first attempt to combine different types of features extracted from different models in RL is in \cite{raad2024scaling} where they provided a framework called SIMA that combines information coming from text encoding, image encoding, and video prediction encoding using transformers architectures to select keyboard and mouse actions in a variety of 3D games. \cite{obando2024mixtures} instead combines different embeddings using a mixture of experts approach.
-
-% ADD
-% https://proceedings.neurips.cc/paper_files/paper/2022/hash/548a482d4496ce109cddfbeae5defa7d-Abstract-Conference.html
-% https://arxiv.org/abs/2107.03380
+In the context of lifelong learning agents, an effective and scalable solution to combine FMs encoding is needed in such a way that abilities can be added to the agent without the need to retrain the whole model.
+To this purpose, in this work, we propose Weight Sharing Attention (WSA) as a combination mechanism to merge pre-trained encodings.
