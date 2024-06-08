@@ -394,7 +394,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         sample = th.from_numpy(sample) / 255
         sample = sample.to(device)
 
-        dropout_p = 0.3
+        dropout_p = 0.15
 
         skill_out = self.preprocess_input(sample)
 
@@ -428,6 +428,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             z = self.encoder(x)
             z = th.reshape(z, (z.size(0), -1))
             self.input_size = z.shape[-1]
+
         self.encoder_seq_layer = nn.Sequential(
             nn.Linear(self.input_size, features_dim, device=device),
             nn.ReLU(),
