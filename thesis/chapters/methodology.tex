@@ -3,37 +3,34 @@
 
 \chapter{Method}
 \label{sec:method}
+The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task.
+Many previous work already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of the world knowledge and simplifying the RL training process.
+Differently from these studies, our methodology is designed to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
+First, our work proposes a set of basic abilities like humans have.
+RL agents are equipped with these FMs, which serve as the prior knowledge needed to generate diverse representations of the environment.
+Then, we focus on how to effectively combine their latent representations to improve agents performance.
 
-TODO - WRITE INTRO
-% The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task. Our idea is to use \textit{Knowledge Skills}, defined in \ref{sec:skills}, to create a starting point for agents giving them a set of prior knowledge from which they can extract information. Later, as explained in Sec. \ref{sec:extractors}, we tested different ways of concatenating Knowledge Skills before feeding the agents with extracted information.
-% The main architecture is depicted in Fig. \ref{fig:main_architecture}.
-% The method to train the agent then is divided into two steps.
-% First, we created a dataset of game frames as specified in \ref{sec:experiments}, used to pre-train knowledge skills models to learn different structured representations of the input. Then, during RL agent training, we fix the weights of these models and we give the same frame as input to all the skills to extract information and combine them into one single embedding. We then gave this new state representation to the RL agent to learn a policy.
+While agents interact with the environment, the current observation is collected and processed through each pre-trained models.
+This process yields multiple perspectives or views of the world, each encoded uniquely based on the specific model.
+These features represent different facets of the environment, providing the agent with a comprehensive and enhanced understanding of the current state.
+The challenge then lies in integrating these disparate views into a cohesive and enriched representation.
+To achieve this, we employ a specialized combination module, that synthesizes the information from the various models into a single latent representation.
+The intuition is that the enriched representation provides a comprehensive understanding of the current state of the environment, derived from the collective insights of the pre-trained models.
+By leveraging FMs, our approach significantly reduces the burden on the RL agent to learn the environmental representation from scratch, allowing it to focus more on refining the action-mapping process.
+This not only accelerates the learning process but also enhances overall performance by providing a well-structured and informative representation.
 
-% \begin{figure}[ht]
-%     \begin{center}
-%         \includegraphics[width=\textwidth]{images/main_architecture.png}
-%     \end{center}
-%     \caption{In Figure we show a schematic of our proposed architecture. The last four game frames are stacked together and passed as input to all skills.  Given \textit{k} different skills we will have \textit{k} different embeddings. Each of them will be passed as input to a specific extractor. In the figure are shown for simplicity only some of the possible extractors. The extractors will concatenate the information from the different embeddings into a single embedding that will be passed to the network in charge of deciding the action.}
-%     \label{fig:main_architecture}
-% \end{figure}
+The architecture of our agents is divided into two main components.
+The first part takes care of processing the current observation into multiple latent representations and then combines them into a single enriched representation.
+We refer to this part as the \textit{Feature Extractor} module.
+Feature extractor part is in turn divided into two sub-modules, the first compute the preprocessing of the information through the FMs, the latter is the combination module that merges the representations.
+Finally, the second part is the policy learning network, where the unified representation is fed into a small neural network whose responsibility is to map the latent encoding to actions.
+
+In the following sections, we will describe in detail the different combination modules that we adopted to merge the representations extracted by the FMs.
+First we focus on the \textit{Weight Sharing Attention} module, which is the main combination module used in our experiments.
+Then, we will describe other combination modules that we tested to compare the performance of the agents.
 
 \section{Weight Sharing Attention}
 \label{sec:wsa}
-% Skills can be defined in multiple ways like policies i.e. sequences of actions required to solve a particular task or INSERIRE ALTRI METODI DALLA PROPOSTA DI TESI
-% More generally, we refer to \textbf{Knowledge Skills} as components that can encode information. They map the state representation into an enriched latent encoding.
-% Formally a \textit{Knowledge Skill K} is defined as a tuple of three different functions $K=<\phi, \gamma, \omega>$:
-% \begin{itemize}
-%     \item $\phi: \mathbb{R}^{n} \rightarrow \mathbb{R}^{m}$, is the \textit{encoding function}, takes as input a representation and encodes it to apply the skill.
-
-%     \item $\gamma: \mathbb{R}^{n} \rightarrow \mathbb{R}^{m}$, is the \textit{skill function}, applies the skill to the given input.
-
-%     \item $\omega: \mathbb{R}^{n} \rightarrow \mathbb{R}^{m}$, is the \textit{adapter function}, elaborate the output from the skills to make it useful.
-% \end{itemize}
-% The Knowledge Skills is applied by composing the three functions $K(x) = \omega (\gamma ( \phi(x)))$.
-% Specifically, we focused on self-supervised or unsupervised models that solve computer vision tasks. Some of the skills used in this work have already been presented in Sec. \ref{sec:related_work}. We implemented the model in \cite{goel2018unsupervised}, which we called Video Object Segmentation (VOS), to detect moving objects, the model in \cite{kulkarni2019unsupervised}, which we refer as Object Keypoints (OK), to detect keypoints of moving objects on a frame, and finally, we implemented the model of \cite{anand2019unsupervised}, which we called State Representation (SR) to learn the state representation. %rifrasare
-
-
 % Although very significant, the skills defined up to this point may not provide enough information for the agent to learn. Therefore, we decided to enrich our skill set by using the well-known model based on convolutional layers specified in \cite{mnih2013playing}, which we refer to as \textit{Nature CNN}, as a base architecture to develop other simple skills.
 % In fact, Nature CNN has been used in various forms of encoder-decoder to implement: 1) an Autoencoder that takes the last frame of a game, encodes it in a latent space, and then tries to reconstruct the original frame; 2) an Image Completion model that given a frame of a game that is occluded with a black square, tries to reconstruct the original frame without occlusion; 3) finally a Frame Prediction model that given the last four frames of a game, tries to predict and reconstruct the frame 5 steps ahead.
 % These last three models were all trained with grayscale game frames of size 84x84 pixels. For the Frame Prediction model, on the other hand, we thought that predicting the frame at the next step might not be very informative since the frame would be very similar to the current one, so we decided to try to predict the frame 5 steps ahead.
@@ -60,6 +57,52 @@ TODO - WRITE INTRO
 %     \caption{This table shows the encoder architecture of Autoencoder, Image Completion, and Frame Prediction models. Input channels for the first convolutional layer are 1 or 4 depending on the model. Autoencoder and Image Completion take as input 1 frame in grayscale while Frame Prediction takes as input the last 4 grayscale frames stacked along the channel dimension. The stride on the second convolutional layer was decreased from 2 to 1 with respect to Nature CNN to match the output dimensions of other skills. Each convolutional layer is followed by a ReLU activation function. The decoder part is specular.}
 %     \label{tab:nature_cnn}
 % \end{table}
+
+
+
+
+
+
+
+
+
+
+%starting from the FMs used to extract information from the environment, then moving to the combination modules used to merge the different representations, and finally, we will describe the policy learning network.
+
+%the second part
+
+%as shown in Figure~\ref{fig:main_architecture}.
+%The first one, delimited by the \textcolor{blue}{blue} box, handles the processing of the current observation into a latent representation.
+%\textcolor{orange}{yellow} box,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \section{Other Combination Modules}
 \label{sec:combination_modules}
