@@ -82,20 +82,20 @@ class FeaturesExtractor(BaseFeaturesExtractor):
 
             self.skills_embeddings.append(so)
 
-            if mode == 0:
-                if skill.name == "state_rep_uns":
-                    so = th.reshape(so, (observations.size(0), -1, 16, 16))
-                elif skill.name in self.adapters:
-                    adapter = self.adapters[skill.name]
-                    so = adapter(so)
-
-            elif mode == 1:
-                if skill.name in self.adapters:
-                    adapter = self.adapters[skill.name]
-                    so = adapter(so)
+            # if mode == 0:
+            #     if skill.name == "state_rep_uns":
+            #         so = th.reshape(so, (observations.size(0), -1, 16, 16))
+            #     elif skill.name in self.adapters:
+            #         adapter = self.adapters[skill.name]
+            #         so = adapter(so)
+            #
+            # elif mode == 1:
+            #     if skill.name in self.adapters:
+            #         adapter = self.adapters[skill.name]
+            #         so = adapter(so)
 
             self.skills_name.append(skill.name)
-            #print(skill.name, so.shape)
+            # print(skill.name, so.shape)
             skill_out.append(so)
 
         return skill_out
@@ -394,7 +394,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         sample = th.from_numpy(sample) / 255
         sample = sample.to(device)
 
-        dropout_p = 0.15
+        #dropout_p = 0.15
 
         skill_out = self.preprocess_input(sample)
 
@@ -408,7 +408,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         for i in range(len(skill_out)):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device),
                                       nn.ReLU(),
-                                      nn.Dropout(p=dropout_p)
+                                      #nn.Dropout(p=dropout_p)
                                       )
             self.mlp_layers.append(seq_layer)
 
@@ -432,7 +432,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         self.encoder_seq_layer = nn.Sequential(
             nn.Linear(self.input_size, features_dim, device=device),
             nn.ReLU(),
-            nn.Dropout(p=dropout_p)
+            #nn.Dropout(p=dropout_p)
         )
 
         # ---------- for WSA ---------- #
@@ -446,11 +446,11 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         # print("forward observation shape", observations.shape)
-
+        # -------------- saving stats -------------- #
         self.skills_embeddings = []
-        skill_out = self.preprocess_input(observations)
-
         weights = []
+
+        skill_out = self.preprocess_input(observations)
 
         with torch.no_grad():
             # pick only the last frame and return a tensor of shape batch_size x 1 x 84 x 84
@@ -461,7 +461,6 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
 
         self.spatial_adapters = []
         self.linear_adapters = []
-
 
         for i in range(len(skill_out)):
             seq_layer = self.mlp_layers[i]

@@ -32,6 +32,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
 
 args = parse_args()
 
+
 seed = None
 if args.seed is not None:
     seed = args.seed
@@ -70,7 +71,7 @@ config["net_arch_vf"] = args.vf
 
 expert = args.use_expert == "True"
 
-version = "3-1 dropout"
+version = "3-2 nospatialadapter"
 
 tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}', f'alg:{alg}']
 
