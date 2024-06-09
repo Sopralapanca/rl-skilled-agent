@@ -8,6 +8,7 @@ Many previous work already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of
 Differently from these studies, our methodology is designed to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
 First, our work proposes a set of basic abilities like humans have.
 RL agents are equipped with these FMs, which serve as the prior knowledge needed to generate diverse representations of the environment.
+FMs weights are frozen during the training process.
 Then, we focus on how to effectively combine their latent representations to improve agents performance.
 
 While agents interact with the environment, the current observation is collected and processed through each pre-trained models.
@@ -26,11 +27,82 @@ Feature extractor part is in turn divided into two sub-modules, the first comput
 Finally, the second part is the policy learning network, where the unified representation is fed into a small neural network whose responsibility is to map the latent encoding to actions.
 
 In the following sections, we will describe in detail the different combination modules that we adopted to merge the representations extracted by the FMs.
-First we focus on the \textit{Weight Sharing Attention} module, which is the main combination module used in our experiments.
-Then, we will describe other combination modules that we tested to compare the performance of the agents.
+First we focus on the \textit{Weight Sharing Attention} module, which is the module that we propose as a solution to the problem of combining different FMs, and we think that it deserves more relevance.
+Then, we will briefly describe other combination modules that we tested to compare the performance of the agents.
 
 \section{Weight Sharing Attention}
 \label{sec:wsa}
+With a view to lifelong learning agents, the aim is therefore to equip the agent with prior skills that can be changed or improved over time to adapt to new unseen tasks.
+To this end, a model capable of re-adapting to new abilities with little or no effort is needed.
+To facilitate the integration of different pre-trained models, we propose WSA\@.
+The WSA module leverages the concept of \textbf{weight sharing}, as seen for the first time in CNNs~\citep{fukushima1980neocognitron}, and attention~\citep{vaswani2017attention} principles to efficiently merge outputs from diverse FMs.
+
+%maybe change
+In specific, WSA dynamically adjusts the weights assigned to each pre-trained model based on the current context, emphasizing the most relevant models for the current state.
+
+Supposing to have a set of $k$ pre-trained models $\Psi = \{\psi_1, \psi_2, \ldots, \psi_k\}$, each model $\psi_i$ is used to extract features from the current observation $\mathcal{O}$.
+Each pre-trained model is equipped with an adapter $\mathcal{A}$, which is a small neural network consisting of a linear layer followed by a non-linearity layer, in this case a ReLU activation function.
+The adapter is used to resize the latent representation of the pre-trained model to a fixed size, ensuring compatibility among different models.
+As a result of this operation, each FM outputs an embedding $E_i$ of a predefined size.
+The weights of the adapters are optimized during training.
+
+Among the provided FMs, one model is used as State Encoder $\mathcal{E}$ to compute a representation of the current state, which serves as \textit{context} $\mathcal{C}$ for the attention mechanism.
+Also for this model, the same kind of adapter is used to resize the latent representation to the same fixed size.
+
+
+To compute the attention weights, we use a shared MLP $f_\theta$ that takes as input the context $\mathcal{C}$ concatenated with the single embedding $E_i$ of each FM\@.
+This MLP outputs the model-specific weight $w_i$ to determine the contribution of each model in the final representation.
+It is important to note that this MLP is shared across all models, ensuring uniform weight computation.
+By dynamically adjusting weights based on the current context, WSA emphasizes the most relevant models for any given situation, resulting in a more accurate and adaptable representation.
+The final representation $\mathcal{R}$ is computed using the weights for all pre-trained models and computing a weighted sum of their embeddings.
+The output obtained is so a combination of the various perspectives, provided by the pre-trained models, into a single enriched latent representation.
+This final representation is used for action mapping, enhancing the performance and learning efficiency of RL agents by integrating the strengths of multiple FMs.
+
+
+The approach by design guarantees two additional features.
+WSA adds \textbf{explainability} to the model.
+By examining the weights assigned to different pre-trained models, we can gain insights into which models are most influential in a given context.
+This achieves a more transparent decision-making process of RL agents.
+Additionally, WSA is \textbf{scalable} and \textbf{adaptable} to any number of pre-trained models.
+Its shared component can handle an arbitrary number of models, making it a flexible solution for dynamically evolving agents.
+
+
+Figure~\ref{fig:main_architecture} shows the main architecture of our agent, with an emphasis on the WSA module.
+Algorithm~\ref{alg:wsa} instead reports the pseudocode for the actual implementation.
+
+\begin{algorithm}[ht]
+    \caption{Weight Sharing Attention}\label{alg:wsa}
+    \texttt{In \textcolor{blue}{blue} we highlight the components that are updated during training.}\\
+    \begin{algorithmic}[1]
+        \Require Current observation $\mathcal{O}$, List of FMs $\Psi$, State Encoder $\mathcal{E}$
+        \State $\mathcal{C} = \textcolor{blue}{\mathcal{A}_0}(\mathcal{E}(\mathcal{O}))$ \Comment{Compute current context representation}
+        \For {FM $\psi$ in $\Psi$}
+            \State $x = \psi_i(\mathcal{O})$ \Comment{Forward pass using current state}
+            \State $E_i = \textcolor{blue}{\mathcal{A}_i}(x)$ \Comment{Use the adapters to compute the resized embedding}
+            \State $w_i = \textcolor{blue}{f_\theta}(\mathcal{C}, E_i)$ \Comment{Compute the weight for current model using shared component}
+        \EndFor
+        \State $\mathcal{R} = \sum_{i=0}^{|\Psi|} w_i * E_i$ \Comment{Final representation: weights $W$, embeddings $E$ $\rightarrow$ $W \cdot E$}
+    \end{algorithmic}
+\end{algorithm}
+
+
+
+\begin{figure}[ht]
+    \begin{center}
+        \includegraphics[width=1\textwidth]{images/main_architecture2}
+    \end{center}
+    \caption{A schematic representation of the main pipeline from observation to actions and WSA architecture. The last four frames are stacked together and passed as input to the FMs and their adapters $\mathcal{A}_1, \dots \mathcal{A}_k$ to obtain an embedding of the current state. A State Encoder $\mathcal{E}$ and its adapter $\mathcal{A}_0$ compute an encoding of the state, that will be used as context $\mathcal{C}$. A shared MLP layer takes as input the context $\mathcal{C}$ and the representation of the $i^{th}$ FM, $E_i$, and predicts the weight for that specific model. The final enriched representation $\mathcal{R}$ is obtained from the weighted summation between each weight $w_i$ and its respective embedding $E_i$. $\mathcal{R}$ is given as input to agents' \texttt{Fully-Connected Network}.}
+    \label{fig:main_architecture}
+\end{figure}
+
+
+
+
+
+
+
+
+
 % Although very significant, the skills defined up to this point may not provide enough information for the agent to learn. Therefore, we decided to enrich our skill set by using the well-known model based on convolutional layers specified in \cite{mnih2013playing}, which we refer to as \textit{Nature CNN}, as a base architecture to develop other simple skills.
 % In fact, Nature CNN has been used in various forms of encoder-decoder to implement: 1) an Autoencoder that takes the last frame of a game, encodes it in a latent space, and then tries to reconstruct the original frame; 2) an Image Completion model that given a frame of a game that is occluded with a black square, tries to reconstruct the original frame without occlusion; 3) finally a Frame Prediction model that given the last four frames of a game, tries to predict and reconstruct the frame 5 steps ahead.
 % These last three models were all trained with grayscale game frames of size 84x84 pixels. For the Frame Prediction model, on the other hand, we thought that predicting the frame at the next step might not be very informative since the frame would be very similar to the current one, so we decided to try to predict the frame 5 steps ahead.
