@@ -95,10 +95,137 @@ Algorithm~\ref{alg:wsa} instead reports the pseudocode for the actual implementa
     \label{fig:main_architecture}
 \end{figure}
 
+\section{Linear Combination Modules}
+\label{sec:linear_combination}
+Linear combination modules are the simplest way to merge the representations extracted by the FMs.
+Considering the set of $k$ pre-trained models, each of them can output an embedding in the spatial field or a one-dimensional vector.
+If the model outputs a one-dimensional vector, it is left as it is, while if it outputs a set of feature maps, it is flattened to produce a one-dimensional vector.
+Then, the embeddings of each model are concatenated to create a large feature vector.
+We refer to this module as \textit{Linear Concatenation Extractor}, or for short \textit{LIN}.
+
+
+One problem with this combination module is that the FMs may have very different dimensionality.
+An embedding might be very large compared to the others, leading to a situation where one model becomes more important than the others just because its dimension is larger.
+So, we developed another combination module, which we refer to as \textit{FLIN}, where first we obtain a linear representation as in the previous extractor for each model.
+Then, we map the representation of each model into an embedding of fixed dimensions using $k$ different linear layers with the same size.
+Each linear layer is followed by a ReLU activation function.
+The new embeddings are then concatenated as before and used as input for the rest of the network.
+
+In Fig.~\ref{fig:lin_combination} we show the architecture of the two linear combination modules.
+
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/pong_train.png}
+        \caption{\texttt{Pong}}
+        \label{fig:lin}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/mspacman_train.png}
+        \caption{\texttt{Ms.Pacman}}
+        \label{fig:fix_lin}
+    \end{subfigure}
+
+    \caption{In Figure we show the architecture of the Linear Concatenation Extractor (LIN) and the Fixed Linear Concatenation Extractor (FLIN). In LIN, the embeddings of each model are concatenated to create a large feature vector. In FIX, the embeddings are mapped into an embedding of fixed dimensions using $k$ different linear layers with the same size.}
+    \label{fig:lin_combination}
+\end{figure}
 
 
 
 
+\section{Convolutional Combination Modules}
+\label{sec:convolutional_combination}
+In this combination module, we exploit the fact that FMs that operate in the spatial field.
+In fact, flatting the feature maps and concatenating them as in the linear combination modules may not be the best choice, as the spatial information is lost.
+To overcome this issue, we first reshape the feature maps coming from the FMs to have the same dimensions.
+FMs that output a one-dimensional vector are reshaped to match the dimensions of the other models.
+Then, the reshaped embeddings are concatenated along the channel dimension and passed to one or more convolutional layers to extract features.
+At this point, the output of the convolutional layer is flattened, and the embedding is passed to the rest of the network.
+We refer to this combination module as \textit{CNN}.
+
+
+Assuming that the set of FMs is composed of model that operates in the spatial field and models that operates in the linear one, we can exploit theses two types of models to create a more complex combination module.
+First, we concatenate the FMs that operate in the spatial field along the channel dimension and pass them through a convolutional layer, as for the previous module.
+Then, we flatten the output of the convolutional layer and concatenate it with the embeddings of the linear models to create the final representation.
+We call this combination module \textit{MIX} as it is a mixture of the previous two modules.
+
+Figure~\ref{fig:conv_combination} shows the architecture of the two convolutional combination modules.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/pong_train.png}
+        \caption{\texttt{Pong}}
+        \label{fig:cnn}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/mspacman_train.png}
+        \caption{\texttt{Ms.Pacman}}
+        \label{fig:mix}
+    \end{subfigure}
+
+    \caption{In Figure we show the architecture of.}
+    \label{fig:conv_combination}
+\end{figure}
+
+\section{Reservoir Combination Module}
+\label{sec:reservoir_combination}
+Inspired by the work of \citet{gallicchio2017}, we decided to explore reservoir dynamics properties to map the input into a lower-dimension latent space using a non-linear transformation.
+To develop this combination module, we created a reservoir with a fixed number of neurons, and as input we used large embedding by concatenating the representations of the FMs as in LIN\@.
+The output of the reservoir is a vector of the size of the reservoir, which is used as input to the policy learning network.
+We refer to this combination module as \textit{RES}.
+Figure~\ref{fig:reservoir_combination} shows the architecture of the reservoir combination module.
+
+\section{DotProduct Attention Combination Module}
+\label{sec:dpa}
+
+We also explored the possibility of combining representations using different types of attention-like mechanisms conditioned on the configuration of the environment.
+In this case, we used the \textit{scaled dot product attention}~\citep{vaswani2017attention}.
+As for the WSA module, the pre-trained model representations are reduced to a vector of fixed size.
+These are then stacked together to form a tensor of shape $k \times \text{vector\_size})$.
+This constitutes the \textbf{key} part and the \textbf{value} part of the attention module.
+For the \textbf{query} part, as for the WSA module, we used the State Encoder to encode the current state of the game in a latent space, and we used an adapter to obtain a vector of the same dimensions.
+This therefore represents the context.
+As the name of the module suggests, the attention module first computes dot product of the query with the keys, divided by the square root of the dimension of the query, then it use a softmax function to obtain the weights.
+Finally, the output of the module is computed as the dot product of the weights with the values.
+We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combination} we show the architecture of the module.
+
+
+
+
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/pong_train.png}
+        \caption{\texttt{Pong}}
+        \label{fig:reservoir_combination}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.47\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/mspacman_train.png}
+        \caption{\texttt{Ms.Pacman}}
+        \label{fig:dpa}
+    \end{subfigure}
+
+    \caption{In Figure we show the architecture of.}
+    \label{fig:dpa_combination}
+\end{figure}
 
 
 
