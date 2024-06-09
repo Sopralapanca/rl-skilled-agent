@@ -71,7 +71,7 @@ config["net_arch_vf"] = args.vf
 
 expert = args.use_expert == "True"
 
-version = "3-2 nospatialadapter"
+version = "3-1 dropout"
 
 tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}', f'alg:{alg}']
 

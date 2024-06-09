@@ -82,17 +82,17 @@ class FeaturesExtractor(BaseFeaturesExtractor):
 
             self.skills_embeddings.append(so)
 
-            # if mode == 0:
-            #     if skill.name == "state_rep_uns":
-            #         so = th.reshape(so, (observations.size(0), -1, 16, 16))
-            #     elif skill.name in self.adapters:
-            #         adapter = self.adapters[skill.name]
-            #         so = adapter(so)
-            #
-            # elif mode == 1:
-            #     if skill.name in self.adapters:
-            #         adapter = self.adapters[skill.name]
-            #         so = adapter(so)
+            if mode == 0:
+                if skill.name == "state_rep_uns":
+                    so = th.reshape(so, (observations.size(0), -1, 16, 16))
+                elif skill.name in self.adapters:
+                    adapter = self.adapters[skill.name]
+                    so = adapter(so)
+
+            elif mode == 1:
+                if skill.name in self.adapters:
+                    adapter = self.adapters[skill.name]
+                    so = adapter(so)
 
             self.skills_name.append(skill.name)
             # print(skill.name, so.shape)
@@ -394,7 +394,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         sample = th.from_numpy(sample) / 255
         sample = sample.to(device)
 
-        #dropout_p = 0.15
+        dropout_p = 0.1
 
         skill_out = self.preprocess_input(sample)
 
@@ -437,6 +437,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
 
         # ---------- for WSA ---------- #
         self.weights = nn.Sequential(nn.Linear((2 * features_dim), 1, device=device), nn.ReLU())
+        self.dropout = nn.Dropout(p=dropout_p)
 
         # ---------- saving info ---------- #
 
@@ -479,6 +480,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
 
         weights = th.stack(weights, 1)
         weights = th.softmax(weights, 1)
+        weights = self.dropout(weights)
 
         # save attention weights to plot them in evaluation
         for i, s in enumerate(self.skills):
