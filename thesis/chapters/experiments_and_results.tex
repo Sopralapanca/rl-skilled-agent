@@ -3,6 +3,28 @@
 
 \chapter{Experiments \& Results}
 \label{sec:experiments}
+
+% The architecture of Nature CNN has been slightly modified as it appears in Tab. \ref{tab:nature_cnn} to match the output dimensions of the other skills so that they can be properly concatenated.
+
+
+%spiegare un po meglio questa parte, non abbiamo un modello generic ma alleniamo una singola skill per ogni ambient al contrario di SIMA
+% Finally, all of these models are not general. We decided to specialize the skills by creating a model for each skill and environment.
+
+% \begin{table}[htbp]
+%     \begin{center}
+%         \begin{tabular}{lllll}
+%             \multicolumn{1}{l}{LAYER}  &\multicolumn{1}{l}{\bf IN. CHANNELS}  &\multicolumn{1}{l}{\bf OUT CHANNELS}  &\multicolumn{1}{l}{\bf KERNEL SIZE}  &\multicolumn{1}{l}{\bf STRIDE}
+%             \\ \hline \\
+%             1st CNN Layer   &  1 or 4  & 32 & 8 & 4 \\
+%             2nd CNN Layer   &  32  & 64 & 3 & 1 \\
+%             3rd CNN Layer   &  64  & 64 & 3 & 1 \\
+
+%         \end{tabular}
+%     \end{center}
+%     \caption{This table shows the encoder architecture of Autoencoder, Image Completion, and Frame Prediction models. Input channels for the first convolutional layer are 1 or 4 depending on the model. Autoencoder and Image Completion take as input 1 frame in grayscale while Frame Prediction takes as input the last 4 grayscale frames stacked along the channel dimension. The stride on the second convolutional layer was decreased from 2 to 1 with respect to Nature CNN to match the output dimensions of other skills. Each convolutional layer is followed by a ReLU activation function. The decoder part is specular.}
+%     \label{tab:nature_cnn}
+% \end{table}
+
 Regarding the experiments, we mainly used the Stable Baselines suite \cite{stable-baselines} and Gymnasium \cite{towers_gymnasium_2023} for our tests.
 We decided to restrict our tests to only four environments, namely \textit{Pong, Breakout, Asteroids, and Ms. Pacman,} this was to avoid adding complexity and growing the time for experiments. We believe that this choice of games provides a fair compromise between simple games like Pong and much more complex games with lots of moving objects like Asteroids.
 Furthermore, the choice of games was dictated by the availability of the RAM annotations provided in \cite{anand2019unsupervised}.

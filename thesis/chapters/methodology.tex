@@ -5,17 +5,16 @@
 \label{sec:method}
 The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task.
 Many previous work already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of the world knowledge and simplifying the RL training process.
-Differently from these studies, our methodology is designed to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
+Differently from these studies, our methodology is designed to use multiple model at the same time, instead of just one, this to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
 First, our work proposes a set of basic abilities like humans have.
 RL agents are equipped with these FMs, which serve as the prior knowledge needed to generate diverse representations of the environment.
-FMs weights are frozen during the training process.
 Then, we focus on how to effectively combine their latent representations to improve agents performance.
-
 While agents interact with the environment, the current observation is collected and processed through each pre-trained models.
-This process yields multiple perspectives or views of the world, each encoded uniquely based on the specific model.
-These features represent different facets of the environment, providing the agent with a comprehensive and enhanced understanding of the current state.
-The challenge then lies in integrating these disparate views into a cohesive and enriched representation.
-To achieve this, we employ a specialized combination module, that synthesizes the information from the various models into a single latent representation.
+This process produce multiple perspectives or views of the world, each distinctively represented according to the particular model utilized.
+These features embody various aspects of the environment, providing the agent with a comprehensive and enhanced understanding of the current state.
+
+The challenge then lies in integrating these possible divergent views into a   and enriched representation.
+In order to  accomplish this, we employ a specialized combination module, that synthesizes the information from the various models into a single latent representation.
 The intuition is that the enriched representation provides a comprehensive understanding of the current state of the environment, derived from the collective insights of the pre-trained models.
 By leveraging FMs, our approach significantly reduces the burden on the RL agent to learn the environmental representation from scratch, allowing it to focus more on refining the action-mapping process.
 This not only accelerates the learning process but also enhances overall performance by providing a well-structured and informative representation.
@@ -23,15 +22,26 @@ This not only accelerates the learning process but also enhances overall perform
 The architecture of our agents is divided into two main components.
 The first part takes care of processing the current observation into multiple latent representations and then combines them into a single enriched representation.
 We refer to this part as the \textit{Feature Extractor} module.
-Feature extractor part is in turn divided into two sub-modules, the first compute the preprocessing of the information through the FMs, the latter is the combination module that merges the representations.
-Finally, the second part is the policy learning network, where the unified representation is fed into a small neural network whose responsibility is to map the latent encoding to actions.
+The second part is the \textit{Policy Learning} network, where the unified representation is fed into a small neural network whose responsibility is to map the latent encoding to actions.
 
-In the following sections, we will describe in detail the different combination modules that we adopted to merge the representations extracted by the FMs.
-First we focus on the \textit{Weight Sharing Attention} module, which is the module that we propose as a solution to the problem of combining different FMs, and we think that it deserves more relevance.
-Then, we will briefly describe other combination modules that we tested to compare the performance of the agents.
 
-\section{Weight Sharing Attention}
+In the following sections, first we will describe in detail how we designed the Feature Extractor module~\ref{sec:feature_extractor}, focusing on various combination techniques to merge the representations extracted by the FMs.
+Then, in Sec. \ref{sec:environments} we will provide a brief overview of the environments used to evaluate our agent.
+
+
+
+\section{Feature Extractor} \label{sec:feature_extractor}
+The Feature Extractor module is the first part of our agent, it is responsible for processing the current observation and extract a meaningful representation of the environment in a compact latent space.
+It is composed of a set of pre-trained models, that are used to extract information from the environment and whose weights are frozen during the training process.
+The second part of the Feature Extractor is the combination module, which is the core of the Feature Extractor.
+
+We will talk about the implementation of the FMs in Sec. INSERT.
+In this section instead we will present one by one all the combination techniques that we have developed to merge the representations extracted by the FMs, with a particular emphasis on the Weight Sharing Attention module, which is the module that we propose as a solution to the problem of combining different FMs in an effective way, and we think that it deserves more relevance.
+
+
+\subsection{Weight Sharing Attention}
 \label{sec:wsa}
+
 With a view to lifelong learning agents, the aim is therefore to equip the agent with prior skills that can be changed or improved over time to adapt to new unseen tasks.
 To this end, a model capable of re-adapting to new abilities with little or no effort is needed.
 To facilitate the integration of different pre-trained models, we propose WSA\@.
@@ -95,7 +105,7 @@ Algorithm~\ref{alg:wsa} instead reports the pseudocode for the actual implementa
     \label{fig:main_architecture}
 \end{figure}
 
-\section{Linear Combination Modules}
+\subsection{Linear Combination Modules}
 \label{sec:linear_combination}
 Linear combination modules are the simplest way to merge the representations extracted by the FMs.
 Considering the set of $k$ pre-trained models, each of them can output an embedding in the spatial field or a one-dimensional vector.
@@ -139,7 +149,7 @@ In Fig.~\ref{fig:lin_combination} we show the architecture of the two linear com
 
 
 
-\section{Convolutional Combination Modules}
+\subsection{Convolutional Combination Modules}
 \label{sec:convolutional_combination}
 In this combination module, we exploit the fact that FMs that operate in the spatial field.
 In fact, flatting the feature maps and concatenating them as in the linear combination modules may not be the best choice, as the spatial information is lost.
@@ -179,7 +189,7 @@ Figure~\ref{fig:conv_combination} shows the architecture of the two convolutiona
     \label{fig:conv_combination}
 \end{figure}
 
-\section{Reservoir Combination Module}
+\subsection{Reservoir Combination Module}
 \label{sec:reservoir_combination}
 Inspired by the work of \citet{gallicchio2017}, we decided to explore reservoir dynamics properties to map the input into a lower-dimension latent space using a non-linear transformation.
 To develop this combination module, we created a reservoir with a fixed number of neurons, and as input we used large embedding by concatenating the representations of the FMs as in LIN\@.
@@ -187,7 +197,7 @@ The output of the reservoir is a vector of the size of the reservoir, which is u
 We refer to this combination module as \textit{RES}.
 Figure~\ref{fig:reservoir_combination} shows the architecture of the reservoir combination module.
 
-\section{DotProduct Attention Combination Module}
+\subsection{DotProduct Attention Combination Module}
 \label{sec:dpa}
 
 We also explored the possibility of combining representations using different types of attention-like mechanisms conditioned on the configuration of the environment.
@@ -200,9 +210,6 @@ This therefore represents the context.
 As the name of the module suggests, the attention module first computes dot product of the query with the keys, divided by the square root of the dimension of the query, then it use a softmax function to obtain the weights.
 Finally, the output of the module is computed as the dot product of the weights with the values.
 We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combination} we show the architecture of the module.
-
-
-
 
 
 \begin{figure}[ht]
@@ -227,53 +234,71 @@ We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combinatio
     \label{fig:dpa_combination}
 \end{figure}
 
-%potrei mettere sezione con gli environment
+\section{Environments}
+\label{sec:environments}
+In this section we provide a brief overview of the environments used to evaluate our agent.
+We have chosen a set of Atari games, which are widely used in the literature to evaluate the performance of RL agents.
+We focused on games that have a discrete action space and discrete observations, as they are more suitable for our agent.
+In particular, we have selected games that require different skills to be solved, in order to test the effectiveness of our agent in a variety of tasks.
+We will list the games used in the experiments, and we will provide a brief description of each one.
+
+\subsubsection{Pong}
+The game of Pong basically is a table tennis simulation.
+This game is played by two players, each controlling a paddle that can move up and down along the left and right edges of the screen.
+The left paddle is controlled by the agent, while the right paddle is controlled by the opponent.
+Points are accumulated when a player is unable to successfully return the ball, resulting in the ball passing beyond their paddle.
+The objective of the game is to score as many points as possible preventing the opponent from doing the same.
+The game ends when one of the players reaches the score of \textit{21}.
+From the viewpoint of the agent, the game is considered solved when it is able to consistently outperform the opponent.
 
 
-% Although very significant, the skills defined up to this point may not provide enough information for the agent to learn. Therefore, we decided to enrich our skill set by using the well-known model based on convolutional layers specified in \cite{mnih2013playing}, which we refer to as \textit{Nature CNN}, as a base architecture to develop other simple skills.
-% In fact, Nature CNN has been used in various forms of encoder-decoder to implement: 1) an Autoencoder that takes the last frame of a game, encodes it in a latent space, and then tries to reconstruct the original frame; 2) an Image Completion model that given a frame of a game that is occluded with a black square, tries to reconstruct the original frame without occlusion; 3) finally a Frame Prediction model that given the last four frames of a game, tries to predict and reconstruct the frame 5 steps ahead.
-% These last three models were all trained with grayscale game frames of size 84x84 pixels. For the Frame Prediction model, on the other hand, we thought that predicting the frame at the next step might not be very informative since the frame would be very similar to the current one, so we decided to try to predict the frame 5 steps ahead.
-
-%inserire qualche frase in più su come abbiamo create queste ultime 3 skill?, sul perchè abbiamo scelto questi modelli, sul fatto che non soon perfetti in quanto molte volte non predicono bene l'output ma che comunque possono codificare informazioni important per l'agente
-
-% The architecture of Nature CNN has been slightly modified as it appears in Tab. \ref{tab:nature_cnn} to match the output dimensions of the other skills so that they can be properly concatenated.
-
-
-%spiegare un po meglio questa parte, non abbiamo un modello generic ma alleniamo una singola skill per ogni ambient al contrario di SIMA
-% Finally, all of these models are not general. We decided to specialize the skills by creating a model for each skill and environment.
-
-% \begin{table}[htbp]
-%     \begin{center}
-%         \begin{tabular}{lllll}
-%             \multicolumn{1}{l}{LAYER}  &\multicolumn{1}{l}{\bf IN. CHANNELS}  &\multicolumn{1}{l}{\bf OUT CHANNELS}  &\multicolumn{1}{l}{\bf KERNEL SIZE}  &\multicolumn{1}{l}{\bf STRIDE}
-%             \\ \hline \\
-%             1st CNN Layer   &  1 or 4  & 32 & 8 & 4 \\
-%             2nd CNN Layer   &  32  & 64 & 3 & 1 \\
-%             3rd CNN Layer   &  64  & 64 & 3 & 1 \\
-
-%         \end{tabular}
-%     \end{center}
-%     \caption{This table shows the encoder architecture of Autoencoder, Image Completion, and Frame Prediction models. Input channels for the first convolutional layer are 1 or 4 depending on the model. Autoencoder and Image Completion take as input 1 frame in grayscale while Frame Prediction takes as input the last 4 grayscale frames stacked along the channel dimension. The stride on the second convolutional layer was decreased from 2 to 1 with respect to Nature CNN to match the output dimensions of other skills. Each convolutional layer is followed by a ReLU activation function. The decoder part is specular.}
-%     \label{tab:nature_cnn}
-% \end{table}
+\subsubsection{Breakout}
+Breakout is a game where the dynamic is similar to Pong, but the objective is different.
+In this case the environment is constituted by a paddle that can move horizontally at the bottom of the screen, which hits a ball that bounces on the walls.
+At the top of the screen there is a wall of bricks, and the agent has to break them using the ball that bounces on a paddle.
+The more bricks the agent breaks, the higher the score it gets.
+When the agent breaks all the bricks the environment is reset and the agent can start a new game.
 
 
-
-
-
-
-
+\subsubsection{Ms. Pacman}
+This game is a maze game where the agent controls a character that moves through the environment and collecting objects.
+The objects are represented by dots that are scattered throughout the maze.
+The more dots the agent collects, the higher the score it gets.
+Agent also has to avoid the ghosts that move through the maze, as they can kill the agent.
+The only way to kill the ghosts is to eat a special object that appears in the maze from time to time.
+The game ends when the agent loses all its lives, or when it collects all the dots in the maze. \\
 
 
 
-%starting from the FMs used to extract information from the environment, then moving to the combination modules used to merge the different representations, and finally, we will describe the policy learning network.
-
-%the second part
-
-%as shown in Figure~\ref{fig:main_architecture}.
-%The first one, delimited by the \textcolor{blue}{blue} box, handles the processing of the current observation into a latent representation.
-%\textcolor{orange}{yellow} box,
-
+Figure \ref{fig:environemnts} shows a frame of each game.
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.30\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/pong_train.png}
+        \caption{\texttt{Pong}}
+        \label{fig:pong_env}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.30\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/mspacman_train.png}
+        \caption{\texttt{Ms.Pacman}}
+        \label{fig:mspacman_env}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.30\textwidth}
+        \centering
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        %\includegraphics[width=\textwidth]{images/mspacman_train.png}
+        \caption{\texttt{Breakout}}
+        \label{fig:breakout_env}
+    \end{subfigure}
+    \caption{In Figure we show the architecture of.}
+    \label{fig:environemnts}
+\end{figure}
 
 
 
