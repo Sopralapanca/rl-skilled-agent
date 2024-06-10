@@ -5,14 +5,9 @@ import argparse
 import atari_py
 import os
 from stable_baselines3 import PPO
-from tqdm import tqdm
-import glob
-from PIL import Image
-import re
-import math
-from pathlib import Path
 import os
 import moviepy.video.io.ImageSequenceClip
+from utils.load_custom_policykwargs import load_policy_kwargs
 
 
 def episode_terminated(infos):
@@ -30,10 +25,12 @@ args = parser.parse_args()
 N_ENVS = 1
 FRAME_STACK = 4
 ENV_NAME = args.env  # "Pong"
-model_path = "y6r4ihnv"  # ATTENZIONE CAMBIA MODELLO
-device = "cuda:2"
-info = "_dropout_0.1_skill"
-
+model_path = "ofx18yej"  # ATTENZIONE CAMBIA MODELLO
+device = "cuda:0"
+info = "_nospatialadapter"
+custom_object = load_policy_kwargs(expert=False, device=device, env=ENV_NAME,
+                                   net_arch=[256], agent="wsharing_attention_ext",
+                                   features_dim=512, num_conv_layers=0)
 
 # Create the environment
 if ENV_NAME.lower() in atari_py.list_games():
@@ -58,8 +55,7 @@ obs = vec_env.reset()
 if ENV_NAME.lower() in atari_py.list_games():
     vec_env.render("rgb_array")
 
-
-model = PPO.load(f"./models/{model_path}/best_model.zip", device=device)
+model = PPO.load(f"./models/{model_path}/best_model.zip", device=device, custom_objects=custom_object)
 offset = 1 / len(action_meanings)
 done = False
 i = 0
@@ -127,16 +123,6 @@ while not done:
 
 obs = vec_env.reset()
 vec_env.close()
-
-# ------------------ GIF ------------------ #
-
-# get all files in SAVE_DIR and list it in order
-# files = glob.glob(f"{SAVE_DIR}/*.png")
-# frames = [Image.open(image) for image in files[:900]] #memory error if too big
-#
-# frame_one = frames[0]
-# frame_one.save(SAVE_DIR+"/attention.gif", format="GIF", append_images=frames,save_all=True, duration=200, loop=1)
-
 
 # ------------------ VIDEO ------------------ #
 
