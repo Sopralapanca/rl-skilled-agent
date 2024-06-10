@@ -25,12 +25,13 @@ args = parser.parse_args()
 N_ENVS = 1
 FRAME_STACK = 4
 ENV_NAME = args.env  # "Pong"
-model_path = "ofx18yej"  # ATTENZIONE CAMBIA MODELLO
-device = "cuda:0"
-info = "_nospatialadapter"
+model_path = "if4fdo3k"  # ATTENZIONE CAMBIA MODELLO
+device = "cuda:3"
+info = "_norelu_lin"
+feature_dim = 1024
 custom_object = load_policy_kwargs(expert=False, device=device, env=ENV_NAME,
                                    net_arch=[256], agent="wsharing_attention_ext",
-                                   features_dim=512, num_conv_layers=0)
+                                   features_dim=feature_dim, num_conv_layers=0)
 
 # Create the environment
 if ENV_NAME.lower() in atari_py.list_games():
