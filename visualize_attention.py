@@ -25,12 +25,13 @@ args = parser.parse_args()
 N_ENVS = 1
 FRAME_STACK = 4
 ENV_NAME = args.env  # "Pong"
-model_path = "if4fdo3k"  # ATTENZIONE CAMBIA MODELLO
+model_path = "qrt2wghl"  # ATTENZIONE CAMBIA MODELLO
 device = "cuda:3"
-info = "_norelu_lin"
-feature_dim = 1024
+info = "_nospatialadapters"
+feature_dim = 256
+net_arch = [256]
 custom_object = load_policy_kwargs(expert=False, device=device, env=ENV_NAME,
-                                   net_arch=[256], agent="wsharing_attention_ext",
+                                   net_arch=net_arch, agent="wsharing_attention_ext",
                                    features_dim=feature_dim, num_conv_layers=0)
 
 # Create the environment

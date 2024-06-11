@@ -82,17 +82,17 @@ class FeaturesExtractor(BaseFeaturesExtractor):
 
             self.skills_embeddings.append(so)
 
-            # if mode == 0:
-            #     if skill.name == "state_rep_uns":
-            #         so = th.reshape(so, (observations.size(0), -1, 16, 16))
-            #     elif skill.name in self.adapters:
-            #         adapter = self.adapters[skill.name]
-            #         so = adapter(so)
-            #
-            # elif mode == 1:
-            #     if skill.name in self.adapters:
-            #         adapter = self.adapters[skill.name]
-            #         so = adapter(so)
+            if mode == 0:
+                if skill.name == "state_rep_uns":
+                    so = th.reshape(so, (observations.size(0), -1, 16, 16))
+                elif skill.name in self.adapters:
+                    adapter = self.adapters[skill.name]
+                    so = adapter(so)
+
+            elif mode == 1:
+                if skill.name in self.adapters:
+                    adapter = self.adapters[skill.name]
+                    so = adapter(so)
 
             self.skills_name.append(skill.name)
             # print(skill.name, so.shape)
@@ -409,6 +409,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device),
                                       nn.ReLU(),
                                       #nn.Dropout(p=dropout_p)
+                                      nn.BatchNorm1d(features_dim, device=device),
                                       )
             self.mlp_layers.append(seq_layer)
 
@@ -433,6 +434,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             nn.Linear(self.input_size, features_dim, device=device),
             nn.ReLU(),
             #nn.Dropout(p=dropout_p)
+            nn.BatchNorm1d(features_dim, device=device),
         )
 
         # ---------- for WSA ---------- #
