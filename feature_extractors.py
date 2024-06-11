@@ -409,7 +409,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device),
                                       nn.ReLU(),
                                       #nn.Dropout(p=dropout_p)
-                                      nn.BatchNorm1d(features_dim, device=device),
+                                      #nn.BatchNorm1d(features_dim, device=device),
                                       )
             self.mlp_layers.append(seq_layer)
 
@@ -434,7 +434,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
             nn.Linear(self.input_size, features_dim, device=device),
             nn.ReLU(),
             #nn.Dropout(p=dropout_p)
-            nn.BatchNorm1d(features_dim, device=device),
+            #nn.BatchNorm1d(features_dim, device=device),
         )
 
         # ---------- for WSA ---------- #

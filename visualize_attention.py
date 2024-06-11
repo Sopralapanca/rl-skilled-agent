@@ -25,10 +25,10 @@ args = parser.parse_args()
 N_ENVS = 1
 FRAME_STACK = 4
 ENV_NAME = args.env  # "Pong"
-model_path = "qrt2wghl"  # ATTENZIONE CAMBIA MODELLO
-device = "cuda:3"
-info = "_nospatialadapters"
-feature_dim = 256
+model_path = "xgfo9pmu"  # ATTENZIONE CAMBIA MODELLO
+device = "cuda:2"
+info = "_norelucnn"
+feature_dim = 1024 if "Pong" in ENV_NAME else 256
 net_arch = [256]
 custom_object = load_policy_kwargs(expert=False, device=device, env=ENV_NAME,
                                    net_arch=net_arch, agent="wsharing_attention_ext",
