@@ -3,19 +3,19 @@
 
 \chapter{Related Works}
 \label{ch:related_work}
-In this chapter, we provide an overview of the most relevant works in the field of RL and FM\@.
+In this chapter, we provide an overview of the most relevant works in the field of RL and FM which are related to the topics of this thesis\@.
 We start by focusing on the FMs which has been recently proposed to improve the performance of RL agents in Sec. \ref{sec:fm_rl}.
-Then, in Sec. \ref{sec:fm_rl_combination}, we discuss the most recent works that combine FM with RL\@.
+Then, in Sec. \ref{sec:fm_rl_combination}, we discuss the most recent works that combine multiple models in the context of RL\@.
 
-\section{Foundational Models \& Reinforcement Learning}\label{sec:fm_rl}
-The idea of improving RL agents feature representation by providing information already processed by other models is not new.
+\section{Foundational Models for Reinforcement Learning agents}\label{sec:fm_rl}
+The idea of improving RL agents' feature representation by providing information already processed by other models is not new.
 Most of the works apply a single model that pre-processes the input data and then learns the actual policy.
 In specific, some work focused on feature representation that can be detached from the learning process by having a module that is able to extract relevant information.
-Some example can be the work of \citet{shah2021rrl} that uses a pre-trained ResNet for representation learning, or the work of \citet{yuan2022pre} that uses a pre-trained encoder to extract features from the input data.
+Some examples can be the work of \citet{shah2021rrl} that uses a pre-trained ResNet for representation learning, or the work of \citet{yuan2022pre} that uses a pre-trained encoder to extract features from the input data.
 
 Several approaches exploit FMs to learn from collected data a general representation by applying different self-supervised methodologies, which can also be fine-tuned during the learning of the policy.
-To name a few, we mention \citet{anand2019unsupervised} who proposed a method to learn state representations on Atari games, \citet{kulkarni2019unsupervised} who provided an unsupervised method to learn object representations in terms of keypoints given video frames, \citet{goel2018unsupervised} who proposed an unsupervised technique for DLR that automatically detects moving objects given recent frames of Atari games, \citet{montalvo2023exploiting} that used a semantic segmentation model to transform Super Mario Bros frames from their original domain to a simplified semantic domain, and then trained the RL algorithm with these simplified images, \citet{xiao2022masked} that pre-trains an encoder by masking the input images and then fine-tunes it on a small amount of task-specific data.
-Some works use human labeled data for eye-tracking \citep{zhang2020atari} to improve the performance of the agent, like the work of \citet{thammineni2023selective} which predicts a human eye-gaze map from input game frames, and use this data to augment the agent's observations.
+To name a few, we mention \citet{anand2019unsupervised} who proposed a method to learn state representations on Atari games, \citet{kulkarni2019unsupervised} who provided an unsupervised method to learn object representations in terms of keypoints given video frames, \citet{goel2018unsupervised} who proposed an unsupervised technique for DLR that automatically detects moving objects given recent frames of Atari games, \citet{montalvo2023exploiting} that used a semantic segmentation model to transform Super Mario Bros frames from their original domain to a simplified semantic domain and then trained the RL algorithm with these simplified images, \citet{xiao2022masked} that pre-trains an encoder by masking the input images and then fine-tunes it on a small amount of task-specific data.
+Some works use human-labeled data for eye-tracking \citep{zhang2020atari} to improve the performance of the agent, like the work of \citet{thammineni2023selective} which predicts a human eye-gaze map from input game frames, and use this data to augment the agent's observations.
 
 Other works uses different attention mechanisms to improve the performance of the agent.
 For example, \citet{bramlage2022generalized} proposed a method that use self-attention mechanism to detect task-relevant features in the input data.
@@ -34,17 +34,17 @@ An example is the work of \citet{lifshitz2024steve} which creates an instruction
 %Agents learn how to perform task composing different enriched elements instead of having to learn the state space from scratch.
 
 
-\section{Combining Foundational Models and Reinforcement Learning}\label{sec:fm_rl_combination}
+\section{Combining multiple models}\label{sec:fm_rl_combination}
 There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation.
-Different works define the skills an agent should have as policies and then tries to combine them.
+Different works define the skills an agent should have as policies and then try to combine them.
 An example is the work of \citet{sahni2017learning} where the skills are trained separately using a reward function only relevant to the skill.
 
 How to combine multiple latent features in a single representation is still an open problem.
-Some works use a mixture of experts approach to combine different embeddings.
+Some works use a \textit{mixture of experts} approach to combine different embeddings.
 For example, in the context of multi-task learning, \citet{sodhani2021multi} proposed a method where a mixture of encoders extract different features from the input data.
 Then they use an attention mechanism considering the embedding coming from a LLM which receive in input the metadata of different tasks as context to produce the final representation.
 While \citet{obando2024mixtures} proposed a method that uses a mixture of experts to extract features from the encoded state of the environment and then combine them to produce the final representation.
-All of these works are focused on combining different embeddings, but they do not consider the case where the embeddings come from different pre-trained models, like FMs, which extract information from different domains i.e.\ images, text, video, etc, and how to combine them to improve the performance of the agent.
+All of these works are focused on combining different embeddings, but they do not consider the case where the embeddings come from different pre-trained models, like FMs, which extract information from different domains i.e.\ images, text, video, etc.
 
 To the best of our knowledge, \citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
 They showcase that combining pre-trained models and trained-from-scratch components leads to better performing agents.

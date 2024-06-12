@@ -4,39 +4,59 @@
 \chapter{Method}
 \label{sec:method}
 The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task.
-Many previous work already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of the world knowledge and simplifying the RL training process.
-Differently from these studies, our methodology is designed to use multiple model at the same time, instead of just one, this to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
+Many previous works already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of world knowledge and simplifying the RL training process.
+Differently from these studies, our methodology is designed to use multiple models at the same time, instead of just one, to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
+
 First, our work proposes a set of basic abilities like humans have.
 RL agents are equipped with these FMs, which serve as the prior knowledge needed to generate diverse representations of the environment.
-Then, we focus on how to effectively combine their latent representations to improve agents performance.
-While agents interact with the environment, the current observation is collected and processed through each pre-trained models.
-This process produce multiple perspectives or views of the world, each distinctively represented according to the particular model utilized.
+While agents interact with the environment, the current observation is collected and processed through each pre-trained model.
+This process produces multiple perspectives or views of the world, each distinctively represented according to the particular model utilized.
 These features embody various aspects of the environment, providing the agent with a comprehensive and enhanced understanding of the current state.
 
-The challenge then lies in integrating these possible divergent views into a   and enriched representation.
-In order to  accomplish this, we employ a specialized combination module, that synthesizes the information from the various models into a single latent representation.
+Then, we focus on how to effectively combine their latent representations to improve agents' performance.
+The challenge lies in integrating these possible divergent views into a single and enriched representation.
+In order to accomplish this, we employ a specialized combination module, that synthesizes the information from the various models into a single latent representation.
 The intuition is that the enriched representation provides a comprehensive understanding of the current state of the environment, derived from the collective insights of the pre-trained models.
-By leveraging FMs, our approach significantly reduces the burden on the RL agent to learn the environmental representation from scratch, allowing it to focus more on refining the action-mapping process.
+By utilizing FMs, our approach significantly alleviates the RL agent's need to learn the environmental representation from scratch, allowing it to focus more on refining the action-mapping process.
 This not only accelerates the learning process but also enhances overall performance by providing a well-structured and informative representation.
 
 The architecture of our agents is divided into two main components.
 The first part takes care of processing the current observation into multiple latent representations and then combines them into a single enriched representation.
 We refer to this part as the \textit{Feature Extractor} module.
-The second part is the \textit{Policy Learning} network, where the unified representation is fed into a small neural network whose responsibility is to map the latent encoding to actions.
+The second part is the \textit{Policy Learning} network, where the unified representation is fed into a small fully-connected neural network whose responsibility is to map the latent encoding to actions.
 
 
-In the following sections, first we will describe in detail how we designed the Feature Extractor module~\ref{sec:feature_extractor}, focusing on various combination techniques to merge the representations extracted by the FMs.
+In the following sections, first, we will describe in detail how we designed the Feature Extractor module focusing on various combination techniques to merge the representations extracted by the FMs  Sec.~\ref{sec:feature_extractor}.
 Then, in Sec. \ref{sec:environments} we will provide a brief overview of the environments used to evaluate our agent.
 
 
 
+
+% prova ad integrare se serve
+%Besides our proposed methodology, we tested and compared the performance of several combination modules. All solutions act as interchangable modules inside the \texttt{Feature Extractor}, i.e. only need to replace the \textcolor{orange}{yellow} component in Figure \ref{fig:main_architecture}. Their output is a linear representation that is provided as input to the \texttt{Fully-Connected Network}. We report a rundown across all solutions:
+%\begin{itemize}
+%    \item \texttt{Linear} (LIN): pre-trained models' representations are linearized and concatenated.
+%    \item \texttt{Fixed Linear} (FIX): embeddings are linearized to a predefined size, possibly using adapters to scale the information.
+%    \item \texttt{Convolutional} (CNN): FMs' outputs are concatenated along the channel dimension. They are processed by a predefined number of convolutional layers and the resulting information is flattened to linear.
+%    \item \texttt{Mixed} (MIX): this is a combination of the previous methods. Data coming from different spaces are dealt separately and then combined.
+%    \item \texttt{Reservoir} (RES): inspired by \citet{gallicchio2017}, this approach leverages reservoir layers to combine models' representations.
+%    \item \texttt{Dot Product Attention} (DPA): similarly to \texttt{Fixed Linear} the representations are reduced to a specific size - key and value. Via \texttt{scaled dot product attention} \citep{vaswani2017attention} we compute the final weighted representation using as query vector the representation obtained from the State Encoder.
+%\end{itemize}
+
+
+
+
+
+
+
+
 \section{Feature Extractor} \label{sec:feature_extractor}
-The Feature Extractor module is the first part of our agent, it is responsible for processing the current observation and extract a meaningful representation of the environment in a compact latent space.
+The Feature Extractor module is the first part of our agent, it is responsible for processing the current observation and extracting a meaningful representation of the environment in a compact latent space.
 It is composed of a set of pre-trained models, that are used to extract information from the environment and whose weights are frozen during the training process.
 The second part of the Feature Extractor is the combination module, which is the core of the Feature Extractor.
-
 We will talk about the implementation of the FMs in Sec. INSERT.
-In this section instead we will present one by one all the combination techniques that we have developed to merge the representations extracted by the FMs, with a particular emphasis on the Weight Sharing Attention module, which is the module that we propose as a solution to the problem of combining different FMs in an effective way, and we think that it deserves more relevance.
+
+In this section instead, we will present one by one all the combination techniques that we have developed to merge the representations extracted by the FMs, with a particular emphasis on the Weight Sharing Attention module, which is the module that we propose as a solution to the problem of combining different FMs in an effective way, and we think that it deserves more relevance.
 
 
 \subsection{Weight Sharing Attention}
@@ -45,18 +65,16 @@ In this section instead we will present one by one all the combination technique
 With a view to lifelong learning agents, the aim is therefore to equip the agent with prior skills that can be changed or improved over time to adapt to new unseen tasks.
 To this end, a model capable of re-adapting to new abilities with little or no effort is needed.
 To facilitate the integration of different pre-trained models, we propose WSA\@.
-The WSA module leverages the concept of \textbf{weight sharing}, as seen for the first time in CNNs~\citep{fukushima1980neocognitron}, and attention~\citep{vaswani2017attention} principles to efficiently merge outputs from diverse FMs.
-
-%maybe change
+The WSA module leverages the concept of \textbf{weight sharing}, as seen for the first time in CNNs~\citep{fukushima1980neocognitron}, and \textbf{attention}~\citep{vaswani2017attention} principles to efficiently merge outputs from diverse FMs.
 In specific, WSA dynamically adjusts the weights assigned to each pre-trained model based on the current context, emphasizing the most relevant models for the current state.
 
 Supposing to have a set of $k$ pre-trained models $\Psi = \{\psi_1, \psi_2, \ldots, \psi_k\}$, each model $\psi_i$ is used to extract features from the current observation $\mathcal{O}$.
-Each pre-trained model is equipped with an adapter $\mathcal{A}$, which is a small neural network consisting of a linear layer followed by a non-linearity layer, in this case a ReLU activation function.
+Each pre-trained model is equipped with an adapter $\mathcal{A}$, which is a small neural network consisting of a linear layer followed by a non-linearity layer, in this case, a ReLU activation function.
 The adapter is used to resize the latent representation of the pre-trained model to a fixed size, ensuring compatibility among different models.
 As a result of this operation, each FM outputs an embedding $E_i$ of a predefined size.
 The weights of the adapters are optimized during training.
 
-Among the provided FMs, one model is used as State Encoder $\mathcal{E}$ to compute a representation of the current state, which serves as \textit{context} $\mathcal{C}$ for the attention mechanism.
+Among the provided FMs, one model is used as \textbf{State Encoder} $\mathcal{E}$ to compute a representation of the current state, which serves as \textit{context} $\mathcal{C}$ for the attention mechanism.
 Also for this model, the same kind of adapter is used to resize the latent representation to the same fixed size.
 
 
@@ -111,12 +129,12 @@ Linear combination modules are the simplest way to merge the representations ext
 Considering the set of $k$ pre-trained models, each of them can output an embedding in the spatial field or a one-dimensional vector.
 If the model outputs a one-dimensional vector, it is left as it is, while if it outputs a set of feature maps, it is flattened to produce a one-dimensional vector.
 Then, the embeddings of each model are concatenated to create a large feature vector.
-We refer to this module as \textit{Linear Concatenation Extractor}, or for short \textit{LIN}.
+We refer to this module as \textit{LIN} for short.
 
 
 One problem with this combination module is that the FMs may have very different dimensionality.
 An embedding might be very large compared to the others, leading to a situation where one model becomes more important than the others just because its dimension is larger.
-So, we developed another combination module, which we refer to as \textit{FLIN}, where first we obtain a linear representation as in the previous extractor for each model.
+So, we developed another combination module, which we refer to as \textit{FIX}, where first we obtain a linear representation as in the previous module for each model.
 Then, we map the representation of each model into an embedding of fixed dimensions using $k$ different linear layers with the same size.
 Each linear layer is followed by a ReLU activation function.
 The new embeddings are then concatenated as before and used as input for the rest of the network.
@@ -130,7 +148,7 @@ In Fig.~\ref{fig:lin_combination} we show the architecture of the two linear com
         \centering
         \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         %\includegraphics[width=\textwidth]{images/pong_train.png}
-        \caption{\texttt{Pong}}
+        \caption{\texttt{LIN}}
         \label{fig:lin}
     \end{subfigure}
     \hfill
@@ -138,11 +156,11 @@ In Fig.~\ref{fig:lin_combination} we show the architecture of the two linear com
         \centering
         \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         %\includegraphics[width=\textwidth]{images/mspacman_train.png}
-        \caption{\texttt{Ms.Pacman}}
+        \caption{\texttt{FIX}}
         \label{fig:fix_lin}
     \end{subfigure}
 
-    \caption{In Figure we show the architecture of the Linear Concatenation Extractor (LIN) and the Fixed Linear Concatenation Extractor (FLIN). In LIN, the embeddings of each model are concatenated to create a large feature vector. In FIX, the embeddings are mapped into an embedding of fixed dimensions using $k$ different linear layers with the same size.}
+    \caption{In Figure we show the architecture of the Linear Combination Module (LIN) and the Fixed Linear Combination Module (FIX). In LIN, the embeddings of each model are concatenated to create a large feature vector. In FIX, the embeddings are mapped into an embedding of fixed dimensions using $k$ different linear layers with the same size.}
     \label{fig:lin_combination}
 \end{figure}
 
@@ -151,7 +169,7 @@ In Fig.~\ref{fig:lin_combination} we show the architecture of the two linear com
 
 \subsection{Convolutional Combination Modules}
 \label{sec:convolutional_combination}
-In this combination module, we exploit the fact that FMs that operate in the spatial field.
+In this combination module, we exploit the fact that FMs operate in the spatial field.
 In fact, flatting the feature maps and concatenating them as in the linear combination modules may not be the best choice, as the spatial information is lost.
 To overcome this issue, we first reshape the feature maps coming from the FMs to have the same dimensions.
 FMs that output a one-dimensional vector are reshaped to match the dimensions of the other models.
@@ -160,7 +178,7 @@ At this point, the output of the convolutional layer is flattened, and the embed
 We refer to this combination module as \textit{CNN}.
 
 
-Assuming that the set of FMs is composed of model that operates in the spatial field and models that operates in the linear one, we can exploit theses two types of models to create a more complex combination module.
+Assuming that the set of FMs is composed of models that operate in the spatial field and models that operate in the linear one, we can exploit these two types of models to create a more complex combination module.
 First, we concatenate the FMs that operate in the spatial field along the channel dimension and pass them through a convolutional layer, as for the previous module.
 Then, we flatten the output of the convolutional layer and concatenate it with the embeddings of the linear models to create the final representation.
 We call this combination module \textit{MIX} as it is a mixture of the previous two modules.
@@ -173,7 +191,7 @@ Figure~\ref{fig:conv_combination} shows the architecture of the two convolutiona
         \centering
         \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         %\includegraphics[width=\textwidth]{images/pong_train.png}
-        \caption{\texttt{Pong}}
+        \caption{\texttt{CNN}}
         \label{fig:cnn}
     \end{subfigure}
     \hfill
@@ -181,18 +199,18 @@ Figure~\ref{fig:conv_combination} shows the architecture of the two convolutiona
         \centering
         \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         %\includegraphics[width=\textwidth]{images/mspacman_train.png}
-        \caption{\texttt{Ms.Pacman}}
+        \caption{\texttt{MIX}}
         \label{fig:mix}
     \end{subfigure}
 
-    \caption{In Figure we show the architecture of.}
+    \caption{n Figure we show the architecture of the Convolutional Combination Module (CNN) and the Mixed Combination Module (MIX). In CNN, we concatenate the embeddings along the channel dimension. In MIX, we concatenate the spatial embeddings together and then we concatenate all the linear embeddings.}
     \label{fig:conv_combination}
 \end{figure}
 
 \subsection{Reservoir Combination Module}
 \label{sec:reservoir_combination}
 Inspired by the work of \citet{gallicchio2017}, we decided to explore reservoir dynamics properties to map the input into a lower-dimension latent space using a non-linear transformation.
-To develop this combination module, we created a reservoir with a fixed number of neurons, and as input we used large embedding by concatenating the representations of the FMs as in LIN\@.
+To develop this combination module, we created a reservoir with a fixed number of neurons, and as input, we used large embedding by concatenating the representations of the FMs as in LIN\@.
 The output of the reservoir is a vector of the size of the reservoir, which is used as input to the policy learning network.
 We refer to this combination module as \textit{RES}.
 Figure~\ref{fig:reservoir_combination} shows the architecture of the reservoir combination module.
@@ -203,11 +221,11 @@ Figure~\ref{fig:reservoir_combination} shows the architecture of the reservoir c
 We also explored the possibility of combining representations using different types of attention-like mechanisms conditioned on the configuration of the environment.
 In this case, we used the \textit{scaled dot product attention}~\citep{vaswani2017attention}.
 As for the WSA module, the pre-trained model representations are reduced to a vector of fixed size.
-These are then stacked together to form a tensor of shape $k \times \text{vector\_size})$.
+These are then stacked together to form a tensor of shape $(k \times \text{vector\_size})$, where $k$ are the number of available FMs, and $vector\_size$ is the fixed dimension of each pre-trained model embedding.
 This constitutes the \textbf{key} part and the \textbf{value} part of the attention module.
 For the \textbf{query} part, as for the WSA module, we used the State Encoder to encode the current state of the game in a latent space, and we used an adapter to obtain a vector of the same dimensions.
 This therefore represents the context.
-As the name of the module suggests, the attention module first computes dot product of the query with the keys, divided by the square root of the dimension of the query, then it use a softmax function to obtain the weights.
+As the name of the module suggests, the attention module first computes the dot product of the query with the keys, divided by the square root of the dimension of the query, then it uses a softmax function to obtain the weights.
 Finally, the output of the module is computed as the dot product of the weights with the values.
 We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combination} we show the architecture of the module.
 
@@ -218,7 +236,7 @@ We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combinatio
         \centering
         \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         %\includegraphics[width=\textwidth]{images/pong_train.png}
-        \caption{\texttt{Pong}}
+        \caption{\texttt{RES}}
         \label{fig:reservoir_combination}
     \end{subfigure}
     \hfill
@@ -226,17 +244,17 @@ We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combinatio
         \centering
         \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         %\includegraphics[width=\textwidth]{images/mspacman_train.png}
-        \caption{\texttt{Ms.Pacman}}
+        \caption{\texttt{DPA}}
         \label{fig:dpa}
     \end{subfigure}
 
-    \caption{In Figure we show the architecture of.}
+    \caption{n Figure we show the architecture of the Reservoir Combination Module (RES) and the DotProduct Attention Combination Module (DPA). In RES, we use reservoir dynamics to encode information coming from different FMs. In DPA, the embeddings are mapped into an embedding of fixed dimensions using $k$ different linear layers with the same size and we use State Encoder $\varepsilon$ as context \textit{C} as for WSA.}
     \label{fig:dpa_combination}
 \end{figure}
 
 \section{Environments}
 \label{sec:environments}
-In this section we provide a brief overview of the environments used to evaluate our agent.
+In this section, we provide a brief overview of the environments used to evaluate our agent.
 We have chosen a set of Atari games, which are widely used in the literature to evaluate the performance of RL agents.
 We focused on games that have a discrete action space and discrete observations, as they are more suitable for our agent.
 In particular, we have selected games that require different skills to be solved, in order to test the effectiveness of our agent in a variety of tasks.
@@ -246,26 +264,29 @@ We will list the games used in the experiments, and we will provide a brief desc
 The game of Pong basically is a table tennis simulation.
 This game is played by two players, each controlling a paddle that can move up and down along the left and right edges of the screen.
 The left paddle is controlled by the agent, while the right paddle is controlled by the opponent.
-Points are accumulated when a player is unable to successfully return the ball, resulting in the ball passing beyond their paddle.
+Points for a player are accumulated when the opponent is unable to successfully return the ball, resulting in the ball passing beyond their paddle.
 The objective of the game is to score as many points as possible preventing the opponent from doing the same.
 The game ends when one of the players reaches the score of \textit{21}.
-From the viewpoint of the agent, the game is considered solved when it is able to consistently outperform the opponent.
+From the viewpoint of the RL agent, the game is considered solved when it is able to consistently outperform the opponent.
 
 
 \subsubsection{Breakout}
 Breakout is a game where the dynamic is similar to Pong, but the objective is different.
-In this case the environment is constituted by a paddle that can move horizontally at the bottom of the screen, which hits a ball that bounces on the walls.
-At the top of the screen there is a wall of bricks, and the agent has to break them using the ball that bounces on a paddle.
+In this case, the environment is constituted by a paddle that can move horizontally at the bottom of the screen, which hits a ball that bounces on the walls.
+At the top of the screen, there is a wall of bricks, and the agent has to break them using the ball that bounces on a paddle.
 The more bricks the agent breaks, the higher the score it gets.
 When the agent breaks all the bricks the environment is reset and the agent can start a new game.
+When the agent fails to intercept the ball, it loses one life, and when it loses all lives, it loses the game.
+Again, the goal of the game is to score as many points as possible.
 
 
 \subsubsection{Ms. Pacman}
-This game is a maze game where the agent controls a character that moves through the environment and collecting objects.
-The objects are represented by dots that are scattered throughout the maze.
-The more dots the agent collects, the higher the score it gets.
-Agent also has to avoid the ghosts that move through the maze, as they can kill the agent.
-The only way to kill the ghosts is to eat a special object that appears in the maze from time to time.
+This game is a maze game where the agent controls a character that moves through the environment and collects various objects.
+The objects are represented by dots, fruits, or power pellets that are scattered throughout the maze.
+The agent navigates the maze searching for dots, the more dots the agent collects, the higher the score it gets.
+Various fruits and other bonus items appear in the maze at certain times. Eating these items grants additional points.
+The agent also has to avoid the ghosts that move through the maze, as they can kill the agent.
+The only way to kill the ghosts is to eat power pellets that appear in the maze from time to time.
 The game ends when the agent loses all its lives, or when it collects all the dots in the maze. \\
 
 
@@ -296,6 +317,6 @@ Figure \ref{fig:environemnts} shows a frame of each game.
         \caption{\texttt{Breakout}}
         \label{fig:breakout_env}
     \end{subfigure}
-    \caption{In Figure we show the architecture of.}
+    \caption{A snapshot of the environments}
     \label{fig:environemnts}
 \end{figure}
