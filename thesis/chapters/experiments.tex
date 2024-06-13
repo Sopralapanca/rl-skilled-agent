@@ -3,31 +3,35 @@
 
 \chapter{Experiments \& Results}
 \label{ch:experiments_and_results}
-In this section we are going to provide information about the experiments that we conducted to test our agents along with the result for each experiment.
+In this chapter we are going to provide information about the experiments that we conducted to test our agents along with the results obtained.
+We start by describing the experimental setup in Sec. \ref{sec:exp_setup}, talking about the libraries and tools used, the data collected, and the training process.
+Then, in Sec. \ref{sec:init_exp}, we present the initial experiments that we conducted to find the best performing extractors for each game.
 %TODO EXTEND
 
-
 \section{Experimental Setup}\label{sec:exp_setup}
-To simulate and interact with the Atari environments~\citep{bellemare2013atari} we leverage the API provided by Gymnasium~\citep{towers_gymnasium_2023}.
-The training performance was tracked and recorded using \texttt{Weights and Biases} \citep{wandb}.
-We build our work using \texttt{Stable-Baselines3} (SB3) \citep{stable-baselines3} as a backbone to create agents architecture and use reliable implementations of RL algorithms.
-In particular, we exploit the interface provided by SB3 that allows to decompose the agents' network in \texttt{Feature Extractor} and \texttt{Fully-Connected Network}, as also highlighted in Figure \ref{fig:main_architecture}.
-We use the \texttt{Feature Extractor} to define the different combination modules providing as output the composed latent representation.
-The \texttt{Fully-Connected Network} receives as input the FMs' unified linear encoding and maps it to actions (or values).
-We keep the latter component as simple as possible since most of the information should be provided by FMs' representations.
-Throughout all the experiments we use the hyperparameter provided by \citet{rl-zoo3} for different RL algorithms.
-We do not conduct any hyperparameter search for our agents.
+To simulate and interact with the Atari environments~\citep{bellemare2013atari} we leveraged the API provided by Gymnasium~\citep{towers_gymnasium_2023}, which has extensive support for Atari games and has been widely used in the RL community.
+The training performance was tracked using \texttt{Weights and Biases}~\citep{wandb}, that allows to monitor the agents and store the results in a cloud-based platform.
+In particular, we utilized the interface provided by SB3, which allowed us to decompose the agents' network into a \textit{Feature Extractor} and \textit{Fully-Connected Network}, as also highlighted in Figure~\ref{fig:main_architecture}.
+We used the \textit{Feature Extractor} to implement the different combination modules providing as output the composed latent representation.
+The \textit{Fully-Connected Network} is kept as simple as possible, this is because most of the information should be provided by the FMs' representations.
+It receives as input the FMs' combined linear encoding and subsequently maps it to actions (or values).
+
+In the execution of all experiments, we maintained the hyperparameters provided by \citet{rl-zoo3} for different RL algorithms.
+We did not conduct any hyperparameter search this time, this to avoid adding complexity to the experiments and growing the time.
 Instead, we only modify the model architecture.
 All the values are reported in Appendix \ref{sec:app-exp-setup}.
+The experiments were conducted on a machine equipped with 4 Intel Xeon Gold 6140M CPUs for a total of 144 threads, 4 Nvidia Tesla V100 GPUs with 16GB of memory, and 1.2TB of RAM.
+
 
 \subsection{FMs Data and Training}
-To train the different FMs we first create a specific dataset for each game.
-For each environment, we collected \texttt{1M} frames via random agents interacting with the environment.
-The dataset contains grayscaled game frames with size 84x84 pixels.
-During the training process of the models, data is randomly sampled to avoid any correlation between elements due to the collection phase.
-For the main experiments of our approach, we use three different models which provides us four different pre-trained networks: \texttt{Video Object Segmentation} \citep{goel2018unsupervised}, \texttt{State Representation}~\citep{anand2019unsupervised}, and \texttt{Object Keypoints}~\citep{kulkarni2019unsupervised}.
-Additionally, we train a deep autoencoder - inspired by Nature CNN \citep{mnih2015human} - to encode the current state and leverage its representation to compute the context.
-The architecture of Nature CNN has been slightly modified as it appears in Tab. \ref{tab:nature_cnn}.
+For the main experiments of our approach, we use three different models which provides us four different pre-trained networks: \texttt{Video Object Segmentation} (VOS)~\citep{goel2018unsupervised}, \texttt{State Representation} (SR)~\citep{anand2019unsupervised}, and finally \texttt{Object Keypoints}~\citep{kulkarni2019unsupervised} which provides us the encoder (OKE) and the keypoint network (OKK).
+These models constitute the set of basic skills that the agent is equipped with.
+We believe that these models provide a good starting point for the agent to learn the environment, and they are informative enough to provide a good representation of the state.
+SR gives a general representation of the state in a compact form, VOS tracks moving objects in the frame, and OKK provides the agent with the position of the objects.
+
+Additionally, for attention-based combination modules, we train a deep autoencoder - inspired by Nature CNN \citep{mnih2015human} - to encode the current state and leverage its representation to compute the context.
+The architecture of Nature CNN has been slightly modified as it appears in Tab. \ref{tab:nature_cnn} to
+match the dimensions of other FMs' representations.
 
  \begin{table}[htbp]
      \begin{center}
@@ -45,7 +49,12 @@ The architecture of Nature CNN has been slightly modified as it appears in Tab. 
  \end{table}
 
 
+To train the different FMs we first create a specific dataset for each game.
+For each environment, we collected \texttt{1M} frames via random agents interacting with the environment.
+The dataset contains grayscaled game frames with size 84x84 pixels.
+During the training process of the models, data is randomly sampled to avoid any correlation between elements due to the collection phase.
 We implement and train the models for all the games using the default architecture and hyperparameters, the values and additional details are reported in Appendix \ref{sec:app-models}.
+
 As previously mentioned, the main objective of this work is the \texttt{combination} of different representations, thus we exploit small models, which can be easily changed to more complex models without affecting the structure of our work.
 While training the agent, pre-trained models' weights are frozen and no longer updated.
 
