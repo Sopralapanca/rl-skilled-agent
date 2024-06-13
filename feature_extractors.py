@@ -394,7 +394,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         sample = th.from_numpy(sample) / 255
         sample = sample.to(device)
 
-        dropout_p = 0.1
+        #dropout_p = 0.1
 
         skill_out = self.preprocess_input(sample)
 
@@ -438,7 +438,9 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         )
 
         # ---------- for WSA ---------- #
-        self.weights = nn.Sequential(nn.Linear((2 * features_dim), 1, device=device), nn.ReLU())
+        self.weights = nn.Sequential(nn.Linear((2 * features_dim), 1, device=device),
+                                     nn.ReLU()
+                                     )
         #self.dropout = nn.Dropout(p=dropout_p)
 
         # ---------- saving info ---------- #
