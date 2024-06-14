@@ -11,7 +11,7 @@ from rl_zoo3.utils import linear_schedule
 from skill_models import *
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
-from stable_baselines3 import PPO, DQN
+
 from feature_extractors import LinearConcatExtractor, FixedLinearConcatExtractor, \
     CNNConcatExtractor, CombineExtractor, \
     DotProductAttentionExtractor, WeightSharingAttentionExtractor, \
@@ -24,6 +24,9 @@ import tensorflow as tf
 
 # utility imports
 from utils.args import parse_args
+
+from stable_baselines3 import DQN #,PPO
+from utils.custom_ppo import PPO
 
 # ---------------------------------- MAIN ----------------------------------
 
@@ -71,7 +74,7 @@ config["net_arch_vf"] = args.vf
 
 expert = args.use_expert == "True"
 
-version = "3-3 batchnorm"
+version = "3-5 entropy"
 
 tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}', f'alg:{alg}']
 

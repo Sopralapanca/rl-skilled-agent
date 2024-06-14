@@ -28,12 +28,12 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         self.__vobj_seg_adapter = nn.Sequential(
             nn.Conv2d(20, 16, 1),
             nn.Conv2d(16, 16, 5, 5),
-            nn.ReLU()
+            nn.ReLU(),
         )
         self.__kpt_enc_adapter = nn.Sequential(
             nn.Conv2d(128, 32, 1),
             nn.Conv2d(32, 32, 6),
-            nn.ReLU()
+            nn.ReLU(),
         )
         self.__kpt_key_adapter = nn.Sequential(
             nn.Conv2d(4, 16, 1),
@@ -408,6 +408,8 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         for i in range(len(skill_out)):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device),
                                       nn.ReLU(),
+
+                                      #nn.Sigmoid()
                                       #nn.Dropout(p=dropout_p)
                                       #nn.BatchNorm1d(features_dim, device=device),
                                       )
@@ -433,6 +435,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         self.encoder_seq_layer = nn.Sequential(
             nn.Linear(self.input_size, features_dim, device=device),
             nn.ReLU(),
+            #nn.Sigmoid(),
             #nn.Dropout(p=dropout_p)
             #nn.BatchNorm1d(features_dim, device=device),
         )
@@ -450,7 +453,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         self.linear_adapters = []
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
-        # print("forward observation shape", observations.shape)
+        #print("forward observation shape", observations.shape)
         # -------------- saving stats -------------- #
         self.skills_embeddings = []
         weights = []
@@ -484,11 +487,15 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
 
         weights = th.stack(weights, 1)
         weights = th.softmax(weights, 1)
+
+        #print("weights shape", weights.shape)
+
         #weights = self.dropout(weights)
 
         # save attention weights to plot them in evaluation
         for i, s in enumerate(self.skills):
             self.att_weights[s.name] = [w[i] for w in weights]
+
 
         # now stack the skill outputs to obtain a sequence of tokens
         stacked_skills = th.stack(skill_out, 0).permute(1, 0, 2)
