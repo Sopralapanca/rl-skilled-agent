@@ -611,29 +611,29 @@ In our implementation, the frames are processed sequentially, and the agent need
 This can be a problem in real-time applications, where the agent needs to make decisions in a short amount of time.
 A possible solution to this problem could be to process the frames in parallel, and to make the agent wait only for the slowest FM to provide its representation.
 
-Another consideration is in the number of parameters of the whole model.
+Another consideration is in the number of trainable parameters of the whole model.
 Different combination modules have different numbers of parameters, and may result in different computational costs.
 Table~\ref{tab:parameters} shows the number of parameters of the different combination modules compared to an end-to-end PPO.
-
-
-
+We notice that we considered only the models with \textit{Fully-Connected Network} of \texttt{256} units.
 
 \begin{table}[ht]
     \begin{center}
         \begin{tabular}{ll}
             \multicolumn{1}{l}{\textbf{Feature Extractor}}  &\multicolumn{1}{l}{\textbf{Parameters}}
             \\ \hline \\
-            LIN              &  - \\
-            FIX        & 256, 512, 1024 \\
-            CNN       & 1, 2, 3\\
-            MIX                             & - \\
-            RES           & 512, 1024, 2048 \\
-            DPA             & 256, 512, 1024 \\
-            WSA         & 256, 512, 1024 \\
-            PPO             & 1,048,576\\
+            LIN              &  \texttt{8.7M} \\
+            FIX        & \texttt{4.9M}--\texttt{19.4M} \\
+            CNN       & \texttt{4.2M}\\ % the number of parameters did not increased so much
+            MIX       & \texttt{4.5M} \\
+            RES           & \texttt{0.3M}--\texttt{1.1M} \\
+            DPA             & \texttt{8.7M}--\texttt{34.7M} \\
+            WSA         & \texttt{8.7M}--\texttt{34.7M} \\
+            PPO             & \texttt{1.6M} \\
 
         \end{tabular}
     \end{center}
     \caption{The table shows the number of parameters of the whole model from the little configuration to the biggest.}
     \label{tab:parameters}
 \end{table}
+
+%Write some conclusions
