@@ -29,16 +29,19 @@ class FeaturesExtractor(BaseFeaturesExtractor):
             nn.Conv2d(20, 16, 1),
             nn.Conv2d(16, 16, 5, 5),
             nn.ReLU(),
+            #nn.Sigmoid()
         )
         self.__kpt_enc_adapter = nn.Sequential(
             nn.Conv2d(128, 32, 1),
             nn.Conv2d(32, 32, 6),
             nn.ReLU(),
+            #nn.Sigmoid()
         )
         self.__kpt_key_adapter = nn.Sequential(
             nn.Conv2d(4, 16, 1),
             nn.Conv2d(16, 16, 6),
             nn.ReLU()
+            #nn.Sigmoid()
         )
         self.adapters = {
             "obj_key_enc": self.__kpt_enc_adapter,
@@ -408,8 +411,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         for i in range(len(skill_out)):
             seq_layer = nn.Sequential(nn.Linear(skill_out[i].shape[1], features_dim, device=device),
                                       nn.ReLU(),
-
-                                      #nn.Sigmoid()
+                                      #nn.Sigmoid(),
                                       #nn.Dropout(p=dropout_p)
                                       #nn.BatchNorm1d(features_dim, device=device),
                                       )

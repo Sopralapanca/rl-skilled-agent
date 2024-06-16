@@ -25,7 +25,7 @@ import tensorflow as tf
 # utility imports
 from utils.args import parse_args
 
-from stable_baselines3 import DQN #,PPO
+from stable_baselines3 import DQN #PPO
 from utils.custom_ppo import PPO
 
 # ---------------------------------- MAIN ----------------------------------
