@@ -25,8 +25,8 @@ import tensorflow as tf
 # utility imports
 from utils.args import parse_args
 
-from stable_baselines3 import DQN #PPO
-from utils.custom_ppo import PPO
+from stable_baselines3 import DQN, PPO
+#from utils.custom_ppo import PPO
 
 # ---------------------------------- MAIN ----------------------------------
 
@@ -395,13 +395,13 @@ else:
     run.finish()
 
 
-# print("net_arch:", model.policy.net_arch)
-# print("share_feature_extractor:", model.policy.share_features_extractor)
-# print("feature_extractor:", model.policy.features_extractor)
-#
-# if skilled_agent:
-#     print("num_skills:", len(model.policy.features_extractor.skills))
-#     for s in model.policy.features_extractor.skills:
-#         print(s.name, "is training", s.skill_model.training)
-#
-# print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))
+print("net_arch:", model.policy.net_arch)
+print("share_feature_extractor:", model.policy.share_features_extractor)
+print("feature_extractor:", model.policy.features_extractor)
+
+if skilled_agent:
+    print("num_skills:", len(model.policy.features_extractor.skills))
+    for s in model.policy.features_extractor.skills:
+        print(s.name, "is training", s.skill_model.training)
+
+print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))

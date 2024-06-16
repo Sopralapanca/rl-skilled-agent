@@ -67,8 +67,6 @@ class FeaturesExtractor(BaseFeaturesExtractor):
             if el.ndim == 4:
                 self.num_channels += el.shape[1]
 
-
-
     def preprocess_input(self, observations: th.Tensor, mode: int = 0) -> [th.Tensor]:
         """
         :param observations: torch tensor of shape (n_envs, n_stacked_frames, height, width)
@@ -497,7 +495,6 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         # save attention weights to plot them in evaluation
         for i, s in enumerate(self.skills):
             self.att_weights[s.name] = [w[i] for w in weights]
-
 
         # now stack the skill outputs to obtain a sequence of tokens
         stacked_skills = th.stack(skill_out, 0).permute(1, 0, 2)
