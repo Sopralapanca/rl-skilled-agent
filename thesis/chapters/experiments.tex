@@ -314,32 +314,79 @@ These results will be discussed in the next section, where we will analyze the r
 
 
 \section{Breakout: Out of Distribution Data}\label{sec:breakout_study}
-Unexpectedly on \texttt{Breakout}, WSA did not work straightaway.
-Both in Figure~\ref{fig:breakouttrain} and in Table~\ref{tab:results}, the performance of WSA is extremely low compared to PPO (\texttt{99 vs 413}).
+While on \textit{Pong} and \textit{Ms.Pacman} the agents performed well, reaching the maximum reward during training and achieving high scores during evaluation, the results on \textit{Breakout} were not as good.
+WSA and the other combination modules did not work right out of the box, and the agents struggled to learn the environment.
+Specifically, both in Figure~\ref{fig:breakouttrain} and in Table~\ref{tab:results}, the performance of WSA is extremely low compared to an end-to-end PPO (\texttt{99} vs \texttt{413}).
+So, in this Section, we will analyze the possible reasons of the behavior of the agents in this environment.
 
-A first attempt to overcome the problem was to increase the number of parameters of the model, adding more expressive power to the network learning the policy.
-We increased the size of the \texttt{Fully-Connected Network} to three linear layers of size 1024, 512, and 256 respectively and use ReLU as activation function.
-Figure~\ref{fig:breakout_policy} show the learning curve of the agent during training.
-Evaluation results are reported in Table~\ref{tab:breakout_results} where we refer to this model as WSA (P).
-With respect to the default scenario, there is an improvement in performance, but WSA is still far from PPO (\texttt{156 vs 413)}.
+As we analyzed in Section~\ref{sec:top-3-performer}, agents could suffer from underfitting problems due to the limited complexity of the model.
+So, a first attempt to overcome the problem was to increase the number of parameters of the model, adding more expressive power to the network that learns the policy.
+We believe that the \textit{Fully-Connected Network} may be too simple to capture the complexity of the environment, and the agents could benefit from a bigger network.
+We increased the size of the policy learning network to three linear layers of size \texttt{1024}, \texttt{512}, and \texttt{256} respectively for the first, second, and third layer, and use ReLU as activation function to avoid vanishing gradients and allow the network to learn more complex patterns.
+Figures~\ref{fig:breakout_policy},~\ref{fig:breakout_cnn_policy}, and~\ref{fig:breakout_fix_policy}
+shows the learning curve of the agents during training.
+Evaluation results are reported in Table~\ref{tab:breakout_results} where we refer to these experiments as \textit{Policy}.
+With respect to the default scenario, there is an improvement in performance for all the agents, and in particular WSA almost doubles its score, meaning that a more complex policy network can help the agent to learn the environment better, and can capture more information from the FMs' representations.
+But the agents' performance is still far from the end-to-end PPO, WSA scored \texttt{156} compared to \texttt{413} of PPO\@.
+We believe that the problem is not only due to the complexity of the model.
+
+
 
 A second attempt to improve the performance of our agents was to better analyze the characteristics of the environments.
-Unlike \texttt{Pong} and \texttt{Ms.Pacman}, where the game screen remains relatively stable, \texttt{Breakout} dynamically evolves over time as more blocks are removed with score progression.
+Considering \textit{Pong} and \textit{Ms.Pacman}, the screen remains relatively stable as the game progresses.
+In \textit{Pong} the only moving objects are the ball and the paddles, while in \textit{Ms.Pacman} the ghosts move in the maze but the only disappearing object are the dots.
+In \textit{Breakout} instead, the environment dynamically evolves over time as more blocks are removed with score progression.
+Leading to scenarios where the agent has to deal with fewer blocks and more open space.
+While on the first stage of the game the agent can earn points just by intercepting and bouncing the ball back, in the late stages the agent has to be more precise and hit the ball in the right direction to break the remaining blocks.
 This poses a \textbf{distributional shift} problem between training and test data.
-Our initial training data, collected from random agents, lacks late game scenarios with few blocks remaining, leading to limitations in FMs performance during evaluation.
-To tackle the problem and show the consequences of a limited training dataset, we gather new datasets from both random and expert agents to encompass early and late game scenarios.
-We retrain all the FMs and RL agents - using a single layer \texttt{Fully-Connected Network}.
-Significant improvements are observed, as shown in Figure~\ref{fig:breakout_expert} and Table \ref{tab:breakout_results}, using (\texttt{M}).
-Notably, WSA demonstrates a substantial increase in the agent's final score (\texttt{156 $\rightarrow$ 345}), approaching PPO performance, and echoing the trends analyzed in Section \ref{sec:results_1} for the other two games.
-To complete the set of experiments, we also test the combination of the previous configuration.
-Increased \texttt{Fully-Connected Network} and Mixed datasets (Figure \ref{fig:breakout_expert_policy}, \texttt{PM}) yields the best performing configuration of WSA with slightly lower but competitive score to PPO (\texttt{387 vs 413}).
+Our initial training data, collected from random agents, lacks late game scenarios with few blocks remaining.
+This could lead to situations where the FMs are not able to generalize well to unseen data, and produce representations that are not informative enough for the agent.
+For example FMs like \textit{OKK} could output the wrong position of the ball or the blocks, and this could lead to a wrong decision by the agent.
 
 
+To address the problem and show the consequences of a limited training dataset, we trained an end-to-end PPO agent, and we used it to collect new data from both random and expert agents to cover early and late game scenarios.
+Then, we retrain all the FMs and RL agents using a single layer \textit{Fully-Connected Network} of \texttt{256} units as before.
+Significant improvements are observed, as shown in Figure~\ref{fig:breakout_expert} for WSA and Table~\ref{tab:breakout_results}, where we refer to these experiments as \textit{Mixed}.
+Notably, WSA demonstrates a substantial increase in the agent's final score going from \texttt{156} to \texttt{345}, approaching the performance of PPO\@.
+Also, FIX shows a significant improvement in evaluation score, going from \texttt{87} to \texttt{199}.
+This suggests that the agent's performance is highly dependent on the quality of the training data, and the agent can perform at most as well as the FMs do.
+The better the FMs are, the better the agent will perform.
+Even though the FMs are trained with mixed data, there may be some scenarios where they are not able to provide the right information, and the agent could benefit from ignoring them.
+Unlikely, as we can see in Figures~\ref{fig:breakout_cnn_mixed} and~\ref{fig:breakout_fix_mixed}, the other combination modules do not show the same improvement in training, and the agents' performance is still lower than WSA\@.
+This may be due to the fact that WSA can weight the contribution of each pre-trained model, such that can ignore the less informative ones.
+While the other combination modules do not have this capability, and they are forced to use all the pre-trained models, even the less informative.
 
 
+To complete the set of experiments, we also tested the combination of the two previous configuration.
+We increased \textit{Fully-Connected Network} and we used mixed datasets.
+Figures~\ref{fig:breakout_expert_policy},~\ref{fig:breakout_cnn_expert_policy},~\ref{fig:breakout_fix_expert_policy} and Table~\ref{tab:breakout_results} shows the results of these experiments, where we refer to these experiments as \textit{Policy \& Mixed}.
+We notice how the combination of the two strategies yields the best performing configuration of WSA with slightly lower but competitive score to PPO (\texttt{387} vs \texttt{413}).
 
 
-
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_policy}
+        \caption{Increasing MLP size}
+        \label{fig:breakout_policy}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_expert}
+        \caption{Using Mixed Data}
+        \label{fig:breakout_expert}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_policy_mixed}
+        \caption{Mixed Data + Increased MLP}
+        \label{fig:breakout_expert_policy}
+    \end{subfigure}~\caption{Performance comparison of WSA with PPO across various strategies on \textit{Breakout}. Each subfigure displays the average score with the standard deviation shaded. They report the different experiments to improve the performance of WSA: (\ref{fig:breakout_policy}) increasing the size of the \textit{Fully-Connected Network} on performance, (\ref{fig:breakout_expert}) pre-training the models using random data and expert data, and (\ref{fig:breakout_expert_policy}) combining the effect of increased \texttt{Fully-Connected Network} and expert data during pre-training.}
+    \label{fig:breakout_study}
+\end{figure}
 
 
 
@@ -348,33 +395,59 @@ Increased \texttt{Fully-Connected Network} and Mixed datasets (Figure \ref{fig:b
     \centering
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/breakout_policy.png}
+        \includegraphics[width=\textwidth]{images/breakout_cnn_policy}
         \caption{Increasing MLP size}
-        \label{fig:breakout_policy}
+        \label{fig:breakout_cnn_policy}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/breakout_expert.png}
+        \includegraphics[width=\textwidth]{images/breakout_cnn_mixed}
         \caption{Using Mixed Data}
-        \label{fig:breakout_expert}
+        \label{fig:breakout_cnn_mixed}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/breakout_policy_mixed.png}
+        \includegraphics[width=\textwidth]{images/breakout_cnn_policy_mixed}
         \caption{Mixed Data + Increased MLP}
-        \label{fig:breakout_expert_policy}
+        \label{fig:breakout_cnn_expert_policy}
     \end{subfigure}
-    \caption{Performance comparison of WSA with PPO across various strategies on \texttt{Breakout}. Each subfigure displays the average score with the standard deviation shaded. They report the different experiments to improve the performance of WSA: (\ref{fig:breakout_policy}) increasing the size of the \texttt{Fully-Connected Network} on performance, (\ref{fig:breakout_expert}) pre-training the models using random data and expert data, and (\ref{fig:breakout_expert_policy}) combining the effect of increased \texttt{Fully-Connected Network} and expert data during pre-training.}
-    \label{fig:breakout_study}
+    \caption{Performance comparison of CNN with PPO across various strategies on \textit{Breakout}. Each subfigure displays the average score with the standard deviation shaded.}
+    \label{fig:breakout_cnn_study}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_fix_policy}
+        \caption{Increasing MLP size}
+        \label{fig:breakout_fix_policy}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_fix_mixed}
+        \caption{Using Mixed Data}
+        \label{fig:breakout_fix_mixed}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_fix_policy_mixed}
+        \caption{Mixed Data + Increased MLP}
+        \label{fig:breakout_fix_expert_policy}
+    \end{subfigure}
+    \caption{Performance comparison of FIX with PPO across various strategies on \textit{Breakout}. Each subfigure displays the average score with the standard deviation shaded.}
+    \label{fig:breakout_fix_study}
 \end{figure}
 
 
 \begin{table}[ht]
 \centering
     \begin{tabular}[b]{lll}
-                \multicolumn{1}{l}{Environment}  &\multicolumn{1}{l}{\bf Agent} &\multicolumn{1}{l}{\bf Reward} \\
+                \multicolumn{1}{l}{Environment}  &\multicolumn{1}{l}{\textbf{Agent}} &\multicolumn{1}{l}{\textbf{Reward}} \\
                 \hline \\
 
 
@@ -405,7 +478,7 @@ Increased \texttt{Fully-Connected Network} and Mixed datasets (Figure \ref{fig:b
     \label{tab:breakout_results}
 \end{table}
 
-
+As final note, it is important to underline that we conducted these experiments considering only the top-performing modules for each game highlighted in Section~\ref{sec:top-3-performer} and we did not test again all the combination modules with different configurations.
 
 
 \section{Weight Sharing Attention Explainability}\label{sec:explainability}
