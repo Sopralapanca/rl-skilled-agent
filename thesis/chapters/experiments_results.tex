@@ -482,6 +482,10 @@ As final note, it is important to underline that we conducted these experiments 
 
 
 \section{Weight Sharing Attention Explainability}\label{sec:explainability}
+
+%%In most of the experiments we have performed, we have noticed that weights sharing attention as a way of concatenating different skill embeddings is the one that performs best.
+%%It, being more general as a method manages to better filter out noisy input, focusing only on the information that is really important for the agent to learn.
+
 In this Section we provide an analysis of the explainability of the WSA module.
 In fact, thanks to the nature of attention mechanism, we can analyze the weights assigned to each pre-trained model in different scenarios.
 This can provide insights on how the agent uses the FMs to make decisions and how the agent adapts its prior knowledge to the environment.
@@ -514,118 +518,122 @@ It is important to notice that the agent considered is the one that performed th
     \label{fig:breakout_attention}
 \end{figure}
 
+
+% STILL TO COMPLETE!!!!
+
 %Lastly, Figure \ref{fig:inter} illustrates the enhanced \texttt{explainability} provided by WSA. By examining the current frames and the corresponding weights allocated by the shared component to each pre-trained model, one can appreciate agents' decision-making process. The visualization reveals how various FMs are leveraged in distinct contexts, shedding light on agents' dynamic adaptation of its prior knowledge.
 
 
+%regarding pond and pacman
+
+
+
+\section{Deep Q-Learning Experiments}\label{sec:dqn}
+
+One last experiment is the one to prove that our approach is not limited to PPO algorithm, but it is independent of the RL algorithm used.
+To do so, we tested the effectiveness of the WSA module in combination with a Deep Q-Learning agent.
+As WSA is the main focus of our work, we decided to test only this module with different embedding sizes.
+We did not test the other combination modules, this is to save computational resources and time since we already proved that combination modules are effective in RL, so we assume that they work also with DQL\@.
+Using the same methodology and structure of experiments of the main work, we study the performance of the module.
+We also restricted to test only the games of \textit{Breakout} and \textit{Ms.Pacman} as \textit{Pong} is very simple, and regarding \textit{Breakout} we FMs trained on the mixed dataset.
+
+Figure~\ref{fig:dqn_experiments} shows that WSA works very well in comparison to the standard DQL agent, and the one with embedding size of \texttt{256} results in the best performance.
+In \textit{Ms.Pacman} the average cumulative reward is higher than DQL for all the training, meaning that the agent learns faster and better.
+While in \textit{Breakout} it is faster to learn on the first part of the training, and at the end DQL results a little bit better.
+This is a behavior similar to the one observed with PPO agents in Section~\ref{sec:breakout_study}.
+
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/mspacman_dqn}
+        \caption{\texttt{MsPacman}}
+        \label{fig:mspacman_dqn}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_dqn}
+        \caption{\texttt{Breakout}}
+        \label{fig:breakout_dqn}
+    \end{subfigure}
+    \caption{Cumulative reward during training of different agents, comparing WSA and DQN. Each subfigure shows the mean score, with shaded areas indicating the standard deviations, across multiple agents.}
+    \label{fig:dqn_experiments}
+\end{figure}
+
+
+
+We selected for evaluation the agent with \texttt{256} as embedding size, since it is the best performing during training.
+This time to evaluate the agents, instead of selecting the best model between the \texttt{4} runs during training, we tested all the models across \texttt{5} random seeds for \texttt{50} episodes.
+Table~\ref{tab:dqn_results} reports the averaged results during evaluation.
+We notice how WSA results in a higher score in both games, and in particular in \textit{Breakout} the agent scores \texttt{213} compared to \texttt{166} of DQL\@.
+Please note that PPO agents reached a higher score in \textit{Breakout} and these results are not directly comparable as the two algorithms have different learning dynamics and different ways to interact with the environment.
+Lastly, we can conclude that WSA works well regardless of the RL algorithm used, and it can be a valuable tool to improve the performance of agents in different scenarios.
+
+
+
+\begin{table}[ht]
+    \begin{center}
+        \begin{tabular}{lll}
+            \multicolumn{1}{l}{Environment}  &\multicolumn{1}{l}{\textbf{Agent}} &\multicolumn{1}{l}{\textbf{Reward}}
+            \\ \hline \\
+
+            \multirow{2}{*}{\texttt{Ms.Pacman}}
+                                  & \textbf{WSA} & \textbf{2047.27 $\pm$ 231.18} \\
+                                  & DQL & 1701.00 $\pm$ 490.41 \\
+                                  \\ \hline \\
+
+            \multirow{2}{*}{\texttt{Breakout}}
+                                  & \textbf{WSA} & \textbf{213.14 $\pm$ 39.37} \\
+                                  & DQL & 166.65 $\pm$ 20.19 \\
+
+        \end{tabular}
+    \end{center}
+    \caption{Performance during \texttt{evaluation} averaged across 5 different seeds, using WSA with embedding size of 256.}
+    \label{tab:dqn_results}
+\end{table}
+
+
+
+\section{Final considerations}\label{sec:final-considerations}
+In this Section, we want to provide some final considerations about our work.
+We have shown that our approach is effective in improving the performance of agents in different scenarios, and it can be applied to different RL algorithms.
+Also, we have shown how the quality of the training data is crucial for the performance of the agent and how WSA can provide explainability to the decision-making process of the agent.
+But there are still some considerations that need to be addressed.
+
+First of all, the computational cost of our approach.
+Using pre-trained models can be computationally expensive, and it can be a bottleneck in the training process.
+In fact, compared to an end-to-end solution, our approach is able to process more or less half of the frames per second. \footnote{The training time is measured considered a shared server and can be influenced by other processes running on the machine.}
+This is due to the fact that, even if the pre-trained model weights are frozen during training, they need to process the frames before the agent can make a decision.
+As the number of FMs increases, the computational cost increases, and the agent needs to wait more time to make a decision.
+In our implementation, the frames are processed sequentially, and the agent needs to wait for all the FMs to provide their representation before making a decision.
+This can be a problem in real-time applications, where the agent needs to make decisions in a short amount of time.
+A possible solution to this problem could be to process the frames in parallel, and to make the agent wait only for the slowest FM to provide its representation.
+
+Another consideration is in the number of parameters of the whole model.
+Different combination modules have different numbers of parameters, and may result in different computational costs.
+Table~\ref{tab:parameters} shows the number of parameters of the different combination modules compared to an end-to-end PPO.
 
 
 
 
-\section{DQN}\label{sec:dqn}
-TODO
-%As sanity-check, to ensure agents' performance do not depend on the particular RL algorithm, we also compare WSA effectiveness on \texttt{Ms.Pacman} and \texttt{Breakout} using \texttt{DQN}.
-%Training curves and evaluation scores are reported in Appendix \ref{sec:app-add-exp}.
+\begin{table}[ht]
+    \begin{center}
+        \begin{tabular}{ll}
+            \multicolumn{1}{l}{\textbf{Feature Extractor}}  &\multicolumn{1}{l}{\textbf{Parameters}}
+            \\ \hline \\
+            LIN              &  - \\
+            FIX        & 256, 512, 1024 \\
+            CNN       & 1, 2, 3\\
+            MIX                             & - \\
+            RES           & 512, 1024, 2048 \\
+            DPA             & 256, 512, 1024 \\
+            WSA         & 256, 512, 1024 \\
+            PPO             & 1,048,576\\
 
-
-
-
-
-
-%\section{Final considerations}
-%sui tempi di esecuzione e sul numero di parametri
-\\
-\\
-%\footnote{Upon acceptance we will publicly release on GitHub the code to replicate all the experiments.}
-
-
-
-
-%
-%
-%% mio vecchio
-%As can be seen from the graphs of the learning curves, in some cases such as Pong and Ms. Pacman, the various skilled agents manage to learn faster than standard PPO. Meanwhile, in Asteroids, the learning speed is comparable with PPO.
-%The chosen skills track moving objects and are very useful in games such as Pong whose underlying environment does not change as the game progresses, this allows the agent to learn faster by concentrating only on the moving ball and moving bars instead of the whole game frame.
-%
-%%analisi su breakout
-%Regarding Breakout, an initial analysis of the experiments performed shows that skill-equipped agents are not competitive with a PPO agent. This could be for various reasons, such as the fact that the skills are only trained on frames where the agent plays randomly, and as Breakout is a game where the structure changes as it progresses when the bricks are destroyed, the skills may no longer be informative in the middle or final stages of the game and even confuse the agent.
-%Another reason could be the fact that the skills used so far mostly track moving objects, which in Breakout are the ball and the bar. The agent may therefore have little or no information about the bricks, which are a static part of the frame.
-%One more reason could be that the policy learning part of the algorithm was untouched and bigger networks may extract more information from the skills.
-%
-%To this end, we have made other experiments by first collecting a dataset of 1000 episodes, 500 of which are frames of an agent that plays random while the other 500 are collected using a trained PPO agent. In this way, we added variety to the dataset and we trained again the skills using this new data. We refer to these skills as \textbf{expert skills}.
-%As extractors, we restricted the tests only to the use of Weights Sharing with sizes 1024 and 256, as these are the ones that performed best in the other experiments, we then chose for comparison Reservoir extractor with size 1024 and Combine. We also decided to focus only on a subset of extractors to decrease the testing time.
-%The results of this experiment can be seen in Fig. \ref{fig:breakout_expert}
-%
-%Next, we ran another experiment using expert skills and also increasing the policy network dimension of the algorithm. Standard PPO uses a linear layer of size 256 both for the policy network and value function network, we instead increased this network using three linear layers of size 1024, 512, and 256 respectively for the first, second, and third one. We use ReLU as activation function after each linear layer to add non-linearity.
-%The results are shown in Fig \ref{fig:breakout_expert_and_policy}.
-%
-%Finally, the last round of experiments was conducted by including the skills of Image Completion and Frame Prediction in addition to the three previously used. The skills are all used in expert mode and we also increased the policy learning network as before.
-%For this last experiment, we used only the agent that performed best in the other experiments, namely Weights sharing with embedding dimensions 256 and 1024.
-%Fig. \ref{fig:breakout_expert_policy_skills} shows the results.
-%
-%\begin{figure}[htbp]
-%    \centering
-%    \begin{subfigure}[b]{0.32\textwidth}
-%        \centering
-%        \includegraphics[width=\textwidth]{images/breakout_policy.png}
-%        \caption{Breakout con MLP + quello che faceva schifo}
-%        \label{fig:breakout_expert}
-%    \end{subfigure}
-%    \hfill
-%    \begin{subfigure}[b]{0.32\textwidth}
-%        \centering
-%        \includegraphics[width=\textwidth]{images/breakout_expert.png}
-%        \caption{Breakout stesso di prima ma con dati expert}
-%        \label{fig:breakout_expert_and_policy}
-%    \end{subfigure}
-%    \hfill
-%    \begin{subfigure}[b]{0.32\textwidth}
-%        \centering
-%        \includegraphics[width=\textwidth]{images/breakout_p+m.png}
-%        \caption{Breakout expert  + policy}
-%        \label{fig:breakout_expert_policy_skills}
-%    \end{subfigure}
-%    \hfill
-%
-%    \caption{PPO
-% rimane uguale in tutti e 3}
-%    \label{fig:trainresults}
-%\end{figure}
-%
-%
-%
-%Tab. \ref{tab:results} shows the highest reward obtained for each game by the top three agents of each game considering the evaluation. This table also presents the agent called PPO which represents our training run of a standard PPO agent without skills, and the agent REFERENCE which is the result reported on the Hugging Face page of Stable-Baselines.
-%
-%\begin{table}[htbp]
-%    \begin{center}
-%        \begin{tabular}{llll}
-%            \multicolumn{1}{l}{AGENT}  &\multicolumn{1}{l}{\bf PONG} &\multicolumn{1}{l}{\bf BREAKOUT} &\multicolumn{1}{l}{\bf MS. PACMAN}
-%            \\ \hline \\
-%            Weights Sharing (1024) &  20 $\pm$ 00 &  - &  -  \\
-%            Weights Sharing (256)  &  - &  356 $\pm$ 00 &  2487 $\pm$ 00  \\
-%            Reservoir (1024)       &  20 $\pm$ 00 &  - &  2111 $\pm$ 00 \\
-%            CNN (2)                &  20 $\pm$ 00 &  - &  1812 $\pm$ 00 \\
-%            CNN (3)                &  - &  50 $\pm$ 00 &  - \\
-%            Fixed Lin. (512)                &  - &  50 $\pm$ 00 &  - \\
-%            PPO                    &  20 $\pm$ 00 &  387 $\pm$ 00 &  2230 $\pm$ 00 \\
-%            REFERENCE              &  21 $\pm$ 0 &  398 $\pm$ 16.30 &  1659 $\pm$ 144.81 \\
-%        \end{tabular}
-%    \end{center}
-%    \caption{Tra parentesi le dimensioni}
-%    \label{tab:results}
-%\end{table}
-
-%As can be seen in \ref{fig:breakout_expert} we tested Breakout with expert skills only on a subset of a few extractors. We chose Weights Sharing Attention with 256 and 1024 as dimensions for skills embeddings, Combine Extractor, and Reservoir Extractor with 1024 as dimension of the reservoir. We restricted only to these extractors to increase the time for experiments too much.
-%We can see that only by using expert skills the Weights Sharing agent become comparable with the PPO agent, it learns more slowly but eventually in evaluation manages to have a score very similar to PPO. Reaching xxx while PPO reaches xxx.
-
-%Let us now analyze the use of expert skills and the increase of the network involved in policy learning.
-%We can see in Fig. \ref{fig:breakout_expert_and_policy} that Weights Sharing Attention with dimension 256 for skills embeddings is the one that performs the best. It is comparable with a PPO agent since they perform basically the same.
-
-
-
-%analisi weights sharing
-%In most of the experiments we have performed, we have noticed that weights sharing attention as a way of concatenating different skill embeddings is the one that performs best.
-%It, being more general as a method manages to better filter out noisy input, focusing only on the information that is really important for the agent to learn.
-
-%INSERIRE ANALISI SUL NUMERO DI PARAMETRI TOTALI DI PPO E SKILLED AGENT
-
-%INSERIRE ANALISI SUGLI FPS TRA PPO E SKILLED AGENT
+        \end{tabular}
+    \end{center}
+    \caption{The table shows the number of parameters of the whole model from the little configuration to the biggest.}
+    \label{tab:parameters}
+\end{table}
