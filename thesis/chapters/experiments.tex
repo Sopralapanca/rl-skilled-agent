@@ -482,14 +482,44 @@ As final note, it is important to underline that we conducted these experiments 
 
 
 \section{Weight Sharing Attention Explainability}\label{sec:explainability}
-TODO
+In this Section we provide an analysis of the explainability of the WSA module.
+In fact, thanks to the nature of attention mechanism, we can analyze the weights assigned to each pre-trained model in different scenarios.
+This can provide insights on how the agent uses the FMs to make decisions and how the agent adapts its prior knowledge to the environment.
+Figure~\ref{fig:breakout_attention} shows the attention weights assigned by the WSA module to each pre-trained model during the evaluation phase of the agent on \textit{Breakout}.
+The frames depict also the current frame of the game and the chosen action by the agent.
+We considered two different scenarios, one where the agent is in the early stages of the game with many blocks and one where the agent is in the late stages of the game and needs to be more precise to hit the ball in the right direction.
+In the first scenario, we can see how SR and VOS are the most weighted models, meaning that they are the most informative.
+In the second scenario, we can see how the agent assigns more weight to OKK and VOS.
+Since OKK and VOS track moving objects, most probably they encode more information about the paddle and the ball, and the agent needs this information to make the right decision.
+%add more eventually
+
+It is important to notice that the agent considered is the one that performed the best i.e.\ the one trained with mixed data and increased \textit{Fully-Connected Network}.
+
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_fix_policy}
+        \label{fig:breakout_weights1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/breakout_fix_mixed}
+        \label{fig:breakout_weights2}
+    \end{subfigure}
+
+    \caption{TODO}
+    \label{fig:breakout_attention}
+\end{figure}
+
 %Lastly, Figure \ref{fig:inter} illustrates the enhanced \texttt{explainability} provided by WSA. By examining the current frames and the corresponding weights allocated by the shared component to each pre-trained model, one can appreciate agents' decision-making process. The visualization reveals how various FMs are leveraged in distinct contexts, shedding light on agents' dynamic adaptation of its prior knowledge.
 
 
 
 
-%\section{Final considerations}
-%sui tempi di esecuzione e sul numero di parametri
+
 
 \section{DQN}\label{sec:dqn}
 TODO
@@ -499,6 +529,10 @@ TODO
 
 
 
+
+
+%\section{Final considerations}
+%sui tempi di esecuzione e sul numero di parametri
 \\
 \\
 %\footnote{Upon acceptance we will publicly release on GitHub the code to replicate all the experiments.}
