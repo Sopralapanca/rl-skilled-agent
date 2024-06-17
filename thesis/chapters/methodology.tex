@@ -2,7 +2,30 @@
 %! Date = 16/05/2024
 
 \chapter{Method}
-\label{sec:method}
+\label{ch:method}
+
+%integra con il resto!
+%To answer the first question, Foundation Models (FMs) present themselves as good candidates.
+%FMs refer to large-scale, pre-trained models that serve as a base for various downstream tasks.
+%Examples of FMs, can be \citet{brown2020language, devlin2018bert, he2016deep}
+%They are trained on extensive datasets in a self-supervised fashion, enabling them to learn rich and generalizable representations that can be fine-tuned or adapted for specific applications.
+%These representations can be leveraged in RL to accelerate the learning process and improve performance on complex tasks.
+%Using FMs' knowledge, RL agents can achieve higher efficiency and effectiveness, even in environments with sparse rewards or limited data.
+%As for the latter question, instead, this thesis aims to study how different FM embeddings can be combined in several ways to compute a rich and informative representation of the environment.
+%
+%
+%In short, we will use relatively small models, but all the work can be scaled without additional effort, and we propose, among the other ways of combining information, Weight Sharing Attention (WSA) as a combination module to incorporate different encodings coming from several FMs.
+%We executed experiments across three different Atari games that are \textit{Pong}, \textit{MsPacman}, and \textit{Breakout} and we studied the behavior of 7 different combination modules.
+%WSA achieves comparable performance with end-to-end solutions, while also adding scalability and explainability to RL agents.
+%We show that without any fine-tuning of hyperparameters, our methodology can achieve competitive results with established RL end-to-end solutions. Moreover, we prove and address the problem of out-of-distribution data, which presents itself as one of the main challenges for these approaches.
+
+
+
+
+
+
+
+
 The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task.
 Many previous works already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of world knowledge and simplifying the RL training process.
 Differently from these studies, our methodology is designed to use multiple models at the same time, instead of just one, to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
