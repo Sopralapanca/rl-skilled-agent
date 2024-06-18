@@ -8,10 +8,17 @@ We start by explaining in Sec. \ref{sec:fm} what is a Foundational Model, then w
 Then, in Sec. \ref{sec:fm_rl_combination} we discuss the most recent works that combine multiple models in the context of RL\@.
 
 \section{Foundational Models}\label{sec:fm}
-A FM is a large DL model, generally self-supervised, that is trained on massive datasets to learn patterns on the input data and extract a general representation of it.
-Over the last years, rather than training a model from scratch, researchers all over the world have been using these pre-trained models to extract features from the input data and adapt the model to a wide range of tasks and domains using fine-tuning.
-FMs are very useful in many applications, especially when the amount of labeled data is limited.
-Their strength lies in the fact that are very adaptable to a wide range of disparate tasks with a high degree of accuracy.
+
+%FMs refer to large-scale, pre-trained models that serve as a base for various downstream tasks.
+%Examples of FMs, can be \citet{brown2020language, devlin2018bert, he2016deep}
+%They are trained on extensive datasets in a self-supervised fashion, enabling them to learn rich and generalizable representations that can be fine-tuned or adapted for specific applications.
+
+
+A FM is a large DL model, generally self-supervised, that is trained on massive datasets to learn hidden patterns and extract a general representation from the data.
+Over the last years, rather than training a model from scratch, researchers all over the world have been using these pre-trained models to extract features from the input data.
+They then adjust the model to a wide range of tasks and domains using fine-tuning.
+FMs are beneficial in many applications, especially when the amount of labeled data is limited.
+Their strength lies in the fact that they are very adaptable to a wide range of disparate tasks with a high degree of accuracy.
 However, developing a FM from scratch is computationally expensive and requires a large amount of data to be trained and money to be spent on computational resources.
 For example, a FM can be trained on a large corpus of text data to learn the language structure and then be fine-tuned on a smaller dataset to perform a specific task like sentiment analysis, text classification, etc.
 The same can be done with images, where a FM can be trained on a large dataset of images to learn their structure, and then be fine-tuned on a smaller dataset to perform a specific task like object detection.
@@ -26,43 +33,44 @@ Regarding the field of timeseries forecasting instead models like TimeGPT~\citep
 The idea of improving RL agents' feature representation by providing information already processed by other models is not new.
 Most of the works apply a single model that pre-processes the input data and then learns the actual policy.
 In specific, some work focused on feature representation that can be detached from the learning process by having a module that is able to extract relevant information.
-Some examples can be the work of \citet{shah2021rrl} that uses a pre-trained ResNet for representation learning, or the work of \citet{yuan2022pre} that uses a pre-trained encoder to extract features from the input data.
+Some examples can be the work of \citet{shah2021rrl}that uses a pre-trained ResNet for representation learning, or the work of \citet{yuan2022pre}that uses a pre-trained encoder to extract features from the input data.
 
 Several approaches exploit FMs to learn from collected data a general representation by applying different self-supervised methodologies, which can also be fine-tuned during the learning of the policy.
-These includes works like \citet{anand2019unsupervised} who proposed a method to learn state representations on Atari games.
-\citet{kulkarni2019unsupervised}, \citet{montalvo2023exploiting} and \citet{xiao2022masked} instead proposed computer vision models that are able to detect moving objects or segment the images in order to simplify the learning process of the agent.
-Some works enhance the state representation by using human-labeled data for eye-tracking~\citep{zhang2020atari} to improve the performance of the agent, like the work of \citet{thammineni2023selective}.
+These include works like \citet{anand2019unsupervised}who proposed a method to learn state representations on Atari games.
+\citet{kulkarni2019unsupervised, montalvo2023exploiting, goel2018unsupervised,xiao2022masked, wu2021self} instead, proposed computer vision models that are able to detect moving objects or segment the images in order to simplify the learning process of the agent.
+Some works enhance the state representation by using human-labeled data for eye-tracking~\citep{zhang2020atari} to improve the performance of the agent, like the work of~\citet{thammineni2023selective}.
+Others pre-train models on frame prediction tasks then use it on RL agents~\citep{finn2016unsupervised}
+
 
 In order to be effective, these representations should be as general as possible without having any bias with respect to the task the agent should solve.
 Other works try to overcome this problem by presenting methodologies to build representations that are reward free - meaning they are unbiased with respect to the task~\citep{stooke2021decoupling} - or by adding auxiliaries objectives to help shape the latent representation~\citep{lan2023bootstrapped}.
 
-%rephrase - check better
-Recently, Large Language Models (LLMs) have been used to improve the performance of RL agents too.
-An example is the work of \citet{lifshitz2024steve} which creates an instruction-tuned Video Pre-trained model that follows the instruction of a text and video encoder.
+Recently, LLMs have been used to improve the performance of RL agents too.
+For example, in~\citet{wang2023voyager}, skills are formalized as pieces of code and automatically generated.
+LLMs can be used in multiple ways like in~\citet{yu2023language}to produce a reward function, or in~\citet{lifshitz2024steve}where the state representation is enhanced by combining it with embeddings from a LLM\@.
+Finally, in~\citet{brohan2023rt} a vision-language model is used to improve the performance of the agent.
 
 
-
-% questa dopo
-%Agents learn how to perform task composing different enriched elements instead of having to learn the state space from scratch.
 
 
 \section{Combining multiple models}\label{sec:fm_rl_combination}
 There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation.
 Different works define the skills an agent should have as policies and then try to combine them.
-An example is the work of \citet{sahni2017learning} where the skills are trained separately using a reward function only relevant to the skill.
+An example is the work of~\citet{sahni2017learning} where the skills are trained separately using a reward function only relevant to the skill.
 
 How to combine multiple latent features in a single representation is still an open problem.
-Some works already proposed attention mechanisms to improve the performance of RL agents, but instead of enhancing the state representation with additional information, they use it to try to make the agent focus only on certain features of the state such as \citet{bramlage2022generalized} and \citet{blakeman2022selective}.
+Some works already proposed attention mechanisms to improve the performance of RL agents, but instead of enhancing the state representation with additional information, they use it to try to make the agent focus only on certain features of the state such as~\citet{bramlage2022generalized, blakeman2022selective}.
 
 Other works use a \textit{mixture of experts} approach to combine different embeddings.
-For example, in the context of multi-task learning, \citet{sodhani2021multi} proposed a method where a mixture of encoders extract different features from the input data.
+For example, in the context of multi-task learning \citet{sodhani2021multi} proposed a method where a mixture of encoders extracts different features from the input data.
 Then they use an attention mechanism considering the embedding coming from a LLM which receive in input the metadata of different tasks as context to produce the final representation.
-While \citet{obando2024mixtures} proposed a method that uses a mixture of experts to extract features from the encoded state of the environment and then combine them to produce the final representation.
+While~\citet{obando2024mixtures} proposed a method that uses a mixture of experts to extract features from the encoded state of the environment and then combine them to produce the final representation.
 All of these works are focused on combining different embeddings, but they do not consider the case where the embeddings come from different pre-trained models, like FMs, which extract information from different domains i.e.\ images, text, video, etc.
 
-To the best of our knowledge, \citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
-They showcase that combining pre-trained models and trained-from-scratch components leads to better performing agents.
+To the best of our knowledge, ~\citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
+They showcase that combining pre-trained models and trained-from-scratch components leads to better-performing agents.
 Unfortunately, due to the large scale of their work, there is no particular attention towards how FMs' representations are combined.
 
 In the context of lifelong learning agents, an effective and scalable solution to combine FMs encoding is needed in such a way that abilities can be added to the agent without the need to retrain the whole model.
 To this purpose, in this work, we propose Weight Sharing Attention (WSA) as a combination mechanism to merge pre-trained encodings.
+Agents learn how to perform a task composing different enriched elements instead of having to learn the state space from scratch.

@@ -4,11 +4,11 @@
 \chapter{Introduction}
 \label{ch:introduction}
 Reinforcement Learning~\citep{sutton1998introduction} is one of the paradigms of Machine Learning (ML).
-It consists of an agent learn the optimal behavior in an environment that can change over time.
-Its objective is to maximize the cumulative reward that it obtained as a result for a sequence of actions.
+It consists of an agent learning the optimal behavior in an environment that can change over time.
+Its objective is to maximize the cumulative reward obtained by the agent as a result for a sequence of actions executed in its world.
 In particular, RL mimics how we, as humans, learn.
 It formulates the learning process as a sequence of interactions with the environment and uses a trial-and-error approach to process data.
-Agents learn to solve a specific task based on their experiences with the world, they learn from the feedback of each action, i.e.\ reward,  and discover the best way to achieve their goal.
+Agents learn to solve a specific task based on their experiences with the world, they learn from the feedback of each action, i.e.\ reward, and discover the best way to achieve their goal.
 
 Over the past decades, RL algorithms have increasingly improved, achieving amazing results in many tasks and being adopted in new fields~\citep{li2017deep, zhang2020deep}.
 For example, RL can be applied in many real-world scenarios, some of them are applications like recommendation systems~\citep{zhao2019deep} where RL agents can customize suggestions to individual users based on their interactions, or for financial predictions~\citep{zhang2019deep} where RL algorithms can optimize long-term returns by considering transaction costs and adapting to market shifts.
@@ -40,6 +40,15 @@ In the development of this thesis, we will then try to answer two questions:
     \item How can we represent skills for an RL agent?
     \item Once skills are defined, how can we encode them and combine information coming from different skills or choose which one to use?
 \end{itemize}
+
+
+In short, we will use relatively small models to represent skills.
+However, all the work can be scaled without additional effort.
+We also propose, among the other ways of combining information, Weight Sharing Attention (WSA) as a combination module to incorporate different encodings coming from several FMs.
+We executed experiments across three different Atari games that are \textit{Pong}, \textit{MsPacman}, and \textit{Breakout}, and we studied the behavior of seven different combination modules.
+WSA achieves comparable performance with end-to-end solutions, while also adding scalability and explainability to RL agents.
+We show that without any fine-tuning of hyperparameters, our methodology can achieve competitive results with established RL end-to-end solutions.
+Moreover, we prove and address the problem of out-of-distribution data, which presents itself as one of the main challenges for these approaches.
 
 
 The thesis is organized in this way: Ch.\ref{ch:background} will introduce and explain all the techniques that are adopted in this work.

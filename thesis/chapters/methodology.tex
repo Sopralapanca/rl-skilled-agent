@@ -3,54 +3,57 @@
 
 \chapter{Method}
 \label{ch:method}
-
-%integra con il resto!
-%To answer the first question, Foundation Models (FMs) present themselves as good candidates.
-%FMs refer to large-scale, pre-trained models that serve as a base for various downstream tasks.
-%Examples of FMs, can be \citet{brown2020language, devlin2018bert, he2016deep}
-%They are trained on extensive datasets in a self-supervised fashion, enabling them to learn rich and generalizable representations that can be fine-tuned or adapted for specific applications.
-%These representations can be leveraged in RL to accelerate the learning process and improve performance on complex tasks.
-%Using FMs' knowledge, RL agents can achieve higher efficiency and effectiveness, even in environments with sparse rewards or limited data.
-%As for the latter question, instead, this thesis aims to study how different FM embeddings can be combined in several ways to compute a rich and informative representation of the environment.
-%
-%
-%In short, we will use relatively small models, but all the work can be scaled without additional effort, and we propose, among the other ways of combining information, Weight Sharing Attention (WSA) as a combination module to incorporate different encodings coming from several FMs.
-%We executed experiments across three different Atari games that are \textit{Pong}, \textit{MsPacman}, and \textit{Breakout} and we studied the behavior of 7 different combination modules.
-%WSA achieves comparable performance with end-to-end solutions, while also adding scalability and explainability to RL agents.
-%We show that without any fine-tuning of hyperparameters, our methodology can achieve competitive results with established RL end-to-end solutions. Moreover, we prove and address the problem of out-of-distribution data, which presents itself as one of the main challenges for these approaches.
-
-%In the development of this thesis, we used the PPO algorithm during the training of our agents, and to validate our approach we tested the method also with the DQL algorithm.
-
-
-
-
-
-
-
+As already highlighted in Ch. \ref{ch:introduction} and~\ref{ch:related_work}
+a typical RL setting consists of an agent that receives as input the state of the environment and has to learn a policy to solve a specific task.
+Most of the time is spent trying to get a useful representation of the state, which is then used to learn the policy.
 The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task.
 Many previous works already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of world knowledge and simplifying the RL training process.
-Differently from these studies, our methodology is designed to use multiple models at the same time, instead of just one, to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
+None of them have tried to combine multiple models at the same time.
+
+Our work then poses two main questions, how to represent skills for an RL agent and how to combine them.
+To answer the first question, FMs present themselves as good candidates, as they provide a general representation of the environment.
+These representations can be leveraged in RL to speed up the learning process and improve performance on complex tasks.
+Using FMs' knowledge, RL agents can achieve higher efficiency and effectiveness, even in environments with sparse rewards or limited data.
+As for the latter question, instead, this thesis aims to study how different FM embeddings can be combined in several ways to compute a rich and informative representation of the environment.
+Our methodology is designed to use multiple models at the same time, instead of just one, to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
+
 
 First, our work proposes a set of basic abilities like humans have.
 RL agents are equipped with these FMs, which serve as the prior knowledge needed to generate diverse representations of the environment.
 While agents interact with the environment, the current observation is collected and processed through each pre-trained model.
-This process produces multiple perspectives or views of the world, each distinctively represented according to the particular model utilized.
+This process produces multiple perspectives or views of the world, each distinctively represented according to the particular model used.
 These features embody various aspects of the environment, providing the agent with a comprehensive and enhanced understanding of the current state.
 
 Then, we focus on how to effectively combine their latent representations to improve agents' performance.
 The challenge lies in integrating these possible divergent views into a single and enriched representation.
-In order to accomplish this, we employ a specialized combination module, that synthesizes the information from the various models into a single latent representation.
+In order to achieve this, we employ a specialized combination module, that synthesizes the information from the various models into a single latent representation.
 The intuition is that the enriched representation provides a comprehensive understanding of the current state of the environment, derived from the collective insights of the pre-trained models.
-By utilizing FMs, our approach significantly alleviates the RL agent's need to learn the environmental representation from scratch, allowing it to focus more on refining the action-mapping process.
-This not only accelerates the learning process but also enhances overall performance by providing a well-structured and informative representation.
+By using FMs, our approach significantly alleviates the RL agent's need to learn the environmental representation from scratch, allowing it to focus more on refining the action-mapping process.
+This not only speeds up the learning process but also enhances overall performance by providing a well-structured and informative representation.
 
-The architecture of our agents is divided into two main components.
+The architecture of our agents is divided into two main components, and it is showed in Fig.~\ref{fig:main}
 The first part takes care of processing the current observation into multiple latent representations and then combines them into a single enriched representation.
 We refer to this part as the \textit{Feature Extractor} module.
 The second part is the \textit{Policy Learning} network, where the unified representation is fed into a small fully-connected neural network whose responsibility is to map the latent encoding to actions.
 
 
-In the following section, we will describe in detail how we designed the Feature Extractor module focusing on various combination techniques to merge the representations extracted by the FMs Sec.~\ref{sec:feature_extractor}.
+\begin{figure}[ht]
+    \begin{center}
+        %\includegraphics[width=1\textwidth]{images/main_architecture2}
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+    \end{center}
+    \caption{General main architecture}
+    \label{fig:main}
+\end{figure}
+
+
+In the following (Sec.~\ref{sec:feature_extractor}), we will describe in detail how we designed the Feature Extractor module focusing on various combination techniques to merge the representations extracted by the FMs.
+
+
+
+
+
+
 
 
 
@@ -70,13 +73,22 @@ In the following section, we will describe in detail how we designed the Feature
 
 
 
-
-
 \section{Feature Extractor} \label{sec:feature_extractor}
 The Feature Extractor module is the first part of our agent, it is responsible for processing the current observation and extracting a meaningful representation of the environment in a compact latent space.
 It is composed of a set of pre-trained models, which are used to gather information from the environment and whose weights are frozen during the training process.
 The second part of the module is the combination module, which is the core of the Feature Extractor.
-We will talk about the implementation of the FMs in Sec. INSERT.
+We tested and compared the performance of several combination modules.
+All solutions act as interchangeable components.
+Their output is a linear representation that is provided as input to the \textit{Fully-Connected Network}.
+We will talk about the FMs selected in Sec. \ref{sec:exp_setup}
+
+ATTENTIONZE DA FINIRE!!
+Combining different FMs is a challenging task, as each model provides a different perspective on the environment.
+The goal is to merge these perspectives into a single enriched representation that captures the most relevant information.
+To achieve this, we developed several combination modules, each with its own strengths and weaknesses.
+
+
+
 
 In this section instead, we will present one by one all the combination techniques that we have developed to merge the representations extracted by the FMs, with a particular emphasis on the Weight Sharing Attention module, which is the component that we propose as a solution to the problem of combining different FMs in an effective way, and we think that it deserves more relevance.
 
@@ -90,11 +102,20 @@ To facilitate the integration of different pre-trained models, we propose WSA\@.
 The WSA module leverages the concept of \textbf{weight sharing}, as seen for the first time in CNNs~\citep{fukushima1980neocognitron}, and \textbf{attention}~\citep{vaswani2017attention} principles to efficiently merge outputs from diverse FMs.
 In specific, WSA dynamically adjusts the weights assigned to each pre-trained model based on the current context, emphasizing the most relevant models for the current state.
 
-Supposing to have a set of $k$ pre-trained models $\Psi = \{\psi_1, \psi_2, \ldots, \psi_k\}$, each model $\psi_i$ is used to extract features from the current observation $\mathcal{O}$.
+As showed in Fig.~\ref{fig:main_architecture}, supposing to have a set of $k$ pre-trained models $\Psi = \{\psi_1, \psi_2, \ldots, \psi_k\}$, each model $\psi_i$ is used to extract features from the current observation $\mathcal{O}$.
 Each pre-trained model is equipped with an adapter $\mathcal{A}$, which is a small neural network consisting of a linear layer followed by a non-linearity layer, in this case, a ReLU activation function.
 The adapter is used to learn a representation of the model's output and also to resize the latent representation of the FM to a fixed size, ensuring compatibility among different models.
 As a result of this operation, each FM outputs an embedding $E_i$ of a predefined size.
 The weights of the adapters are optimized during training.
+
+\begin{figure}[ht]
+    \begin{center}
+        \includegraphics[width=1\textwidth]{images/main_architecture2}
+    \end{center}
+    \caption{In Figure we show all the information flow from observation to actions and the architecture of the WSA module. The last four frames are stacked together and passed as input to the FMs and their adapters $\mathcal{A}_1, \dots \mathcal{A}_k$ to obtain an embedding of the current state $E_i$. A State Encoder $\mathcal{E}$ and its adapter $\mathcal{A}_0$ compute an encoding of the state, that will be used as context $\mathcal{C}$. A shared MLP layer takes as input the context $\mathcal{C}$ and the representation of the $i^{th}$ FM, $E_i$, and produce the weight for that specific model. The final enriched representation $\mathcal{R}$ is obtained from the weighted summation between each weight $w_i$ and its respective embedding $E_i$. $\mathcal{R}$ is given as input to agents' \textit{Fully-Connected Network}.}
+    \label{fig:main_architecture}
+\end{figure}
+
 
 Among the provided FMs, one model is used as \textbf{State Encoder} $\mathcal{E}$ to compute a representation of the current state, which serves as \textit{context} $\mathcal{C}$ for the attention mechanism.
 Also for this model, the same kind of adapter is used to resize the latent representation to the same fixed size.
@@ -114,9 +135,7 @@ WSA adds \textbf{explainability} to the model, where with explainability we mean
 In fact, by examining the weights assigned to different pre-trained models, we can gain insights into which models are most influential in a given context.
 Additionally, WSA is \textbf{scalable} and \textbf{adaptable} to any number of pre-trained models.
 Its shared component can handle any number of models, we can easily add or remove FMs from the set without the need to retrain the whole agent, making it a flexible solution for dynamically evolving agents.
-
-Figure~\ref{fig:main_architecture} shows the main architecture of our agent, with an emphasis on the WSA module.
-Algorithm~\ref{alg:wsa} instead reports the pseudocode for the actual implementation.
+Algorithm~\ref{alg:wsa} reports the pseudocode for the actual implementation.
 
 \begin{algorithm}[ht]
     \caption{Weight Sharing Attention}\label{alg:wsa}
@@ -135,13 +154,7 @@ Algorithm~\ref{alg:wsa} instead reports the pseudocode for the actual implementa
 
 
 
-\begin{figure}[ht]
-    \begin{center}
-        \includegraphics[width=1\textwidth]{images/main_architecture2}
-    \end{center}
-    \caption{In Figure we show all the information flow from observation to actions and the architecture of the WSA module. The last four frames are stacked together and passed as input to the FMs and their adapters $\mathcal{A}_1, \dots \mathcal{A}_k$ to obtain an embedding of the current state $E_i$. A State Encoder $\mathcal{E}$ and its adapter $\mathcal{A}_0$ compute an encoding of the state, that will be used as context $\mathcal{C}$. A shared MLP layer takes as input the context $\mathcal{C}$ and the representation of the $i^{th}$ FM, $E_i$, and produce the weight for that specific model. The final enriched representation $\mathcal{R}$ is obtained from the weighted summation between each weight $w_i$ and its respective embedding $E_i$. $\mathcal{R}$ is given as input to agents' \textit{Fully-Connected Network}.}
-    \label{fig:main_architecture}
-\end{figure}
+
 
 \subsection{Linear Combination Modules}
 \label{subsec:linear_combination}
