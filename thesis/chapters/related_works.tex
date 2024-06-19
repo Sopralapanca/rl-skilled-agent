@@ -4,8 +4,8 @@
 \chapter{Related Works}
 \label{ch:related_work}
 In this chapter, we provide an overview of the most relevant works in the field of RL and FM which are related to the topics of this thesis\@.
-We start by explaining in Sec. \ref{sec:fm} what is a Foundational Model, then we move to the works focusing on the FMs which has been recently proposed to improve the performance of RL agents in Sec. \ref{sec:fm_rl}.
-Then, in Sec. \ref{sec:fm_rl_combination} we discuss the most recent works that combine multiple models in the context of RL\@.
+We start by explaining in Sec.\ref{sec:fm} what is a Foundational Model, then we move to show FMs which has been recently proposed to improve the performance of RL agents in Sec.\ref{sec:fm_rl}.
+Finally, in Sec.\ref{sec:fm_rl_combination} we discuss the most recent works that combine multiple models in the context of RL\@.
 
 \section{Foundational Models}\label{sec:fm}
 
@@ -23,7 +23,7 @@ However, developing a FM from scratch is computationally expensive and requires 
 For example, a FM can be trained on a large corpus of text data to learn the language structure and then be fine-tuned on a smaller dataset to perform a specific task like sentiment analysis, text classification, etc.
 The same can be done with images, where a FM can be trained on a large dataset of images to learn their structure, and then be fine-tuned on a smaller dataset to perform a specific task like object detection.
 
-Recent works have revolutionized the field of natural language processing (NLP) by introducing large language models (LLMs) like GPT-3~\citep{brown2020language}, BERT~\citep{devlin2018bert}, and Minerva~\citep{minerva}.
+Recent works have revolutionized the field of natural language processing (NLP) by introducing Large Language Models (LLMs) like GPT-3~\citep{brown2020language}, BERT~\citep{devlin2018bert}, and Minerva~\citep{minerva}.
 Also, in the field of computer vision, models like Stable Diffusion~\citep{rombach2022high} or DALL-E~\citep{ramesh2021zero} have changed the way images are processed and generated.
 Regarding the field of timeseries forecasting instead models like TimeGPT~\citep{liao2024timegpt} have been recently proposed.
 
@@ -32,23 +32,58 @@ Regarding the field of timeseries forecasting instead models like TimeGPT~\citep
 \section{Foundational Models in Reinforcement Learning agents}\label{sec:fm_rl}
 The idea of improving RL agents' feature representation by providing information already processed by other models is not new.
 Most of the works apply a single model that pre-processes the input data and then learns the actual policy.
+
 In specific, some work focused on feature representation that can be detached from the learning process by having a module that is able to extract relevant information.
-Some examples can be the work of \citet{shah2021rrl}that uses a pre-trained ResNet for representation learning, or the work of \citet{yuan2022pre}that uses a pre-trained encoder to extract features from the input data.
+For example, the work of \citet{shah2021rrl} uses a pre-trained ResNet \citep{he2016deep} for representation learning.
+A ResNet is a specific type of Convolutional Neural Network (CNN) that is able to learn the features of an image.
+In their work, they pre-trains the encoder of the ResNet on a wide variety of images with different classes.
+Then, they use the encoder to extract features from the input data in RL setting, and fuse this information with features coming from robotic sensors.
+In their case, the combination of different information is done by a simple concatenation of the features.
+As in our work, they freeze the encoder during the learning process of the agent.
+A very similar work is the one of \citet{yuan2022pre} that uses also a pre-trained ResNet to extract features, but differently from the previous work, they do not combine feature extracted with other ones.
+\citet{montalvo2023exploiting} proposed semantic segmentation too as a pre-processing step for RL agents to enhanching their performance.
+They used a dataset consisting of Super Mario Bros standard frames and segmented frames to pre-training a model.
+Then they use this model to preprocess frames during the training of a RL agent.
+
 
 Several approaches exploit FMs to learn from collected data a general representation by applying different self-supervised methodologies, which can also be fine-tuned during the learning of the policy.
-These include works like \citet{anand2019unsupervised}who proposed a method to learn state representations on Atari games.
-\citet{kulkarni2019unsupervised, montalvo2023exploiting, goel2018unsupervised,xiao2022masked, wu2021self} instead, proposed computer vision models that are able to detect moving objects or segment the images in order to simplify the learning process of the agent.
-Some works enhance the state representation by using human-labeled data for eye-tracking~\citep{zhang2020atari} to improve the performance of the agent, like the work of~\citet{thammineni2023selective}.
-Others pre-train models on frame prediction tasks then use it on RL agents~\citep{finn2016unsupervised}
+For example, the work of \citet{anand2019unsupervised} which proposed a method to learn state representations on Atari games.
+In fact, they proposed a model that, given observations of an agent that plays Atari games, exploits the spatio-temporal information of the frames to learn a linear representation of the state.
+This linear representation has to match the RAM state of the game, which is a representation of the game state that is used by the game itself.
+Other works instead, proposed self-supervised models that perform computer vision tasks.
+Like \citet{kulkarni2019unsupervised}, that presented a model that is able to discover keypoints i.e. coordinates of specific interesting points in the image.
+They use a KeyNet \citep{jakab2018keynet} and a CNN to extract the keypoints of objects and keep track of them over time.
+\citet{goel2018unsupervised} proposed a method for video object segmentation.
+They used CNN to extract $K$ different object masks from the frames of the game.
+Then they use the encoder of the video segmentation model to extract features from the frames and concatenate them with
+the features extracted from a static object network.
+Finally, they use the concatenated features to train an RL agent.
+\citet{wu2021self} proposed a self-supervised attention module to generate attention masks on images.
+The goal is to pre-train a model that is able to detect salient regions in the frame.
+They then combine the attention masks with the features extracted from the frame using a CNN by multiplying them.
+Finally, the enhanced state is used as input for the RL agent.
+As benchmarks, the works above, use the Atari games and show that the agent is effective in solving the games.
+Some works enhance the state representation by using human-labeled data for eye-tracking~\citep{zhang2020atari} to improve the performance of the agent.
+The work of~\citet{thammineni2023selective} is an example.
+They use a model to predict a human eye-gaze map from the game frames, and use this data to augment agent's observations.
+
+Regarding instead works that do not focus on video games benchmarks, \citet{xiao2022masked} proposed a self-supervised model that receives as input a masked image, and the goal is to reconstruct the original image.
+They use the pre-trained encoder, freezing its weight, to learn complex motor control from pixels.
+Others pre-train models on frame prediction tasks using dataset consisting of YouTube video clips, human motions, driving and more ~\citep{finn2016unsupervised}.
+The learned model is then used for decision-making in vision-based robotic control tasks.
+
 
 
 In order to be effective, these representations should be as general as possible without having any bias with respect to the task the agent should solve.
-Other works try to overcome this problem by presenting methodologies to build representations that are reward free - meaning they are unbiased with respect to the task~\citep{stooke2021decoupling} - or by adding auxiliaries objectives to help shape the latent representation~\citep{lan2023bootstrapped}.
+Some works try to overcome this problem by presenting methodologies to build representations that are reward-free - meaning they are unbiased with respect to the task.
+For example, \citet{stooke2021decoupling} proposed a method that uses CNN to associate pairs of observations separated by a short time interval.
+Then the encoder of the model is used in online RL.
+Another example is the work of \citet{lan2023bootstrapped} which adds auxiliary objectives to help shape the latent representation.
 
 Recently, LLMs have been used to improve the performance of RL agents too.
-For example, in~\citet{wang2023voyager}, skills are formalized as pieces of code and automatically generated.
-LLMs can be used in multiple ways like in~\citet{yu2023language}to produce a reward function, or in~\citet{lifshitz2024steve}where the state representation is enhanced by combining it with embeddings from a LLM\@.
-Finally, in~\citet{brohan2023rt} a vision-language model is used to improve the performance of the agent.
+Without going too much into detail, in~\citet{wang2023voyager}, skills are formalized as pieces of code and automatically generated.
+LLMs are also used in~\citet{yu2023language} to produce a reward function, or in~\citet{lifshitz2024steve} where the state representation is enhanced by combining it with embeddings from a LLM\@.
+Finally, in~\citet{brohan2023rt} a vision-language model is used to improve agent efficiency.
 
 
 

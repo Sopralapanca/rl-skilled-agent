@@ -15,8 +15,9 @@ Machine Learning, Fig. \ref{fig:ml_hierarchy}, is the branch of Artificial Intel
 In simple words, ML teaches the systems to think and understand like humans by learning from data.
 ML finds application in many fields, including natural language processing~\citep{devlin2018bert}, computer vision~\citep{he2016deep}, speech recognition~\citep{hinton2012deep}, email filtering~\citep{carreras2001boosting}, medicine~\citep{esteva2017dermatologist}, and many more
 
-There are several types of ML family of algorithms, each with its characteristics and applications.
-Some of the main types are Supervised Learning~\citep{kotsiantis2007supervised}, Unsupervised Learning~\citep{hastie2009elements}, Self-Supervised Learning~\citep{balestriero2023cookbook}, and finally Reinforcement Learning~\citep{sutton1998introduction}, Fig.\ref{fig:ml_types}
+There are several types of ML family of algorithms (Fig.\ref{fig:ml_types}), each with its characteristics and applications.
+Some of the main types are Supervised Learning~\citep{kotsiantis2007supervised}, Unsupervised 
+Learning~\citep{hastie2009elements}, Self-Supervised Learning~\citep{balestriero2023cookbook}, and finally Reinforcement Learning~\citep{sutton1998introduction}
 A subset of ML is Deep Learning (DL)~\citep{lecun2015deep}, which focuses on training neural networks with many layers.
 
 We will talk about the different kinds of learning algorithms and DL in the following subsection, while since RL is the focus of this work we will dedicate a separate section.
@@ -53,19 +54,19 @@ In this context, models are equipped with \textit{labeled} data, meaning that ea
 The goal is to learn a mapping function from inputs to outputs that can be used to predict the target for new, unseen inputs.
 The process of training a supervised learning model consists of two main phases: training and testing.
 During the training phase, the algorithm searches for patterns in the data that can be used to make predictions.
-After the training phase, the model can receive in input new unseen data and determine which label it belongs to, this is called the testing phase.
+After the training phase, the model can receive as input new unseen data and determine which label it belongs to, this is called the testing phase.
 
 %example
-For example, given a dataset of pairs consisting of flower images and their labels representing the flower species, we refer to this as training data or training set.
-The aim is to train a model that learns to predict the species of a flower given its image, based on the patterns learned from the training data like color, shape, and size.
-When the model outputs the predicted species of a flower image, it is possible to compare it with the true label to evaluate the model's performance.
+For example, consider to have a dataset of pairs consisting of flower images and their labels representing the flower species, we refer to this as training data or training set.
+The aim is to train a model on the training set that learns to predict the species of a flower given its image, based on the patterns learned from the training data like color, shape, and size.
+When the model outputs the predicted species of a flower image, it can be compared with the true label to evaluate the model's performance.
 The learning process is iterative, and the model is updated based on the errors made during the training phase.
 If the predicted species is the same as the true label, the model has made a correct prediction, and it does not need to be updated, otherwise, it has made an incorrect prediction, and the model needs to update its parameters in order to obtain the correct prediction.
-Once the model is trained such that to recognize most of the species of the flowers in the training set, it can be used to predict the species of a new flower image that was not present in the training set.
+Once the model is trained such that it recognizes most of the species of the flowers in the training set, it can be used to predict the species of a new flower image that was not present in the training set.
 
 
 %categories
-There are two main categories of supervised learning that are:
+Two main categories of supervised learning are:
 \begin{itemize}
     \item Classification - The goal is to predict a discrete label.
     For example, classifying emails as spam or not spam, or recognizing handwritten digits.
@@ -83,8 +84,8 @@ Over the years, many algorithms have been developed to solve supervised learning
 Supervised Learning models can have high accuracy when they are trained on a huge amount of quality labeled data.
 Also, they can be used as pre-trained models, which saves time and resources when developing new models from scratch.
 Moreover, many supervised learning models like decision trees, are interpretable, meaning that it is possible to understand how the model makes predictions.
-This is very helpful in context like medicine, where it is important to understand the reasons behind the model's predictions.
-They have some limitations though, in fact, sometimes they need a huge amount of data to perform well, meaning that in context where there is a lack of data, they may not be the best choice, meanwhile, in context where there is a huge amount of data, they can be time-consuming to process all the data.
+This is very helpful in contexts like medicine, where it is important to understand the reasons behind the model's predictions.
+They have some limitations though, in fact, sometimes they need a huge amount of data to perform well, meaning that in the context where there is a lack of data, they may not be the best choice, meanwhile, in the context where there is a huge amount of data, they can be time-consuming to process all the data.
 Also, they may suffer from \textit{overfitting} problem, which means that the model learns the training data too well, and it is not able to generalize on unseen data.
 
 
@@ -97,7 +98,7 @@ The primary goal of Unsupervised learning is to discover hidden patterns, simila
 
 %example
 For example, given a dataset of customer purchase history, the goal is to group customers based on their purchasing behavior.
-The algorithm will group customers with similar purchasing behavior into clusters, and this information can be used to target specific groups of customers with personalized marketing campaigns.
+The algorithm will group customers with similar purchasing behavior into clusters, and this information can be used to target specific groups of people with personalized marketing campaigns.
 
 %categories
 The main categories of unsupervised learning are:
@@ -233,19 +234,15 @@ The mathematical representation of a feed-forward neural network is expressed in
 \end{figure}
 
 
-The process of learning in NNs, consists of changing the weights and biases of the model over time and relies on the \textbf{backpropagation} algorithm~\citep{rumelhart1986learning} that comprises two main steps: forward pass and backward pass.
+The process of learning in NNs consists of changing the weights and biases of the model over time and relies on the \textbf{backpropagation} algorithm~\citep{rumelhart1986learning} that comprises two main steps: forward pass and backward pass.
 
-Assuming to a have a supervised learning problem, i.e.\ the dataset consist of pairs $(x,y)$ where
-$x$ is the example $y$ is the ground-truth target, in the forward pass, the input data is passed through the network and the predicted output $\hat{y}$ is computed.
-Then, considering the output of the network, the error is calculated using a loss function which is a distance metric and measures the difference between the predicted output and the ground-truth.
-A typical loss function is the Mean Squared Error (MSE) which is defined as:
+Assuming to have a dataset consisting of pairs $(x,y)$ where
+$x$ is the example $y$ is the ground-truth target, in the forward pass, the input data is passed through the network, and the predicted output $\hat{y}$ is computed.
+Then the error committed by the model is calculated using a loss function which is a distance metric and measures the difference between the predicted output $\hat{y}$ and the ground-truth $y$.
 
-\begin{equation}
-    MSE = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2
-\end{equation}
-
-The backward pass consists of propagating the error back through the network, from the output layer to the input one, and it is responsible for updating the weights and biases proportionally to the error computed in order to minimize the error between the predicted output and the ground-truth.
-Weights are updated using the \textit{gradient descent algorithm}, which is an optimization method that iteratively updates the weights in the direction that minimizes the loss function.
+The backward pass then consists of propagating the error back through the network, from the output layer to the input one. 
+It is responsible for updating the weights and biases proportionally to the error computed in order to minimize the error between the predicted output and the ground-truth.
+The learnable parameters are updated using the \textit{gradient descent algorithm}, which is an optimization method that iteratively updates the parameters in the direction that minimizes the loss function.
 In neural networks, backpropagation is implemented using the chain rule to compute the gradients of the loss function with respect to the weights. 
 Decomposing the computation of the gradient of the loss into simpler computations makes the computation of the gradients more efficient and allows the training of deep neural networks.
 In Fig. \ref{fig:gradient_descent} it is possible to see an image that represents the gradient descent method, while in Algorithm~\ref{alg:gradient_descent} we provide the pseudocode of the gradient descent algorithm.
@@ -306,7 +303,7 @@ In the literature, multi-layered neural networks are referred to as Deep Neural 
 \label{sec:rl}
 
 Reinforcement Learning is a paradigm of ML works in a way that mimics the trial-and-error learning process that humans use to achieve their goals.
-The principal elements that form RL are: the agent, the environment, and the reward signal.
+The principal elements that form RL are the agent, the environment, and the reward signal.
 
 The environment represents the world where the agent lives.
 The agent instead is the learner that interacts with it, and for each action that the agent makes, it obtains a reward that usually is a scalar number.
@@ -338,13 +335,14 @@ Specifically, in the presence of fully observable environments, the RL problem i
 
 Both actions and states can be discrete when they are uniquely represented by a discrete value, or continue when they are represented by a continuous range of values.
 
-It is possible to define the return of an agent in an MDP as the sum of discounted reward from a specific timestep t.
+It is possible to define the return of an agent in an MDP as the sum of discounted rewards from a specific timestep t.
 In particular:
 \begin{equation} \label{eq:return}
     G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \dots = \sum_{k=0}^{\infty} \gamma^k R_{t+k+1}
 \end{equation}
 
-The principal components of an RL agent are three and in order are: the policy $\pi$, the value function $v$, and the model of the environment $m$.
+The principal components of an RL agent are three and in order are the policy $\pi$, the value function $v$, and the model of the environment $m$.
+
 The policy $\pi$ defines the behavior of the agent, it is a mapping from states to actions.
 Policy can be deterministic if it maps states to a single action, or stochastic if it maps states to a distribution over all possible actions.
 The policy can be represented as a table, a function, or a neural network, and in the context of MDPs, the policy is defined in Eq. \ref{eq:policy}, where $P$ is the probability of taking action $a$ considering to be in state $s$.
@@ -464,7 +462,8 @@ We will also talk about some of the most famous RL algorithms, including \textit
 \label{subsec:model_based_rl}
 Model-based RL is more like planning, agents build a model of the environment and then use it to plan their actions.
 Model-based RL algorithms are based on the Bellman Equations and include algorithms like \textbf{Policy Iteration}~\citep{howard1960dynamic} and \textbf{Value Iteration}~\citep{bellman1966dynamic}.
-While, more recent works like \textbf{PlaNet}~\citep{hafner2019learning} and \textbf{Dreamer}~\citep{hafner2019dream} use neural networks to learn a model of the environment and then use it to plan their actions.
+These algorithms store information about the transition probabilities and the reward function in tabular form.
+While more recent works like \textbf{PlaNet}~\citep{hafner2019learning} and \textbf{Dreamer}~\citep{hafner2019dream} use neural networks to learn a model of the environment and then use it to plan their actions.
 
 Policy Iteration is an algorithm that computes the optimal policy by iteratively applying the \textit{Bellman Expectation Equation}.
 It alternates between policy evaluation, which computes the value function for a given policy using the Bellman Expectation Equation, and policy improvement, which computes the optimal policy given the value function acting greedily i.e.\ choosing the action that maximizes the action-value function in a given state.
@@ -488,12 +487,12 @@ On-policy means that the agent learns the policy $\pi$ while following the curre
 Off-policy means that the agent learns the policy $\pi$ while following a different policy $\mu$.
 This is very helpful in the context of \textit{learning from imitation} or reusing experiences.
 
-In the context of Off-policy learning, a well-known algorithm is \textbf{Q-learning}~\citep{watkins1992q}.
+In the context of Off-policy learning, a well-known algorithm is \textbf{Q-learning} \citep{watkins1992q}.
 Q-learning learns a policy $\pi$ while interacting with the environment and updating each time the estimation of the optimal action-value function $q_*(s,a)$.
 In order to do this, it applies iteratively the Bellman Optimality Equation.
 Since a model of the environment is not known, it is not possible to compute the expected value of the next state, so Q-learning uses the concept of \textit{Temporal Difference} (TD) learning~\citep{sutton1988learning}, which is a bootstrapping method, i.e.\ updates the current estimate of the value function using the next estimate of the value function.
 In particular \textit{TD learning} computes the \textit{TD error}, which is defined in Eq. \ref{eq:td_error} where  $R_{t+1} + \gamma Q(S_{t+1}, A_{t+1})$ is called \textit{TD target} and $Q(S_t, A_t)$ is the current estimate of the action-value function.
-In Q-learning, \textit{TD target, and TD error} are also called \textit{Q target, and Q error}.
+In Q-learning, \textit{TD target} and \textit{TD error} are also called \textit{Q target, and Q error}.
 
 \begin{equation} \label{eq:td_error}
     \delta = R_{t+1} + \gamma Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t)
@@ -515,12 +514,12 @@ It is important to notice that Q-learning values are stored in a table.
     \begin{center}
         \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
     \end{center}
-    \caption{Sample backup diagram Image of Q-learning algorithm.}
+    \caption{ backup diagram of Q-learning algorithm.}
     \label{fig:q_learning}
 \end{figure}
 
 
-Next action instead is chosen following a \textit{behavior policy} $\mu$ which is the $\epsilon$-greedy policy.
+The next action instead is chosen following a \textit{behavior policy} $\mu$ which is the $\epsilon$-greedy policy.
 This means that with probability $\epsilon$ the agent chooses a random action, and with probability 1-$\epsilon$ the agent acts greedily and chooses the action that maximizes the action-value function.
 This is done in training in order to explore the environment using the random policy and avoid getting stuck in local optima.
 We report the pseudocode of the Q-learning algorithm in Algorithm~\ref{alg:q_learning}.
@@ -535,7 +534,7 @@ The Q-learning algorithm is guaranteed to converge to the optimal policy, but it
 \For{each episode}
     \State Initialize $S$
     \For{each step of the episode}
-        \State Choose $A$ from $S$ using policy derived from $Q$
+        \State Choose $A$ from $S$ using policy derived from $Q$ (e.g., $\epsilon$-greedy)
         \State Take action $A$, observe $R$, $S'$
         \State $Q(S, A) \leftarrow Q(S, A) + \alpha [R + \gamma \max_{a'} Q(S', a') - Q(S, A)]$
         \State $S \leftarrow S'$
@@ -584,12 +583,12 @@ The buffer will contain the agent's transitions, which are tuples consisting of 
 To update the action-value function, the agent randomly samples a batch of transitions from the replay buffer, this transitions represent the ground-truth, and are used to compute the TD error.
 This is done in order to stabilize the learning process and avoid the correlation between the samples.
 
-The neural networks involved in the DQL algorithm are two, the online network and the target network, and they are called Deep Q-Networks (DQN).
-The online network is used to predict current estimation of the action-value function, while the target network is used to compute the target action-value function.
+The neural networks involved in the DQL algorithm are two, the online network and the target network, and they are called Deep Q-networks (DQN).
+The online network is used to predict the current estimation of the action-value function, while the target network is used to compute the Q target.
 
-The loss function is defined in Eq. \ref{eq:dqn_loss} and it is the MSE between the predicted action-value function and the target action-value function.
+The loss function is defined in Eq. \ref{eq:dqn_loss} and it is the Mean Squared Error (MSE) between the predicted action-value function and the target action-value function.
 In the formula, $D$ is the replay buffer, $\textbf{w}$ are the weights of the online neural network, and in specific $\textbf{w}^-$ are the weights of the target network, which are updated less frequently than the weights of the online network.
-
+The two different sets of parameters $\textbf{w}$ and $\textbf{w}^-$ are needed to improve the stability and the convergence of the training process.
 
 \begin{equation} \label{eq:dqn_loss}
     L(\textbf{w}) = \E_{(s, a, r, s') \sim D} [((r + \gamma \max_{a'} Q(s', a', \textbf{w}^-)) - Q(s, a, \textbf{w}))^2]

@@ -5,10 +5,10 @@
 \label{ch:introduction}
 Reinforcement Learning~\citep{sutton1998introduction} is one of the paradigms of Machine Learning (ML).
 It consists of an agent learning the optimal behavior in an environment that can change over time.
-Its objective is to maximize the cumulative reward obtained by the agent as a result for a sequence of actions executed in its world.
+Its objective is to maximize the cumulative reward obtained by an agent resulting from a sequence of actions executed in its world.
 In particular, RL mimics how we, as humans, learn.
 It formulates the learning process as a sequence of interactions with the environment and uses a trial-and-error approach to process data.
-Agents learn to solve a specific task based on their experiences with the world, they learn from the feedback of each action, i.e.\ reward, and discover the best way to achieve their goal.
+Agents learn to solve a specific task based on their experiences with the world, they learn from the feedback of each action, i.e.\ the reward, and discover the best way to achieve their goal.
 
 Over the past decades, RL algorithms have increasingly improved, achieving amazing results in many tasks and being adopted in new fields~\citep{li2017deep, zhang2020deep}.
 For example, RL can be applied in many real-world scenarios, some of them are applications like recommendation systems~\citep{zhao2019deep} where RL agents can customize suggestions to individual users based on their interactions, or for financial predictions~\citep{zhang2019deep} where RL algorithms can optimize long-term returns by considering transaction costs and adapting to market shifts.
@@ -18,7 +18,7 @@ the works of \citet{mnih2013playing, mnih2015human}, which started to explore th
 As a result of these works, although based on problems that may seem as basic as those in video games, new development perspectives have been created and an increasing interest has turned toward Deep Reinforcement Learning (DRL).
 In fact, DRL has produced substantial advancements in various research fields and applications, such as games as already mentioned, beating all Atari games at super-human performance with a single algorithm~\citep{agent57} or defeating pro players in games like GO, StarCraft II and DOTA~\citep{alphago, starcraft, dota}, but also in robotics~\citep{rlrob, bousmalis2023robocat} and lastly toward general agents for 3D environments including different data modalities~\citep{sima2024}.
 
-Discussing some of the problems highlighted in this thesis concerning the current algorithms in the literature, in a typical RL setting, agents receive as input state, without any additional information on the elements that characterize it.
+Discussing some of the problems highlighted in this thesis concerning the current algorithms in the literature, in a typical RL setting, agents receive as input the state without any additional information on the elements that characterize it.
 Learning consists of creating a map from input to action space i.e.\ creating a policy.
 A DRL agent trains a model from scratch to solve one specific task and, therefore, requires a lot of interaction with the environment to perform well, much more than the number of actions a human would need.
 End-to-end solutions for the learning process implicitly hide a significant effort related to understanding how to process the input representations in the best possible way.

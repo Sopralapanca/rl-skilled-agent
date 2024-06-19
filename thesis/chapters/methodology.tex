@@ -3,9 +3,9 @@
 
 \chapter{Method}
 \label{ch:method}
-As already highlighted in Ch. \ref{ch:introduction} and~\ref{ch:related_work}
+As already highlighted in Ch.~\ref{ch:introduction} and Ch.~\ref{ch:related_work}
 a typical RL setting consists of an agent that receives as input the state of the environment and has to learn a policy to solve a specific task.
-Most of the time is spent trying to get a useful representation of the state, which is then used to learn the policy.
+Most of the training time is spent trying to get a useful representation of the state, which is then used to learn the policy.
 The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task.
 Many previous works already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of world knowledge and simplifying the RL training process.
 None of them have tried to combine multiple models at the same time.
@@ -31,7 +31,7 @@ The intuition is that the enriched representation provides a comprehensive under
 By using FMs, our approach significantly alleviates the RL agent's need to learn the environmental representation from scratch, allowing it to focus more on refining the action-mapping process.
 This not only speeds up the learning process but also enhances overall performance by providing a well-structured and informative representation.
 
-The architecture of our agents is divided into two main components, and it is showed in Fig.~\ref{fig:main}
+The architecture of our agents is divided into two main components, and it is shown in Fig.~\ref{fig:main}
 The first part takes care of processing the current observation into multiple latent representations and then combines them into a single enriched representation.
 We refer to this part as the \textit{Feature Extractor} module.
 The second part is the \textit{Policy Learning} network, where the unified representation is fed into a small fully-connected neural network whose responsibility is to map the latent encoding to actions.
@@ -76,21 +76,18 @@ In the following (Sec.~\ref{sec:feature_extractor}), we will describe in detail 
 \section{Feature Extractor} \label{sec:feature_extractor}
 The Feature Extractor module is the first part of our agent, it is responsible for processing the current observation and extracting a meaningful representation of the environment in a compact latent space.
 It is composed of a set of pre-trained models, which are used to gather information from the environment and whose weights are frozen during the training process.
+We will talk about the FMs selected in Sec. \ref{sec:exp_setup}
+
 The second part of the module is the combination module, which is the core of the Feature Extractor.
 We tested and compared the performance of several combination modules.
 All solutions act as interchangeable components.
 Their output is a linear representation that is provided as input to the \textit{Fully-Connected Network}.
-We will talk about the FMs selected in Sec. \ref{sec:exp_setup}
 
-ATTENTIONZE DA FINIRE!!
-Combining different FMs is a challenging task, as each model provides a different perspective on the environment.
+
+Combining different FMs is a challenging task, as each model provides a different view of the environment.
 The goal is to merge these perspectives into a single enriched representation that captures the most relevant information.
 To achieve this, we developed several combination modules, each with its own strengths and weaknesses.
-
-
-
-
-In this section instead, we will present one by one all the combination techniques that we have developed to merge the representations extracted by the FMs, with a particular emphasis on the Weight Sharing Attention module, which is the component that we propose as a solution to the problem of combining different FMs in an effective way, and we think that it deserves more relevance.
+We will present one by one all the combination techniques that we have developed to merge the representations extracted by the FMs, with a particular emphasis on the Weight Sharing Attention module, which is the component that we propose as a solution to the problem of combining different FMs in an effective way, and we think that it deserves more relevance.
 
 
 \subsection{Weight Sharing Attention}

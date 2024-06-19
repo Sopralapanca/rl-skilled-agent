@@ -3,15 +3,15 @@
 
 \chapter{Experiments \& Results}
 \label{ch:experiments_and_results}
-In this chapter we are going to provide information about how we implemented the various modules of out work, the experiments that we conducted to test our agents and the results obtained.
-We start by describing the experimental setup in Sec. \ref{sec:exp_setup}, talking about the libraries and tools used, the data collected, the training process, and the environments used to evaluate our agents in Sec. \ref{subsec:environments}.
-We will present the experiments we performed one by one and for each one we will show the results obtained.
-We start from the initial experiments in Sec. \ref{sec:init_exp}, where we tested different combination modules to find the best performing ones.
+In this chapter, we are going to provide information about how we implemented the various modules of our work, the experiments that we conducted to test our agents, and the results obtained.
+We start by describing the experimental setup in Sec. \ref{sec:exp_setup}, talking about the libraries and tools used, the data collected, the training process, and the environments used to evaluate our agents.
+We will present the experiments we performed one by one and for each one, we will show the results obtained.
+We start from the initial experiments in Sec. \ref{sec:init_exp}, where we tested different combination modules to find the best-performing ones.
 Then, in Sec. \ref{sec:top-3-performer}, we will consider only the best three performing modules for each game, and we will compare them with PPO\@.
 In Sec. \ref{sec:breakout_study}, we will focus on the \textit{Breakout} game, which showed a different behavior compared to the other games.
 We will analyze the reasons behind this behavior and propose some possible solutions to improve the performance of the agent in this game.
 In Sec. \ref{sec:explainability}, we will provide an explanation of the Weight Sharing Attention mechanism and how it works.
-Finally, in Sec. \ref{sec:dqn}, to prove that our approach is not dependent on the RL algorithm used, we will test the effectiveness of WSA on \textit{Ms.Pacman} and \textit{Breakout} using \textbf{DQN}.
+Finally, in Sec. \ref{sec:dqn}, to prove that our approach is not dependent on the RL algorithm used, we will test the effectiveness of WSA  using \textbf{DQN}.
 
 \section{Experimental Setup}\label{sec:exp_setup}
 In order to interact and simulate Atari environments~\citep{bellemare2013atari} we used broadly the API provided by Gymnasium~\citep{towers_gymnasium_2023}, which has extensive support for Atari games and has been widely used in the RL community.
@@ -20,8 +20,8 @@ The platform allows to monitor the agents and store the results in a cloud-based
 
 Our work uses \textit{Stable-Baselines3} (SB3)~\citep{stable-baselines3} as a framework for agent architecture and reliable implementations of RL algorithms in PyTorch.
 SB3 implements the algorithms with a modular architecture, which allows to easily modify the agent's structure.
-This is particularly useful for our work, as we need to combine different representations in the agent's architecture.
-In fact, SB3 provides a simple interface to decompose the agent's network into a \textit{Feature Extractor} and a \textit{Fully-Connected Network}, and this is the schema that we reported in our architecture as shown in Figure~\ref{fig:main_architecture}.
+This is particularly useful for us, as we need to combine different representations in the agent's architecture.
+In fact, SB3 provides a simple interface to decompose the agent's network into a \textit{Feature Extractor} and a \textit{Fully-Connected Network}, and this is the schema that we reported in our architecture as shown in Figure~\ref{fig:main}.
 We used the \textit{Feature Extractor} to implement the different combination modules providing as output the composed latent representation.
 The \textit{Fully-Connected Network} is kept as simple as possible, this is because most of the information should be provided by the FMs' representations.
 It receives as input the FMs' combined linear encoding and subsequently maps it to actions (or values).
@@ -52,9 +52,9 @@ Table~\ref{tab:ppo_hyperparams} shows the hyperparameters used for the PPO agent
         \caption{PPO hyperparameters.} \label{tab:ppo_hyperparams}
 \end{table}
 
-To setup the environment in order to be used by the agent, we used the \textit{AtariPreprocessing} wrapper provided by SB3, which preprocesses the frames by grayscaling them and resizing them to 84x84 pixels, and then stacking the last four frames to provide the agent with temporal information.
+To set the environment in order to be used by the agent, we used the \textit{Atari Preprocessing} wrapper provided by SB3, which preprocesses the frames by grayscaling them, resizing them to 84x84 pixels, and then stacking the last four frames to provide the agent with temporal information.
 We also run multiple instances of the environment in parallel to speed up the training process, in particular, we used \texttt{8} parallel environments.
-So, the agent receives as input a tensor of shape $8 \times 4 \times 84 \times 84$, where the first dimension represents the number of parallel environments, the second dimension represent the number frames stacked together and the last two dimensions represent the size of the frame.
+So, the agent receives as input a tensor of shape $8 \times 4 \times 84 \times 84$, where the first dimension represents the number of parallel environments, the second dimension represents the number of frames stacked together and the last two dimensions represent the size of the frame.
 The experiments were conducted on a machine equipped with 4 Intel Xeon Gold 6140M CPUs for a total of 144 threads, 4 Nvidia Tesla V100 GPUs with 16GB of memory, and 1.2TB of RAM\@.
 The experiments were conducted on a single GPU, eventually running multiple experiments in parallel.
 
@@ -62,11 +62,11 @@ The experiments were conducted on a single GPU, eventually running multiple expe
 \subsection{Environments}
 \label{subsec:environments}
 In this section, we provide a brief overview of the environments used to evaluate our agent.
-We have chosen a set of Atari games which are widely used in the literature to evaluate the performance.
+We have chosen a set of Atari games that are widely used in the literature to evaluate their performance.
 We focused on games that have a discrete action space and discrete observations.
 In particular, we have selected games that require different skills to be solved, in order to test the effectiveness of our agent in a variety of tasks.
 We will list the games used in the experiments, and we will provide a brief description of each one.
-
+In Fig.~\ref{fig:environemnts} we provide an example of game frames for each one.
 \subsubsection{Pong}
 The game of Pong is a table tennis simulation.
 This game is played by two players, each controlling a paddle that can move up and down along the left and right edges of the screen.
@@ -74,7 +74,7 @@ The paddles are used to hit a ball back and forth.
 The right paddle is controlled by the RL agent, while the left paddle is controlled by the opponent.
 Points for a player are accumulated when the opponent is unable to successfully return the ball, resulting in the ball passing beyond their paddle.
 The objective of the game is to score as many points as possible preventing the opponent from doing the same.
-The game ends when one of the players reaches the score of \textit{21}.
+The game ends when one of the players reaches the score of \texttt{21}.
 From the viewpoint of the RL agent, the game is considered solved when it is able to consistently outperform the opponent.
 
 
@@ -97,11 +97,7 @@ Eating these items grants additional points.
 The agent also has to avoid the ghosts that move through the maze, as they can kill the agent.
 The only way to kill the ghosts is to eat power pellets that appear in the maze from time to time and give the agent the ability to eat the ghosts.
 Eating ghosts also grants additional points.
-The game ends when the agent loses all its lives, or when it collects all the dots in the maze. \\
-
-
-
-Figure~\ref{fig:environemnts} shows a frame of each game.
+The game ends when the agent loses all its lives, or when it collects all the dots in the maze. 
 \begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.30\textwidth}
@@ -133,10 +129,10 @@ Figure~\ref{fig:environemnts} shows a frame of each game.
 
 
 \subsection{FMs Data and Training}\label{subsec:fms-data-and-training}
-For the main experiments of our approach, we use three different models which provides us four different pre-trained networks: \texttt{Video Object Segmentation} (VOS)~\citep{goel2018unsupervised}, \texttt{State Representation} (SR)~\citep{anand2019unsupervised}, and finally \texttt{Object Keypoints}~\citep{kulkarni2019unsupervised} which provides us the object encoder (OKE) and the object keypoint network (OKK).
+For the main experiments of our approach, we use three different models which provide us with four different pre-trained networks: \textit{Video Object Segmentation} (VOS)~\citep{goel2018unsupervised}, \textit{State Representation} (SR) \citep{anand2019unsupervised}, and finally \textit{Object Keypoints}~\citep{kulkarni2019unsupervised} which provides us the object encoder (OKE) and the object keypoint network (OKK).
 These models constitute the set of basic skills that the agent is equipped with.
 We believe that these models provide a good starting point for the agent to learn the environment, and they are informative enough to provide a good representation of the state.
-In fact, SR gives a general representation of the state in a compact form, VOS tracks moving objects in the frame which can be useful for tracking the ball in Pong or Breakout or the ghosts in Ms.Pacman, and finally Object Keypoints provides the agent with the position of the objects in the frame.
+In fact, SR gives a general representation of the state in a compact form, VOS tracks moving objects in the frame which can be useful for tracking the ball in Pong or Breakout or the ghosts in Ms.Pacman, and finally, Object Keypoints provides the agent with the position of the objects in the frame.
 
 Additionally, for attention-based combination modules, we train a deep autoencoder - inspired by Nature CNN~\citep{mnih2015human} - to encode the current state and leverage its representation to compute the context.
 The architecture of Nature CNN has been slightly modified as it appears in Tab. \ref{tab:nature_cnn} to
@@ -163,26 +159,26 @@ To train the different FMs and the Autoencoder we first create a specific datase
 For each environment, we collected \texttt{1M} frames via agents interacting with the environment.
 The agents act randomly in this case, and the frames are collected without any reward.
 This is done to ensure that the data is not biased towards a specific policy.
-The dataset contains grayscaled game frames with size 84x84 pixels.
+The dataset contains grayscale game frames with a size of 84x84 pixels.
 During the training process of the models, game frames are randomly sampled to avoid any correlation between elements due to the collection phase since the frames are collected sequentially.
 We implemented and trained the models for all the games using the default architecture and hyperparameters provided by the authors.
 The values and additional details are reported in Appendix~\ref{sec:app-models}.
 While training the agent, pre-trained models' weights are frozen and no longer updated.
 
 It is important to note that we build a model for each game, and we do not use a single model for all the games.
-These FMs are small models which can be easily changed to more complex models without affecting the structure of our work if needed.
+These FMs are small models that can be easily changed to more complex models without affecting the structure of our work if needed.
 
 
 \section{Initial Experiments}\label{sec:init_exp}
-As showed in Section~\ref{subsec:environments}, we chose three different Atari games as benchmark for our work, namely \textit{Pong, Breakout, and Ms. Pacman,}
-A first choice of the games was dictated by the availability of the RAM annotations provided in~\cite{anand2019unsupervised}.
-Then to avoid adding complexity and growing the time for experiments we restricted to test only the games already cited.
-We believe that this choice of games provides a fair compromise between simple games like Pong and much more complex games like Pacman.
+As shown in Section~\ref{subsec:environments}, we chose three different Atari games as benchmarks for our work, namely \textit{Pong, Breakout, and Ms. Pacman,}
+The first choice of the games was dictated by the availability of the RAM annotations provided in~\cite{anand2019unsupervised}.
+Then to avoid adding complexity and growing the time for experiments we restricted to testing only the games already cited.
+We believe that this choice of games provides a fair compromise between simple games like \textit{Pong} and much more complex games with many moving parts like \textit{Pacman}.
 For each environment, we selected the \textit{NoFrameskip-v4} version of the game which is the most common version used in the literature. 
-In this version, the agent can take an action every frame.
+In this version, the agent can take an action in every frame.
 
-After training each FM, we run a first round of experiments using the three games, where we implemented the \textit{Feature Extractor} using all the combination modules shown in Section~\ref{sec:feature_extractor} one at a time with different embedding sizes or configurations.
-The \textit{Fully-Connected Network} is set to a single layer of 256 units both for policy network and value function network.
+After training each FM, we ran a first round of experiments using the three games, where we implemented the \textit{Feature Extractor} using all the combination modules shown in Section~\ref{sec:feature_extractor} one at a time with different embedding sizes or configurations.
+The \textit{Fully-Connected Network} is set to a single layer of \texttt{256} units both for policy network and value function network.
 As shown in Table~\ref{tab:emb_siz_modules}, we explore a variety of configurations for each module, ensuring a comprehensive assessment of their performance.
 
 \begin{table}[ht]
@@ -205,13 +201,13 @@ As shown in Table~\ref{tab:emb_siz_modules}, we explore a variety of configurati
 \end{table}
 
 
-This first phase of experiments aims to find the \texttt{3} best performing combination modules that will be used for our empirical analysis along with our proposed method.
-Agents are trained for \texttt{10M} steps using the parameters provided by \texttt{rl-zoo}, and throughout the learning process, agents are repeatedly evaluated for 100 episodes.
-During the training phase of these first experiments, we applied early stopping for agents that showed no improvement over \texttt{5} consecutive evaluations.
+This first phase of experiments aims to find the \texttt{3} best-performing combination modules that will be used for our empirical analysis along with our proposed method.
+Agents are trained for \texttt{10M} steps using the parameters provided by \texttt{rl-zoo}, and throughout the learning process, agents are repeatedly evaluated each \texttt{40.000} for \texttt{100} episodes.
+During the training phase of these first experiments, we applied \textbf{early stopping} for agents that showed no improvement over \texttt{5} consecutive evaluations.
 This strategy allowed us to promptly identify the best-performing configurations and to save computational resources as these experiments are computationally expensive.
 In Appendix~\ref{sec:app-com-mod} we report all the learning curves in this experimental phase.
 
-Here instead we show our first results providing the best performing modules for each game, the chosen embedding size is detailed between parentheses:
+Here instead we show our first results providing the best-performing modules for each game, the chosen embedding size is detailed between parentheses:
 \begin{itemize}
     \item \texttt{Pong}: WSA (1024), RES (1024), CNN (2)
     \item \texttt{Ms.Pacman}: WSA (256), RES (1024), CNN (2)
@@ -220,9 +216,9 @@ Here instead we show our first results providing the best performing modules for
 
 \section{Top 3 Performer}\label{sec:top-3-performer}
 In the subsequent phase, the research progressed with a refined focus.
-We used the same methodology and setup as the initial experiments for our empirical evaluation, but we restricted the tests only to the best performing modules for each game.
+We used the same methodology and setup as the initial experiments for our empirical evaluation, but we restricted the tests only to the best-performing modules for each game.
 This time we avoid using early stopping, and we let the agents train for the full \texttt{10M} steps.
-For each game, for each agent, we executed multiple instances of the experiment using different seeds for a total of \texttt{4} runs per agent per game.
+For each game, for each combination module i.e. for each agent, we executed multiple instances of the experiment using different seeds for a total of \texttt{4} runs per agent per game.
 The training results are averaged over the different seeds, and we also considered a Running Average of the cumulative reward to smooth the learning curves.
 We also included an agent trained with the standard PPO algorithm as a reference, so without pre-trained models and trained from scratch, for a total of \texttt{4} agents per game.
 Figure~\ref{fig:trainresults} shows the average learning curves of agents during training where the shaded area depicts the standard deviation.
@@ -256,8 +252,8 @@ Figure~\ref{fig:trainresults} shows the average learning curves of agents during
 
 
 To evaluate our agents, we selected for each agent the run that performed best during training, and we tested it across \texttt{5} random seeds for \texttt{50} episodes.
-The seeds specifically are: 47695, 32558, 94088, 71782 and 66638.
-Table~\ref{tab:results} reports the averaged results during evaluation of the best agent during training.
+The seeds specifically are \texttt{47695}, \texttt{32558}, \texttt{94088}, \texttt{71782} and \texttt{66638}.
+Table~\ref{tab:results} reports the averaged results during the evaluation of the best agent during training.
 
 \begin{table}[ht]
 \centering
@@ -288,24 +284,24 @@ Table~\ref{tab:results} reports the averaged results during evaluation of the be
 
 
 Analyzing these results, focusing on \textit{Pong} Fig.~\ref{fig:pongtraining} and \textit{Ms.Pacman} Fig.~\ref{fig:mspacmantrain},
-we can see that our approach WSA and other combination modules yield a high reward in the first stages of the training process.
+we can see that our approach WSA and other combination modules yields a high reward in the first stages of the training process.
 This suggests that FMs, as we hypothesized in the premises of our work, deliver valuable insights and a broad understanding of various elements in the environment without requiring additional training, as they offer an insightful and comprehensive base of knowledge straight out of the box.
 
 In the case of \textit{Pong}, the performance of the agents is almost identical during training.
 The agents reach the maximum reward of \texttt{21} in the first stages of training.
 We notice that WSA in this case is a bit slower than the other agents to reach the maximum reward on average, but it is still able to reach it.
-On the other hand, in \textit{Ms.Pacman}, the agents show a different behavior, showing a more marked difference in performance during training between WSA and other combination modules.
-In the second phase of training, eventually end-to-end PPO catches up and reaches a higher final reward score.
+On the other hand, in \textit{Ms. Pacman}, the agents show a different behavior, showing a more marked difference in performance during training between WSA and other combination modules.
+In the second phase of training, eventually, end-to-end PPO catches up and reaches a higher final reward score.
 This suggests that the FMs' representations are more effective in the early stages of training, providing the agent with many insights about the environment and allowing it to learn faster.
 The fact that end-to-end PPO reaches a higher final score may suggest that agents trained with FMs need to be refined to perform at their best.
 Again, it is important to note that we did not perform any hyperparameter search, and the agents' performance could be further improved by tuning the hyperparameters.
 
-Nevertheless, looking at the evaluation results in Table~\ref{tab:results}, WSA matches the maximum reward (\texttt{21}) on \textit{Pong} and achieves higher score (\textit{2530}) on \texttt{Ms.Pacman} than end-to-end PPO (\texttt{2258}).
+Nevertheless, looking at the evaluation results in Table~\ref{tab:results}, WSA matches the maximum reward (\texttt{21}) on \textit{Pong} and achieves a higher score (\texttt{2530}) on \texttt{Ms. Pacman} than end-to-end PPO (\texttt{2258}).
 From these results, we can make two important considerations.
 The first one is the difference between training and evaluation scores.
-In particular, in \textit{Ms.Pacman} is more marked, WSA provides a solid generalization for the task, scoring around \texttt{1250} during training compared to \texttt{2530} during evaluation.
+In particular, in \textit{Ms. Pacman} is more marked, WSA provides a solid generalization for the task, scoring around \texttt{1250} during training compared to \texttt{2530} during evaluation.
 The second one concerns the difference compared to PPO final score during learning.
-With respect to end-to-end solutions, our approach has a limited number of components that are updated during training, in particular the \texttt{Fully-Connected Network} is only one layer.
+With respect to end-to-end solutions, our approach has a limited number of components that are updated during training, in particular, the \textit{Fully-Connected Network} is only one layer.
 This could lead to underfitting, and the performance of the agent could be further improved by increasing the complexity of the model.
 
 We notice that the results of \textit{Breakout} are not as good as the other games.
@@ -314,10 +310,10 @@ These results will be discussed in the next section, where we will analyze the r
 
 
 \section{Breakout: Out of Distribution Data}\label{sec:breakout_study}
-While on \textit{Pong} and \textit{Ms.Pacman} the agents performed well, reaching the maximum reward during training and achieving high scores during evaluation, the results on \textit{Breakout} were not as good.
+While on \textit{Pong} and \textit{Ms. Pacman} the agents performed well, reaching the maximum reward during training and achieving high scores during evaluation, the results on \textit{Breakout} were not as good.
 WSA and the other combination modules did not work right out of the box, and the agents struggled to learn the environment.
 Specifically, both in Figure~\ref{fig:breakouttrain} and in Table~\ref{tab:results}, the performance of WSA is extremely low compared to an end-to-end PPO (\texttt{99} vs \texttt{413}).
-So, in this Section, we will analyze the possible reasons of the behavior of the agents in this environment.
+So, in this Section, we will analyze the possible reasons for the behavior of the agents in this environment.
 
 As we analyzed in Section~\ref{sec:top-3-performer}, agents could suffer from underfitting problems due to the limited complexity of the model.
 So, a first attempt to overcome the problem was to increase the number of parameters of the model, adding more expressive power to the network that learns the policy.
@@ -326,22 +322,22 @@ We increased the size of the policy learning network to three linear layers of s
 Figures~\ref{fig:breakout_policy},~\ref{fig:breakout_cnn_policy}, and~\ref{fig:breakout_fix_policy}
 shows the learning curve of the agents during training.
 Evaluation results are reported in Table~\ref{tab:breakout_results} where we refer to these experiments as \textit{Policy}.
-With respect to the default scenario, there is an improvement in performance for all the agents, and in particular WSA almost doubles its score, meaning that a more complex policy network can help the agent to learn the environment better, and can capture more information from the FMs' representations.
+With respect to the default scenario, there is an improvement in performance for all the agents, and in particular, WSA almost doubles its score, meaning that a more complex policy network can help the agent to learn the environment better, and can capture more information from the FMs' representations.
 But the agents' performance is still far from the end-to-end PPO, WSA scored \texttt{156} compared to \texttt{413} of PPO\@.
 We believe that the problem is not only due to the complexity of the model.
 
 
 
 A second attempt to improve the performance of our agents was to better analyze the characteristics of the environments.
-Considering \textit{Pong} and \textit{Ms.Pacman}, the screen remains relatively stable as the game progresses.
-In \textit{Pong} the only moving objects are the ball and the paddles, while in \textit{Ms.Pacman} the ghosts move in the maze but the only disappearing object are the dots.
+Considering \textit{Pong} and \textit{Ms. Pacman}, the screen remains relatively stable as the game progresses.
+In \textit{Pong} the only moving objects are the ball and the paddles, while in \textit{Ms. Pacman} the ghosts move in the maze but the only disappearing objects are the dots.
 In \textit{Breakout} instead, the environment dynamically evolves over time as more blocks are removed with score progression.
 Leading to scenarios where the agent has to deal with fewer blocks and more open space.
-While on the first stage of the game the agent can earn points just by intercepting and bouncing the ball back, in the late stages the agent has to be more precise and hit the ball in the right direction to break the remaining blocks.
+While on the first stage of the game, the agent can earn points just by intercepting and bouncing the ball back, in the late stages the agent has to be more precise and hit the ball in the right direction to break the remaining blocks.
 This poses a \textbf{distributional shift} problem between training and test data.
-Our initial training data, collected from random agents, lacks late game scenarios with few blocks remaining.
-This could lead to situations where the FMs are not able to generalize well to unseen data, and produce representations that are not informative enough for the agent.
-For example FMs like \textit{OKK} could output the wrong position of the ball or the blocks, and this could lead to a wrong decision by the agent.
+Our initial training data, collected from random agents, lacks late-game scenarios with few blocks remaining.
+This could lead to situations where the FMs are not able to generalize well to unseen data and produce representations that are not informative enough for the agent.
+For example, FMs like \textit{OKK} could output the wrong position of the ball or the blocks, and this could lead to a wrong decision by the agent.
 
 
 To address the problem and show the consequences of a limited training dataset, we trained an end-to-end PPO agent, and we used it to collect new data from both random and expert agents to cover early and late game scenarios.
@@ -354,13 +350,13 @@ The better the FMs are, the better the agent will perform.
 Even though the FMs are trained with mixed data, there may be some scenarios where they are not able to provide the right information, and the agent could benefit from ignoring them.
 Unlikely, as we can see in Figures~\ref{fig:breakout_cnn_mixed} and~\ref{fig:breakout_fix_mixed}, the other combination modules do not show the same improvement in training, and the agents' performance is still lower than WSA\@.
 This may be due to the fact that WSA can weight the contribution of each pre-trained model, such that can ignore the less informative ones.
-While the other combination modules do not have this capability, and they are forced to use all the pre-trained models, even the less informative.
+The other combination modules do not have this capability, and they are forced to use all the pre-trained models, even the less informative ones.
 
 
-To complete the set of experiments, we also tested the combination of the two previous configuration.
+To complete the set of experiments, we also tested the combination of the two previous configurations.
 We increased \textit{Fully-Connected Network} and we used mixed datasets.
 Figures~\ref{fig:breakout_expert_policy},~\ref{fig:breakout_cnn_expert_policy},~\ref{fig:breakout_fix_expert_policy} and Table~\ref{tab:breakout_results} shows the results of these experiments, where we refer to these experiments as \textit{Policy \& Mixed}.
-We notice how the combination of the two strategies yields the best performing configuration of WSA with slightly lower but competitive score to PPO (\texttt{387} vs \texttt{413}).
+We notice how the combination of the two strategies yields the best-performing configuration of WSA with a slightly lower but competitive score to PPO (\texttt{387} vs \texttt{413}).
 
 
 \begin{figure}[ht]
@@ -497,6 +493,9 @@ In the second scenario, we can see how the agent assigns more weight to OKK and 
 Since OKK and VOS track moving objects, most probably they encode more information about the paddle and the ball, and the agent needs this information to make the right decision.
 %add more eventually
 
+
+TODO-DA FINIRE
+
 It is important to notice that the agent considered is the one that performed the best i.e.\ the one trained with mixed data and increased \textit{Fully-Connected Network}.
 
 
@@ -530,15 +529,15 @@ It is important to notice that the agent considered is the one that performed th
 
 \section{Deep Q-Learning Experiments}\label{sec:dqn}
 
-One last experiment is the one to prove that our approach is not limited to PPO algorithm, but it is independent of the RL algorithm used.
-To do so, we tested the effectiveness of the WSA module in combination with a Deep Q-Learning agent.
+One last experiment is the one to prove that our approach is not limited to PPO algorithm, but is independent of the RL algorithm used.
+To do so, we tested the effectiveness of the WSA module in combination with a Deep Q-learning agent.
 As WSA is the main focus of our work, we decided to test only this module with different embedding sizes.
 We did not test the other combination modules, this is to save computational resources and time since we already proved that combination modules are effective in RL, so we assume that they work also with DQL\@.
 Using the same methodology and structure of experiments of the main work, we study the performance of the module.
-We also restricted to test only the games of \textit{Breakout} and \textit{Ms.Pacman} as \textit{Pong} is very simple, and regarding \textit{Breakout} we FMs trained on the mixed dataset.
+We also restricted to test only the games of \textit{Breakout} and \textit{Ms. Pacman} as \textit{Pong} is very simple, and regarding \textit{Breakout} we FMs trained on the mixed dataset.
 
-Figure~\ref{fig:dqn_experiments} shows that WSA works very well in comparison to the standard DQL agent, and the one with embedding size of \texttt{256} results in the best performance.
-In \textit{Ms.Pacman} the average cumulative reward is higher than DQL for all the training, meaning that the agent learns faster and better.
+Figure~\ref{fig:dqn_experiments} shows that WSA works very well in comparison to the standard DQL agent, and the one with an embedding size of \texttt{256} results in the best performance.
+In \textit{Ms. Pacman} the average cumulative reward is higher than DQL for all the training, meaning that the agent learns faster and better.
 While in \textit{Breakout} it is faster to learn on the first part of the training, and at the end DQL results a little bit better.
 This is a behavior similar to the one observed with PPO agents in Section~\ref{sec:breakout_study}.
 
@@ -547,14 +546,14 @@ This is a behavior similar to the one observed with PPO agents in Section~\ref{s
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/mspacman_dqn}
-        \caption{\texttt{MsPacman}}
+        %\includegraphics[width=\textwidth]{images/mspacman_dqn}
+        \caption{\texttt{Ms. Pacman}}
         \label{fig:mspacman_dqn}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{images/breakout_dqn}
+        %\includegraphics[width=\textwidth]{images/breakout_dqn}
         \caption{\texttt{Breakout}}
         \label{fig:breakout_dqn}
     \end{subfigure}
@@ -564,10 +563,10 @@ This is a behavior similar to the one observed with PPO agents in Section~\ref{s
 
 
 
-We selected for evaluation the agent with \texttt{256} as embedding size, since it is the best performing during training.
+We selected for evaluation the agent with \texttt{256} as embedding size since it is the best performing during training.
 This time to evaluate the agents, instead of selecting the best model between the \texttt{4} runs during training, we tested all the models across \texttt{5} random seeds for \texttt{50} episodes.
 Table~\ref{tab:dqn_results} reports the averaged results during evaluation.
-We notice how WSA results in a higher score in both games, and in particular in \textit{Breakout} the agent scores \texttt{213} compared to \texttt{166} of DQL\@.
+We notice how WSA results in a higher score in both games and in particular in \textit{Breakout} the agent scores \texttt{213} compared to \texttt{166} of DQL\@.
 Please note that PPO agents reached a higher score in \textit{Breakout} and these results are not directly comparable as the two algorithms have different learning dynamics and different ways to interact with the environment.
 Lastly, we can conclude that WSA works well regardless of the RL algorithm used, and it can be a valuable tool to improve the performance of agents in different scenarios.
 
@@ -579,7 +578,7 @@ Lastly, we can conclude that WSA works well regardless of the RL algorithm used,
             \multicolumn{1}{l}{Environment}  &\multicolumn{1}{l}{\textbf{Agent}} &\multicolumn{1}{l}{\textbf{Reward}}
             \\ \hline \\
 
-            \multirow{2}{*}{\texttt{Ms.Pacman}}
+            \multirow{2}{*}{\texttt{Ms. Pacman}}
                                   & \textbf{WSA} & \textbf{2047.27 $\pm$ 231.18} \\
                                   & DQL & 1701.00 $\pm$ 490.41 \\
                                   \\ \hline \\
@@ -590,7 +589,7 @@ Lastly, we can conclude that WSA works well regardless of the RL algorithm used,
 
         \end{tabular}
     \end{center}
-    \caption{Performance during \texttt{evaluation} averaged across 5 different seeds, using WSA with embedding size of 256.}
+    \caption{Performance during evaluation averaged across 5 different seeds, using WSA with the embedding size of 256.}
     \label{tab:dqn_results}
 \end{table}
 

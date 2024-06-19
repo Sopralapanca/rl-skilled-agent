@@ -16,7 +16,12 @@
 \usepackage[urlcolor=blue]{hyperref}
 \usepackage[parfill]{parskip}   % no indentation between paragraphs
 \usepackage{xcolor}             % for the colors
+\usepackage{multirow}
 \usepackage{makecell}           % for multirow in tables
+
+\usepackage[titletoc,toc,page]{appendix}
+\renewcommand{\appendixpagename}{\appendixname}
+\renewcommand{\appendixtocname}{\appendixname}
 
 \usepackage{algorithm}
 \usepackage{algpseudocode}
@@ -34,7 +39,7 @@
 
 
 
-
+\noappendicestocpagenum
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Begin document, create title and abstract
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -72,7 +77,9 @@ TODO
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Appendices
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\appendix
-%\include{chapters/appendixA}
+\begin{appendices}
+\renewcommand{\thesection}{A.\arabic{section}}
+\include{chapters/appendix}
+\end{appendices}
 
 \end{document}
