@@ -4,6 +4,7 @@ import yaml
 import numpy as np
 import random
 import os
+import pickle
 
 # training imports
 import wandb
@@ -26,15 +27,14 @@ import tensorflow as tf
 from utils.args import parse_args
 
 from stable_baselines3 import DQN, PPO
+
 #from utils.custom_ppo import PPO
 
 # ---------------------------------- MAIN ----------------------------------
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # ignore tensorflow warnings about CPU
 
-
 args = parse_args()
-
 
 seed = None
 if args.seed is not None:
@@ -47,7 +47,7 @@ if args.seed is not None:
 skilled_agent = args.use_skill == "True"
 alg = args.alg
 
-tb_log_name = alg if not skilled_agent else "S"+alg
+tb_log_name = alg if not skilled_agent else "S" + alg
 debug = args.debug == "True"
 
 device = f"cuda:{args.device}" if args.device != "cpu" else "cpu"
@@ -67,7 +67,7 @@ else:
 if "_" in env_name:
     env_name = env_name.replace("_", "")
 
-config["f_ext_kwargs"]["device"] = device #do not comment this, it is the parameter passed to the feature extractor
+config["f_ext_kwargs"]["device"] = device  #do not comment this, it is the parameter passed to the feature extractor
 config["game"] = env_name
 config["net_arch_pi"] = args.pi
 config["net_arch_vf"] = args.vf
@@ -101,7 +101,6 @@ if not os.path.exists(gamelogs):
 vec_env = make_atari_env(game_id, n_envs=config["n_envs"], seed=seed)
 vec_env = VecFrameStack(vec_env, n_stack=config["n_stacks"])
 vec_env = VecTransposeImage(vec_env)
-
 
 skills = []
 skills.append(get_state_rep_uns(env_name, device, expert=expert))
@@ -394,14 +393,19 @@ else:
     )
     run.finish()
 
+if hasattr(model.policy.features_extractor, "training_weights"):
+    training_weights = model.policy.features_extractor.training_weights
 
-print("net_arch:", model.policy.net_arch)
-print("share_feature_extractor:", model.policy.share_features_extractor)
-print("feature_extractor:", model.policy.features_extractor)
+    with open(f'{env}_attention_weights.pkl', 'wb') as f:
+        pickle.dump(training_weights, f)
 
-if skilled_agent:
-    print("num_skills:", len(model.policy.features_extractor.skills))
-    for s in model.policy.features_extractor.skills:
-        print(s.name, "is training", s.skill_model.training)
-
-print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))
+# print("net_arch:", model.policy.net_arch)
+# print("share_feature_extractor:", model.policy.share_features_extractor)
+# print("feature_extractor:", model.policy.features_extractor)
+#
+# if skilled_agent:
+#     print("num_skills:", len(model.policy.features_extractor.skills))
+#     for s in model.policy.features_extractor.skills:
+#         print(s.name, "is training", s.skill_model.training)
+#
+# print("params:", sum(p.numel() for p in model.policy.parameters() if p.requires_grad))

@@ -451,6 +451,8 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         self.att_weights = {}
         self.spatial_adapters = []
         self.linear_adapters = []
+        self.training_weights = []
+
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         #print("forward observation shape", observations.shape)
@@ -488,8 +490,7 @@ class WeightSharingAttentionExtractor(FeaturesExtractor):
         weights = th.stack(weights, 1)
         weights = th.softmax(weights, 1)
 
-        #print("weights shape", weights.shape)
-
+        self.training_weights.append(weights.detach().cpu().numpy())
         #weights = self.dropout(weights)
 
         # save attention weights to plot them in evaluation
