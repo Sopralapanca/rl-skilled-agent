@@ -52,7 +52,7 @@ In fact, they proposed a model that, given observations of an agent that plays A
 This linear representation has to match the RAM state of the game, which is a representation of the game state that is used by the game itself.
 Other works instead, proposed self-supervised models that perform computer vision tasks.
 Like \citet{kulkarni2019unsupervised}, that presented a model that is able to discover keypoints i.e. coordinates of specific interesting points in the image.
-They use a KeyNet \citep{jakab2018keynet} and a CNN to extract the keypoints of objects and keep track of them over time.
+They use a KeyNet~\citep{jakab2018keynet} and a CNN to extract the keypoints of objects and keep track of them over time.
 \citet{goel2018unsupervised} proposed a method for video object segmentation.
 They used CNN to extract $K$ different object masks from the frames of the game.
 Then they use the encoder of the video segmentation model to extract features from the frames and concatenate them with
@@ -89,23 +89,55 @@ Finally, in~\citet{brohan2023rt} a vision-language model is used to improve agen
 
 
 \section{Combining multiple models}\label{sec:fm_rl_combination}
-There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation.
-Different works define the skills an agent should have as policies and then try to combine them.
-An example is the work of~\citet{sahni2017learning} where the skills are trained separately using a reward function only relevant to the skill.
 
-How to combine multiple latent features in a single representation is still an open problem.
-Some works already proposed attention mechanisms to improve the performance of RL agents, but instead of enhancing the state representation with additional information, they use it to try to make the agent focus only on certain features of the state such as~\citet{bramlage2022generalized, blakeman2022selective}.
+How to effectively combine multiple latent features in a single representation is still an open problem.
+There is almost non-existing literature about works that try to apply more than one model at the same time to enhance the representation.
+
+Many works focus on combining different skills learned by the agent by a simple concatenation of the features.
+For example,~\citet{sahni2017learning} defined a skill as a policy that is able to solve a specific task.
+Each skill is trained separately using a reward function only relevant to the one.
+Then skill embeddings are generated, the combination of the skills is done by a simple concatenation.
+
+
+
+
 
 Other works use a \textit{mixture of experts} approach to combine different embeddings.
-For example, in the context of multi-task learning \citet{sodhani2021multi} proposed a method where a mixture of encoders extracts different features from the input data.
-Then they use an attention mechanism considering the embedding coming from a LLM which receive in input the metadata of different tasks as context to produce the final representation.
-While~\citet{obando2024mixtures} proposed a method that uses a mixture of experts to extract features from the encoded state of the environment and then combine them to produce the final representation.
-All of these works are focused on combining different embeddings, but they do not consider the case where the embeddings come from different pre-trained models, like FMs, which extract information from different domains i.e.\ images, text, video, etc.
+For example, in the context of multi-task learning \citet{sodhani2021multi} proposed a method where a mixture of encoders extracts different features from the input data and produces different embeddings.
+Then, an attention mechanism is used to combine the embeddings using as information the metadata of the tasks processed by an LLM\@.
+The attention module outputs a linear representation which is again concatenated with the embedding of the LLM\@.
+This final representation is used as input for the RL agent.
+\citet{obando2024mixtures} also proposed a mixture of experts approach for a RL setting.
+They indeed showed how scaling up the number of parameters of a RL agent can improve its performance.
+While the focus of their work is not the one of combining different models, it still can be taken as reference to explore a different way to combine embeddings.
+In fact, given the frame of Atari games as input, theu use a CNN encoder to extract features maps.
+The feature maps are then tokenized in different ways and each token is given to a different expert.
+The result of the experts is then combined using SoftMoE~\citep{puigcerver2023sparse} to produce the final representation.
+All of these works combine multiple embeddings in different ways, but they do not consider the case where the embeddings come from different pre-trained models.
+
+FMs, instead, are able to extract information from different domains, like images, text, video, etc.
+Exploiting their information could lead to a more general and effective representation of the state space.
 
 To the best of our knowledge, ~\citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
 They showcase that combining pre-trained models and trained-from-scratch components leads to better-performing agents.
 Unfortunately, due to the large scale of their work, there is no particular attention towards how FMs' representations are combined.
 
 In the context of lifelong learning agents, an effective and scalable solution to combine FMs encoding is needed in such a way that abilities can be added to the agent without the need to retrain the whole model.
+Recent development in attention models could prove very useful in this context, as they are able to focus on different parts of the input data and combine them in a meaningful way.
+
+Some works already proposed attention mechanisms to extract and enhance specific features of the state representation builded by the RL agent.
+
+For example, ~\citet{bramlage2022generalized} proposed a method that uses an attention mechanism to focus on specific features of the state representation.
+
+\citet{blakeman2022selective}.
+
+But these works do not focus on combining multiple representations extracted from different models.
+
+
 To this purpose, in this work, we propose Weight Sharing Attention (WSA) as a combination mechanism to merge pre-trained encodings.
 Agents learn how to perform a task composing different enriched elements instead of having to learn the state space from scratch.
+
+
+%Some works already proposed attention mechanisms to combine multiple representations
+%
+%improve the performance of RL agents, but instead of enhancing the state representation with additional information, they use it to try to make the agent focus only on certain features of the state such as~\citet{bramlage2022generalized, blakeman2022selective}.
