@@ -7,24 +7,21 @@ As already highlighted in Ch.~\ref{ch:introduction} and Ch.~\ref{ch:related_work
 a typical RL setting consists of an agent that receives as input the state of the environment and has to learn a policy to solve a specific task.
 Most of the training time is spent trying to get a useful representation of the state, which is then used to learn the policy.
 The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task.
-Many previous works already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of world knowledge and simplifying the RL training process.
-None of them have tried to combine multiple models at the same time.
+Many previous works already, mentioned in Sec.\ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of world knowledge and simplifying the RL training process.
+Almost none of them have tried to combine multiple models at the same time.
+Our methodology is designed to use multiple models at the same time, instead of just one, to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
 
-Our work then poses two main questions, how to represent skills for an RL agent and how to combine them.
+Our work poses two main questions, how to represent skills for an RL agent and how to combine them.
 To answer the first question, FMs present themselves as good candidates, as they provide a general representation of the environment.
 These representations can be leveraged in RL to speed up the learning process and improve performance on complex tasks.
 Using FMs' knowledge, RL agents can achieve higher efficiency and effectiveness, even in environments with sparse rewards or limited data.
-As for the latter question, instead, this thesis aims to study how different FM embeddings can be combined in several ways to compute a rich and informative representation of the environment.
-Our methodology is designed to use multiple models at the same time, instead of just one, to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
-
-
 First, our work proposes a set of basic abilities like humans have.
 RL agents are equipped with these FMs, which serve as the prior knowledge needed to generate diverse representations of the environment.
 While agents interact with the environment, the current observation is collected and processed through each pre-trained model.
 This process produces multiple perspectives or views of the world, each distinctively represented according to the particular model used.
-These features embody various aspects of the environment, providing the agent with a comprehensive and enhanced understanding of the current state.
-
-Then, we focus on how to effectively combine their latent representations to improve agents' performance.
+%These features embody various aspects of the environment, providing the agent with a comprehensive and enhanced understanding of the current state.
+As for the latter question, instead, this thesis aims to study how different FM embeddings can be combined in several ways to compute a rich and informative representation of the environment.
+We focus on how to effectively combine their latent representations to improve agents' performance.
 The challenge lies in integrating these possible divergent views into a single and enriched representation.
 In order to achieve this, we employ a specialized combination module, that synthesizes the information from the various models into a single latent representation.
 The intuition is that the enriched representation provides a comprehensive understanding of the current state of the environment, derived from the collective insights of the pre-trained models.
@@ -79,14 +76,13 @@ It is composed of a set of pre-trained models, which are used to gather informat
 We will talk about the FMs selected in Sec. \ref{sec:exp_setup}
 
 The second part of the module is the combination module, which is the core of the Feature Extractor.
-We tested and compared the performance of several combination modules.
-All solutions act as interchangeable components.
-Their output is a linear representation that is provided as input to the \textit{Fully-Connected Network}.
-
-
 Combining different FMs is a challenging task, as each model provides a different view of the environment.
 The goal is to merge these perspectives into a single enriched representation that captures the most relevant information.
 To achieve this, we developed several combination modules, each with its own strengths and weaknesses.
+All solutions act as interchangeable components.
+Their output is a linear representation that is provided as input to the \textit{Fully-Connected Network}.
+We then tested and compared their performance.
+
 We will present one by one all the combination techniques that we have developed to merge the representations extracted by the FMs, with a particular emphasis on the Weight Sharing Attention module, which is the component that we propose as a solution to the problem of combining different FMs in an effective way, and we think that it deserves more relevance.
 
 
@@ -282,3 +278,6 @@ We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combinatio
     \label{fig:dpa_combination}
 \end{figure}
 
+
+
+\section{Technical Details}
