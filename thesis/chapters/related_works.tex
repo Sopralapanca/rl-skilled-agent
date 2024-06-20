@@ -87,7 +87,6 @@ Finally, in~\citet{brohan2023rt} a vision-language model is used to improve agen
 
 
 
-
 \section{Combining multiple models}\label{sec:fm_rl_combination}
 
 How to effectively combine multiple latent features in a single representation is still an open problem.
@@ -99,45 +98,42 @@ Each skill is trained separately using a reward function only relevant to the on
 Then skill embeddings are generated, the combination of the skills is done by a simple concatenation.
 
 
-
-
-
-Other works use a \textit{mixture of experts} approach to combine different embeddings.
-For example, in the context of multi-task learning \citet{sodhani2021multi} proposed a method where a mixture of encoders extracts different features from the input data and produces different embeddings.
+Other works use a \textit{mixture of experts} (MoE)~\citep{shazeer2017outrageously} approach to combine different embeddings.
+For example, in the context of multi-task learning \citet{sodhani2021multi} proposed a method where a mixture of encoders that extracts different features from the input data and produces different embeddings.
 Then, an attention mechanism is used to combine the embeddings using as information the metadata of the tasks processed by an LLM\@.
-The attention module outputs a linear representation which is again concatenated with the embedding of the LLM\@.
+The attention module outputs a linear representation which is again concatenated with the embedding of coming from the LLM\@.
 This final representation is used as input for the RL agent.
 \citet{obando2024mixtures} also proposed a mixture of experts approach for a RL setting.
 They indeed showed how scaling up the number of parameters of a RL agent can improve its performance.
 While the focus of their work is not the one of combining different models, it still can be taken as reference to explore a different way to combine embeddings.
-In fact, given the frame of Atari games as input, theu use a CNN encoder to extract features maps.
+In fact, given the frame of Atari games as input, they use a CNN encoder to extract features maps.
 The feature maps are then tokenized in different ways and each token is given to a different expert.
 The result of the experts is then combined using SoftMoE~\citep{puigcerver2023sparse} to produce the final representation.
-All of these works combine multiple embeddings in different ways, but they do not consider the case where the embeddings come from different pre-trained models.
 
+All of these works combine multiple embeddings in different ways, but they do not consider the case where the embeddings come from different pre-trained models.
 FMs, instead, are able to extract information from different domains, like images, text, video, etc.
 Exploiting their information could lead to a more general and effective representation of the state space.
 
 To the best of our knowledge, ~\citet{sima2024} is the first work that provides the agent with multiple instances of FMs.
+In their work, they trained the agent first collecting a huge dataset of video of games and other research environments.
+Also, they collected a broad range of text instructions, clustering the tasks in different categories.
+Using this data, they pre-trained a video-prediction model, an image-text alignment model, and a text encoder model.
+Then, the agent receive as input visual information from a simulated 3D environment and language instructions,
+preprocess the information using the pre-trained models.
+To combine the embeddings they use a  trained-from-scratch transformer-based model~\citep{dai2019transformer} which includes attention mechanisms on its architecture.
+The output of the agent is keyboard and mouse actions.
 They showcase that combining pre-trained models and trained-from-scratch components leads to better-performing agents.
 Unfortunately, due to the large scale of their work, there is no particular attention towards how FMs' representations are combined.
+Also, using such a big model as a transformer could be computationally expensive and not scalable.
+In fact, in cases where the agent has to learn or use new abilities, the whole model has to be retrained.
 
 In the context of lifelong learning agents, an effective and scalable solution to combine FMs encoding is needed in such a way that abilities can be added to the agent without the need to retrain the whole model.
 Recent development in attention models could prove very useful in this context, as they are able to focus on different parts of the input data and combine them in a meaningful way.
-
-Some works already proposed attention mechanisms to extract and enhance specific features of the state representation builded by the RL agent.
-
-For example, ~\citet{bramlage2022generalized} proposed a method that uses an attention mechanism to focus on specific features of the state representation.
-
-\citet{blakeman2022selective}.
-
-But these works do not focus on combining multiple representations extracted from different models.
+Some works already proposed attention mechanisms to extract and enhance specific features of the state representation built by the RL agent.
+For example, both ~\citet{bramlage2022generalized} and \citet{blakeman2022selective} proposed different attention-like methods to focus on specific features of the state representation.
+These works do not focus on combining multiple representations extracted from different models, but they restrict the agent to concentrate only on certain features.
 
 
-To this purpose, in this work, we propose Weight Sharing Attention (WSA) as a combination mechanism to merge pre-trained encodings.
+To this purpose, in this work, we propose Weight Sharing Attention (WSA) as an attention-like combination mechanism to merge different pre-trained encodings.
 Agents learn how to perform a task composing different enriched elements instead of having to learn the state space from scratch.
-
-
-%Some works already proposed attention mechanisms to combine multiple representations
-%
-%improve the performance of RL agents, but instead of enhancing the state representation with additional information, they use it to try to make the agent focus only on certain features of the state such as~\citet{bramlage2022generalized, blakeman2022selective}.
+Also, they are able to adapt to many situations just by weighting the importance of the different abilities.
