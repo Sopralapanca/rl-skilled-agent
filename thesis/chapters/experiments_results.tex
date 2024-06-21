@@ -487,35 +487,53 @@ In fact, thanks to the nature of attention mechanism, we can analyze the weights
 This can provide insights on how the agent uses the FMs to make decisions and how the agent adapts its prior knowledge to the environment.
 Figure~\ref{fig:breakout_attention} shows the attention weights assigned by the WSA module to each pre-trained model during the evaluation phase of the agent on \textit{Breakout}.
 The frames depict also the current frame of the game and the chosen action by the agent.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{1\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/744}
+        \caption{First scenario.}
+        \label{fig:breakout_weights1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{1\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/1524}
+        \caption{Second scenario.}
+        \label{fig:breakout_weights2}
+    \end{subfigure}
+    \caption{Figure shows the attention weights assigned by the WSA module to each pre-trained model during the evaluation phase of the agent on \textit{Breakout}. It is possible to appreciate different weights combinations in two separate game situations.}
+    \label{fig:breakout_attention}
+\end{figure}
+
 We considered two different scenarios, one where the agent is in the early stages of the game with many blocks and one where the agent is in the late stages of the game and needs to be more precise to hit the ball in the right direction.
 In the first scenario, we can see how SR and VOS are the most weighted models, meaning that they are the most informative.
 In the second scenario, we can see how the agent assigns more weight to OKK and VOS.
 Since OKK and VOS track moving objects, most probably they encode more information about the paddle and the ball, and the agent needs this information to make the right decision.
-%add more eventually
 
+Regarding the other two games, we analyzed the attention weights assigned by the WSA module and discover that weights collapsed on a single model.
+This is a well-known problem in attention mechanisms, and it is called \textit{attention collapse}.
+To solve this issue different strategies have been tried like:
+\begin{itemize}
+    \item \textbf{Dropout}: adding a dropout layer after the linear adapters for the skills, after the linear adapter for the state, or after the softmax layer for the weights.
+    Dropout randomly set some weights to zero during training to avoid the collapse.
+    \item \textbf{Batch Normalization}: adding a batch normalization layer after the linear adapters for the skills, or after the linear adapter for the state.
+    \item \textbf{Sigmoid}: using a sigmoid activation function instead of ReLU in the adapters.
+    \item \textbf{Entropy Penalty}: add a regularization term to the loss function of PPO based on the entropy of the weights.
+    This encourages the weights to be more uniform.
+\end{itemize}
 
-TODO-DA FINIRE
+Unfortunately, none of these strategies seems to work.
+Most of the times the weights still collapse on a single model, while adding too much regularization lead to a uniform distribution of the weights at each step.
+In other cases, the agent was not able to learn.
+This problem may suggest that the FMs are already too informative for these two games.
+They learn the environment well, and the agent does not need to use all of them to make decisions.
+It does not matter which model the agent uses, the agent will perform well anyway.
 
 It is important to notice that the agent considered is the one that performed the best i.e.\ the one trained with mixed data and increased \textit{Fully-Connected Network}.
 
 
-\begin{figure}[ht]
-    \centering
-    \begin{subfigure}[b]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{images/breakout_fix_policy}
-        \label{fig:breakout_weights1}
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[b]{0.45\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{images/breakout_fix_mixed}
-        \label{fig:breakout_weights2}
-    \end{subfigure}
-
-    \caption{TODO}
-    \label{fig:breakout_attention}
-\end{figure}
 
 
 % STILL TO COMPLETE!!!!
@@ -547,6 +565,7 @@ This is a behavior similar to the one observed with PPO agents in Section~\ref{s
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         %\includegraphics[width=\textwidth]{images/mspacman_dqn}
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         \caption{\texttt{Ms. Pacman}}
         \label{fig:mspacman_dqn}
     \end{subfigure}
@@ -554,6 +573,7 @@ This is a behavior similar to the one observed with PPO agents in Section~\ref{s
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
         %\includegraphics[width=\textwidth]{images/breakout_dqn}
+        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         \caption{\texttt{Breakout}}
         \label{fig:breakout_dqn}
     \end{subfigure}
