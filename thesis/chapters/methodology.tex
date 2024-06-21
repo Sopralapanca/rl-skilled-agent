@@ -7,7 +7,7 @@ As already highlighted in Ch.~\ref{ch:introduction} and Ch.~\ref{ch:related_work
 a typical RL setting consists of an agent that receives as input the state of the environment and has to learn a policy to solve a specific task.
 Most of the training time is spent trying to get a useful representation of the state, which is then used to learn the policy.
 The focus of this work is to simplify as much as possible the representation learning of current RL algorithms leveraging prior knowledge and letting the agent focus on learning the actual policy to solve the task.
-Many previous works already, mentioned in Sec.\ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of world knowledge and simplifying the RL training process.
+Many previous works already, mentioned in Sec. \ref{sec:fm_rl}, share the idea of leveraging FMs to enhance the state representation facilitating the transfer of world knowledge and simplifying the RL training process.
 Almost none of them have tried to combine multiple models at the same time.
 Our methodology is designed to use multiple models at the same time, instead of just one, to enhance the efficiency and effectiveness of RL agents by leveraging a set of pre-trained models tailored to the current task.
 
@@ -20,6 +20,7 @@ RL agents are equipped with these FMs, which serve as the prior knowledge needed
 While agents interact with the environment, the current observation is collected and processed through each pre-trained model.
 This process produces multiple perspectives or views of the world, each distinctively represented according to the particular model used.
 %These features embody various aspects of the environment, providing the agent with a comprehensive and enhanced understanding of the current state.
+
 As for the latter question, instead, this thesis aims to study how different FM embeddings can be combined in several ways to compute a rich and informative representation of the environment.
 We focus on how to effectively combine their latent representations to improve agents' performance.
 The challenge lies in integrating these possible divergent views into a single and enriched representation.
@@ -44,12 +45,8 @@ The second part is the \textit{Policy Learning} network, where the unified repre
 \end{figure}
 
 
-In the following (Sec.~\ref{sec:feature_extractor}), we will describe in detail how we designed the Feature Extractor module focusing on various combination techniques to merge the representations extracted by the FMs.
-
-
-
-
-
+In Sec.~\ref{sec:feature_extractor}), we will describe in detail how we designed the Feature Extractor module focusing on various combination techniques to merge the representations extracted by the FMs.
+While in Sec.~\ref{sec:technical-details}, we will provide some technical details on how the components are designed and how they work together.
 
 
 
@@ -72,16 +69,16 @@ In the following (Sec.~\ref{sec:feature_extractor}), we will describe in detail 
 
 \section{Feature Extractor} \label{sec:feature_extractor}
 The Feature Extractor module is the first part of our agent, it is responsible for processing the current observation and extracting a meaningful representation of the environment in a compact latent space.
-It is composed of a set of pre-trained models, which are used to gather information from the environment and whose weights are frozen during the training process.
+It is composed itself of two main parts, the first part is a set of pre-trained models, which are used to gather information from the environment and whose weights are frozen during the training process.
 We will talk about the FMs selected in Sec. \ref{sec:exp_setup}
 
 The second part of the module is the combination module, which is the core of the Feature Extractor.
 Combining different FMs is a challenging task, as each model provides a different view of the environment.
 The goal is to merge these perspectives into a single enriched representation that captures the most relevant information.
 To achieve this, we developed several combination modules, each with its own strengths and weaknesses.
-All solutions act as interchangeable components.
+All solutions act as interchangeable components, and we tested and compared their performance.
 Their output is a linear representation that is provided as input to the \textit{Fully-Connected Network}.
-We then tested and compared their performance.
+
 
 We will present one by one all the combination techniques that we have developed to merge the representations extracted by the FMs, with a particular emphasis on the Weight Sharing Attention module, which is the component that we propose as a solution to the problem of combining different FMs in an effective way, and we think that it deserves more relevance.
 
@@ -96,6 +93,11 @@ The WSA module leverages the concept of \textbf{weight sharing}, as seen for the
 In specific, WSA dynamically adjusts the weights assigned to each pre-trained model based on the current context, emphasizing the most relevant models for the current state.
 
 As showed in Fig.~\ref{fig:main_architecture}, supposing to have a set of $k$ pre-trained models $\Psi = \{\psi_1, \psi_2, \ldots, \psi_k\}$, each model $\psi_i$ is used to extract features from the current observation $\mathcal{O}$.
+
+
+
+
+
 Each pre-trained model is equipped with an adapter $\mathcal{A}$, which is a small neural network consisting of a linear layer followed by a non-linearity layer, in this case, a ReLU activation function.
 The adapter is used to learn a representation of the model's output and also to resize the latent representation of the FM to a fixed size, ensuring compatibility among different models.
 As a result of this operation, each FM outputs an embedding $E_i$ of a predefined size.
@@ -280,4 +282,5 @@ We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combinatio
 
 
 
-\section{Technical Details}
+\section{Technical Details}\label{sec:technical-details}
+We will now describe step by step how the components are designed and how they work together.
