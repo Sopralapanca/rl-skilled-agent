@@ -35,7 +35,7 @@ Table~\ref{tab:ppo_hyperparams} shows the hyperparameters used for the PPO agent
 \begin{table}[htbp]
     \centering
         \begin{tabular}{ll}
-            \multicolumn{1}{l}{\bf Hyperparameter}  &\multicolumn{1}{l}{\bf Value}
+            \multicolumn{1}{l}{\textbf{Hyperparameter}}  &\multicolumn{1}{l}{\textbf{Value}}
             \\ \hline \\
             N. Envs.       & 8 \\
             N. Stacks      & 4 \\
@@ -49,7 +49,8 @@ Table~\ref{tab:ppo_hyperparams} shows the hyperparameters used for the PPO agent
             Ent. Coef.     & 0.01 \\
             Normalize      & True \\
         \end{tabular}
-        \caption{PPO hyperparameters.} \label{tab:ppo_hyperparams}
+        \caption{This Table provides the hyperparameters used for our PPO agents both for end-to-end PPO and for the agents with FMs.}
+    \label{tab:ppo_hyperparams}
 \end{table}
 
 To set the environment in order to be used by the agent, we used the \textit{Atari Preprocessing} wrapper provided by SB3, which preprocesses the frames by grayscaling them, resizing them to 84x84 pixels, and then stacking the last four frames to provide the agent with temporal information.
@@ -112,7 +113,7 @@ The game ends when the agent loses all its lives, or when it collects all the do
         \centering
         \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
         %\includegraphics[width=\textwidth]{images/mspacman_train.png}
-        \caption{\texttt{Ms.Pacman}}
+        \caption{\texttt{Ms. Pacman}}
         \label{fig:mspacman_env}
     \end{subfigure}
     \hfill
@@ -123,7 +124,7 @@ The game ends when the agent loses all its lives, or when it collects all the do
         \caption{\texttt{Breakout}}
         \label{fig:breakout_env}
     \end{subfigure}
-    \caption{A snapshot of the environments}
+    \caption{A snapshot of the environments.}
     \label{fig:environemnts}
 \end{figure}
 
@@ -196,7 +197,7 @@ As shown in Table~\ref{tab:emb_siz_modules}, we explore a variety of configurati
 
         \end{tabular}
     \end{center}
-    \caption{The table shows all the extractors' configurations tested in the initial phase of experiments. For FIX, DPA, and WSA the values indicate the fixed dimensions of embeddings and context, for RES the size of the reservoir and for CNN the number of convolutional layers.}
+    \caption{The Table shows all the extractors' configurations tested in the initial phase of experiments. For FIX, DPA, and WSA the values indicate the fixed dimensions of embeddings and context, in output from the linear adapters. For RES  in indicates the size of the reservoir and for CNN the number of convolutional layers used to extract features from the feature maps.}
     \label{tab:emb_siz_modules}
 \end{table}
 
@@ -269,7 +270,7 @@ Table~\ref{tab:results} reports the averaged results during the evaluation of th
                 \multirow{4}{*}{\texttt{Ms.Pacman}} & CNN & 1801.30 $\pm$ 20.95 \\
                                       & RES & 1369.27 $\pm$ 565.23 \\
                                       &\textbf{WSA} & \textbf{2530.20 $\pm$ 23.09} \\
-                                      & \underline{PPO} & \underline{2258.40 $\pm$ 1.42}\\
+                                      & PPO & 2258.40 $\pm$ 1.42\\
                                       \hline \\
 
                 \multirow{4}{*}{\texttt{Breakout}}
@@ -278,7 +279,7 @@ Table~\ref{tab:results} reports the averaged results during the evaluation of th
                                       & WSA & 99.58 $\pm$ 6.66 \\
                                       & \textbf{PPO} & \textbf{413.51 $\pm$ 1.10}\\
     \end{tabular}
-    \caption{Performance during evaluation averaged across 5 different seeds.}
+    \caption{Performance during evaluation averaged across 5 different seeds. In bold, the best performing agent for each game.}
     \label{tab:results}
 \end{table}
 
@@ -364,23 +365,23 @@ We notice how the combination of the two strategies yields the best-performing c
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_policy}
-        \caption{Increasing MLP size}
+        \caption{Policy}
         \label{fig:breakout_policy}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_expert}
-        \caption{Using Mixed Data}
+        \caption{Mixed}
         \label{fig:breakout_expert}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_policy_mixed}
-        \caption{Mixed Data + Increased MLP}
+        \caption{Policy \& Mixed}
         \label{fig:breakout_expert_policy}
-    \end{subfigure}~\caption{Performance comparison of WSA with PPO across various strategies on \textit{Breakout}. Each subfigure displays the average score with the standard deviation shaded. They report the different experiments to improve the performance of WSA: (\ref{fig:breakout_policy}) increasing the size of the \textit{Fully-Connected Network} on performance, (\ref{fig:breakout_expert}) pre-training the models using random data and expert data, and (\ref{fig:breakout_expert_policy}) combining the effect of increased \texttt{Fully-Connected Network} and expert data during pre-training.}
+    \end{subfigure}~\caption{Performance comparison of WSA with end-to-end PPO across various strategies on \textit{Breakout}. Each subfigure displays the average score with the standard deviation shaded. They report the different experiments to improve the performance of WSA: (\ref{fig:breakout_policy}) increasing the size of the \textit{Fully-Connected Network} on performance, (\ref{fig:breakout_expert}) pre-training the models using random data and expert data, and (\ref{fig:breakout_expert_policy}) combining the effect of increased \texttt{Fully-Connected Network} and expert data during pre-training.}
     \label{fig:breakout_study}
 \end{figure}
 
@@ -392,24 +393,24 @@ We notice how the combination of the two strategies yields the best-performing c
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_cnn_policy}
-        \caption{Increasing MLP size}
+        \caption{Policy}
         \label{fig:breakout_cnn_policy}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_cnn_mixed}
-        \caption{Using Mixed Data}
+        \caption{Mixed}
         \label{fig:breakout_cnn_mixed}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_cnn_policy_mixed}
-        \caption{Mixed Data + Increased MLP}
+        \caption{Policy \& Mixed}
         \label{fig:breakout_cnn_expert_policy}
     \end{subfigure}
-    \caption{Performance comparison of CNN with PPO across various strategies on \textit{Breakout}. Each subfigure displays the average score with the standard deviation shaded.}
+    \caption{Performance comparison of CNN with PPO across various strategies on \textit{Breakout}. With \textit{Policy} we mean the increasing of the MLP network, with \textit{Mixed} the use of mixed data, and with \textit{Policy \& Mixed} the combination of the two strategies. Each subfigure displays the average score with the standard deviation shaded.}
     \label{fig:breakout_cnn_study}
 \end{figure}
 
@@ -418,24 +419,24 @@ We notice how the combination of the two strategies yields the best-performing c
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_fix_policy}
-        \caption{Increasing MLP size}
+        \caption{Policy}
         \label{fig:breakout_fix_policy}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_fix_mixed}
-        \caption{Using Mixed Data}
+        \caption{Mixed}
         \label{fig:breakout_fix_mixed}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{0.32\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/breakout_fix_policy_mixed}
-        \caption{Mixed Data + Increased MLP}
+        \caption{Policy \& Mixed}
         \label{fig:breakout_fix_expert_policy}
     \end{subfigure}
-    \caption{Performance comparison of FIX with PPO across various strategies on \textit{Breakout}. Each subfigure displays the average score with the standard deviation shaded.}
+    \caption{Performance comparison of FIX with PPO across various strategies on \textit{Breakout}. With \textit{Policy} we mean the increasing of the MLP network, with \textit{Mixed} the use of mixed data, and with \textit{Policy \& Mixed} the combination of the two strategies. Each subfigure displays the average score with the standard deviation shaded.}
     \label{fig:breakout_fix_study}
 \end{figure}
 
@@ -512,29 +513,60 @@ In the first scenario, we can see how SR and VOS are the most weighted models, m
 In the second scenario, we can see how the agent assigns more weight to OKK and VOS.
 Since OKK and VOS track moving objects, most probably they encode more information about the paddle and the ball, and the agent needs this information to make the right decision.
 
-Regarding the other two games, we analyzed the attention weights assigned by the WSA module and discover that weights collapsed on a single model.
-This is a well-known problem in attention mechanisms, and it is called \textit{attention collapse}.
-To solve this issue different strategies have been tried like:
-\begin{itemize}
-    \item \textbf{Dropout}: adding a dropout layer after the linear adapters for the skills, after the linear adapter for the state, or after the softmax layer for the weights.
-    Dropout randomly set some weights to zero during training to avoid the collapse.
-    \item \textbf{Batch Normalization}: adding a batch normalization layer after the linear adapters for the skills, or after the linear adapter for the state.
-    \item \textbf{Sigmoid}: using a sigmoid activation function instead of ReLU in the adapters.
-    \item \textbf{Entropy Penalty}: add a regularization term to the loss function of PPO based on the entropy of the weights.
-    This encourages the weights to be more uniform.
-\end{itemize}
 
-Unfortunately, none of these strategies seems to work.
-Most of the times the weights still collapse on a single model, while adding too much regularization lead to a uniform distribution of the weights at each step.
-In other cases, the agent was not able to learn.
+
+Regarding the other two games, we analyzed the attention weights assigned by the WSA module and discover that weights collapsed on a single model.
+In specific, in \textit{Pong} the agent always assigns the same weight to the OKK, while in \textit{Ms. Pacman} attention weights collapsed on the VOS model.
+This is a well-known problem in attention mechanisms, and it is called \textit{attention collapse}.
+To solve this issue different strategies have been tried that we will list below.
+
+\subsubsection{Dropout}
+Dropout is a regularization technique used in DL to prevent overfitting.
+It consists of randomly setting some weights to zero during training, with a probability \textit{p}.
+During the evaluation phase instead, dropout is not applied.
+We add a dropout layer after the linear adapters for the skills, after the linear adapter for the state, or after the softmax layer for the weights.
+We tested different values of \textit{p}, in specific, \texttt{0.2}, \texttt{0.3}.
+We observed in \textit{Pong} that using p=0.1, the weights still collpased on the same model but differently from before, when the state does not expose the ball, the agent assigns more weight to the VOS model.
+Using p=0.2 and p=0.3, lead to a uniform distribution of the weights at each step.
+Regarding \textit{Ms. Pacman} the agent was not able to learn using p=0.2 and p=0.3, while using p=0.1 the weights are uniformly distributed at each step.
+
+
+% inseriesci figure pong
+
+
+\subsubsection{Batch Normalization}:
+Batch normalization is a technique used to normalize the input of a layer, so that the mean is zero and the variance is one.
+We add a batch normalization layer after the linear adapters for the skills, or after the linear adapter for the state.
+In this case, both for \textit{Pong} and \textit{Ms. Pacman} the agent was not able to learn properly.
+
+\subsubsection{Changing Activation Function}
+Considering the structure of our agents, we use ReLU as activation function for the adapters.
+This is a common choice in DL, but we regarding the attention RElu could delete some information as it sets to zero all the negative values.
+We then tried to remove the ReLU activation function and use a linear activation function both in the linear and spatial adapters.
+In both games, we discover that agents were not able to learn properly or the weights were uniformly distributed at each step.
+We also did another experiment where we used a sigmoid activation function instead of ReLU, but the results were the same.
+
+\subsubsection{Entropy Penalty Term}
+Finally, we consider to add a penalty term to the loss function of PPO based on the entropy of the attention weights.
+Low entropy means that the weights are concentrated on a single model, while high entropy means that the weights are uniformly distributed.
+In specific, we computed the entropy of the weights at each time step as in Equation~\ref{eq:entropy}, where $w_i$ is the weight assigned to the $i$-th model, $N$ is the number of models, $\epsilon$ is a small value to avoid the logarithm of zero.
+Since we run multiple environments in parallel, we computed the mean entropy across all the environments.
+We then added the entropy term to the loss function of PPO. %with a coefficient of \texttt{0.01}.
+
+\begin{equation}
+    H = -\sum_{i=1}^{N} w_i \log(w_i + \epsilon)
+    \label{eq:entropy}
+\end{equation}
+
+
+As for the results, in \textit{Pong} weights still collapse on the same model, while in \textit{Ms. Pacman} the weights are uniformly distributed at each step and agents were not able to learn as without the entropy term. \\ \\
+
+
 This problem may suggest that the FMs are already too informative for these two games.
-They learn the environment well, and the agent does not need to use all of them to make decisions.
+Each pre-trained model learns the environment well, and the agent does not need to use all of them to make decisions.
 It does not matter which model the agent uses, the agent will perform well anyway.
 
-It is important to notice that the agent considered is the one that performed the best i.e.\ the one trained with mixed data and increased \textit{Fully-Connected Network}.
-
-
-
+It is important to notice that each strategy is applied independently of the others, and a combination of them could lead to better results.
 
 % STILL TO COMPLETE!!!!
 

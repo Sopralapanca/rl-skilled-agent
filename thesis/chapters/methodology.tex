@@ -37,10 +37,15 @@ The second part is the \textit{Policy Learning} network, where the unified repre
 
 \begin{figure}[ht]
     \begin{center}
-        %\includegraphics[width=1\textwidth]{images/main_architecture2}
-        \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
+        \includegraphics[width=1\textwidth]{images/main_architecture_new}
     \end{center}
-    \caption{General main architecture}
+    \caption{Figure shows a general representation of the agent's architecture, depicting information flow from observations to actions.
+    Last \texttt{4} frames of the game are stacked together to form the observations.
+    The Feature Extractor module is responsible for processing the current observation, extracting meaningful representations and combining them.
+    It is equipped with a set of pre-trained models and a combination module.
+    In general, combination modules are composed by a set of adapters $\mathcal{A}$ which learn a representation of the FM output and eventually resize it a fixed size.
+    They produce a set of embeddings $E$ which are then combined in different ways to produce the final representation $\mathcal{R}$.
+    The Policy Learning network is the second part of the agent's architecture used to map the current state $\mathcal{R}$ to an action.}
     \label{fig:main}
 \end{figure}
 
@@ -80,7 +85,7 @@ During the training of RL agents, their weights are frozen in order to preserve 
 In particular, we will have a set of $k$ embeddings $E^{FM}$ in output from the FMs, $E^{FM}_i = \psi_i(\mathcal{O})$.
 The models operate both in the spatial field, so they output an embedding consisting of a set of feature maps, and in the linear field, so they output a one-dimensional vector.
 This is the initial step of our methodology.
-We will talk more in detail about the FMs selected in Sec. \ref{sec:exp_setup}
+We will talk more in detail about the FMs selected in Sec. \ref{sec:exp_setup}.
 
 \subsection{Combination Modules}\label{subsec:combination-modules}
 Continuing with the Feature Extractor module, the next step is to combine the representations extracted by the FMs.
@@ -106,25 +111,25 @@ In specific, WSA dynamically adjusts the weights assigned to each pre-trained mo
 This module, depicted in Fig. \ref{fig:wsa_main_architecture}, is designed in this way.
 It receives as input the representation extracted by the FMs, on which it applies the preprocessing step described before.
 Then, spatial embeddings are flattened to obtain a one-dimensional vector.
-WSA module is equipped with another set of adapter, called \textit{Linear Adapters} $\mathcal{A^{l}}$, where each adapter $\mathcal{A^{l}_i}$ is a small neural network consisting of a single linear layer followed by a non-linearity layer, in this case, a ReLU activation function.
-The adapter is used to learn a representation of the model's output and also to resize the linear latent representation of the FM to a fixed size.
-This guarantee consistency between various models.
-As a result of this operation, we obtain an embedding for each FM representation, called $E^{l}_i$, of a predefined size.
+WSA module is equipped with another set of adapter, called \textit{Linear Adapters} $\mathcal{A}^{l}$, where each adapter $\mathcal{A}^{l}_i$ is a small neural network consisting of a single linear layer followed by a non-linearity layer, in this case, a ReLU activation function.
+The adapters are used to learn a representation of FMs output and also to resize the different linear latent representations of the state to a fixed size.
+This guarantees consistency between various models.
+As a result of this operation, we obtain an embedding for each FM representation, called $E^{l}_i$.
+All the embeddings have the same dimension, and it is possible to combine them in a meaningful way.
 
 
 \begin{figure}[ht]
     \begin{center}
         \includegraphics[width=1\textwidth]{images/wsa_main_architecture}
     \end{center}
-    \caption{In Figure, we show all the information flow from observation to actions and the architecture of the WSA module. The last four frames are stacked together and passed as input to the FMs and their adapters $\mathcal{A}_1, \dots \mathcal{A}_k$ to obtain an embedding of the current state $E^l_i$. A State Encoder $\mathcal{E}$ and its adapter $\mathcal{A}^l_0$ compute an encoding of the state, that will be used as context $\mathcal{C}$. A shared MLP layer takes as input the context $\mathcal{C}$ and the representation of the $i^{th}$ FM, $E^l_i$, and produce the weight for that specific model. The final enriched representation $\mathcal{R}$ is obtained from the weighted summation between each weight $w_i$ and its respective embedding $E^l_i$. $\mathcal{R}$ is given as input to agents' \textit{Fully-Connected Network}.}
+    \caption{In Figure, we show in specific all the information course from game frames to agent actions specifying the architecture of the WSA module. The last four frames are stacked together and passed as input to the FMs and their spatial adapters $\mathcal{A}^{s}_1, \dots \mathcal{A}^{s}_j$ first, and then to the linear adapters $\mathcal{A}^{l}_1, \dots \mathcal{A}^{l}_k$ to obtain an embedding of the current state $E^l_i$. A State Encoder $\mathcal{E}$ and its adapter $\mathcal{A}^l_0$ compute an encoding of the state, that will be used as context $\mathcal{C}$. A shared MLP layer takes as input the context $\mathcal{C}$ and the representation of the $i^{th}$ FM, $E^l_i$, and produces the weight $w_i$ for that specific view of the state. The final enriched representation $\mathcal{R}$ is obtained from the weighted summation between each weight $w_i$ and its respective embedding $E^l_i$. $\mathcal{R}$ is given as input to agents' \textit{Fully-Connected Network}.}
     \label{fig:wsa_main_architecture}
 \end{figure}
 
 
 Among the provided FMs, one is used as \textbf{State Encoder} $\mathcal{E}$ to compute a representation of the current state, which serves as \textit{context} $\mathcal{C}$ for the attention mechanism.
-The State Encoder produces a spatial embedding of the current observation.
-Here we do not use a spatial adapter to preprocess the output of the State Encoder, we just flatten the representation to obtain a linear embedding.
-A linear adapter $\mathcal{A}^{l}_0$ of the same shape of the others is used to resize the latent representation to a fixed size, and this will be the context $\mathcal{C}$.
+The State Encoder produces a spatial encoding of the current observation which is flattened to obtain a linear embedding.
+A linear adapter $\mathcal{A}^{l}_0$, of the same shape of the other linear adapters, is used to resize the latent representation to a fixed size, and this will be the context $\mathcal{C}$.
 
 To compute the attention weights, we use a shared MLP $f_\theta$ that takes as input the context $\mathcal{C}$ concatenated with the single embedding $E^{l}_i$ of each FM\@.
 This MLP outputs the model-specific weight $w_i$ to determine the contribution of each model in the final representation.
@@ -164,14 +169,16 @@ Algorithm~\ref{alg:wsa} reports the pseudocode for the actual implementation.
 
 \subsubsection{Linear Combination Modules}\label{subsubsec:linear_combination}
 Linear combination modules are the simplest way to merge the representations extracted by the FMs.
-Considering the set of $k$ pre-trained models, each of them can output an embedding in the spatial field or a one-dimensional vector after the preprocessing step.
-If the model outputs a one-dimensional vector, it is left as it is, while if it outputs a set of feature maps, it is flattened to produce a one-dimensional vector.
-Then, the embeddings of each model are concatenated to create a large feature vector and this constitutes the final representation of the environment $\mathcal{R}$.
+Considering the set of $k$ pre-trained models, each of them can output an embedding in the spatial field or a one-dimensional vector.
+We apply the spatial adapters to the embeddings that operate in the spatial field, and we leave the linear embeddings as they are.
+Then, we flatten the spatial embeddings to obtain a linear encoding.
+The embeddings of each model are then concatenated to create a large feature vector.
+This constitutes the final representation of the environment $\mathcal{R}$.
 We refer to this module as \textit{LIN} for short.
 
 Building such a large vector can be helpful since the information from different models are not compressed, and the final representation is rich and informative.
-One problem with this combination module is that the FMs may have very different dimensionality.
-An embedding might be very large compared to the others, leading to a situation where one model becomes more important than the others just because its dimension is larger.
+One problem though with this combination module is that the FMs may have very different dimensionality.
+An embedding might be huge compared to the others, leading to a situation where one model becomes more important than the others just because its dimension is larger.
 So, we developed another combination module, which we refer to as \textit{FIX}, where first we obtain a linear representation as in the previous module for each model.
 Then, we map the representation of each model into an embedding of fixed dimensions using $k$ linear adapters $\mathcal{A}^{l}$ of the same size.
 Each adapter is a neural network constituted of a linear layer is followed by a ReLU activation function.
@@ -195,7 +202,7 @@ In Fig.~\ref{fig:lin_combination} we show the architecture of the two linear com
         \label{fig:fix_lin}
     \end{subfigure}
 
-    \caption{In Figure we show the architecture of the Linear Combination Module (LIN) and the Fixed Linear Combination Module (FIX). In LIN, the embeddings of each model are first flattened to one-dimensional vectors, then concatenated to create a large feature vector. In FIX, the embeddings are also mapped into an embedding of fixed dimensions using $k$ different linear layers with the same size and then concatenated}
+    \caption{In Figure we show the architecture of the Linear Combination Module (LIN) and the Fixed Linear Combination Module (FIX). In LIN, the embeddings of each model are first flattened to one-dimensional vectors, then concatenated to create a large feature vector. In FIX, the embeddings are also mapped into encodings of fixed dimensions using $k$ different linear layers with the same size and then concatenated}
     \label{fig:lin_combination}
 \end{figure}
 
@@ -215,7 +222,7 @@ This module is particularly useful when the FMs are designed to capture spatial 
 Assuming that the set of FMs is composed of models that operate in the spatial field and models that operate in the linear one, we can exploit these two types of models to create a more complex combination module.
 As before, first we preprocess the output of the FMs using the spatial adapters.
 Then, we concatenate the FMs embedding that operate in the spatial field along the channel dimension.
-We then pass this embedding through a convolutional layer to extract spatial features, followed by a ReLU activation function.
+We then pass this embedding through a single convolutional layer to extract spatial features, followed by a ReLU activation function.
 Finally, we flatten the output of the convolutional layer and concatenate it with the embeddings of the linear FMs to create the final representation $\mathcal{R}$.
 We call this combination module \textit{MIX} as it is a mixture of the previous two modules.
 
@@ -244,10 +251,10 @@ Figure~\ref{fig:conv_combination} shows the architecture of the two convolutiona
 \subsubsection{Reservoir Combination Module}
 \label{subsubsec:reservoir_combination}
 Inspired by the work of \citet{gallicchio2017}, we decided to explore reservoir dynamics properties to map the input into a lower-dimension latent space using a non-linear transformation.
-To develop this combination module, we created a reservoir with fixed weights using a predefined number of neurons.
+To develop this combination module, we created a \textit{reservoir} with fixed weights using a predefined number of neurons.
 As input, for the reservoir we used the representation $\mathcal{R}$ built by the LIN combination module.
 The output of the reservoir is a vector of the size of the number of neurons on it.
-This is the new computed representation $\mathcal{R}$, which is used as input to the policy learning network.
+This is the new computed representation $\mathcal{R}$, which is used as input to the policy learning network, which can be viewed as the \textit{readout}.
 We refer to this combination module as \textit{RES}.
 Figure~\ref{fig:reservoir_combination} shows the architecture of the reservoir combination module.
 
@@ -290,8 +297,8 @@ We call this combination module \textit{DPA} and in Fig.~\ref{fig:dpa_combinatio
 
 \section{Policy Learning}\label{sec:policy_learning}
 This is the last part of the agent's architecture, where the enriched representation obtained from the Feature Extractor module is used to map the current state to an action.
-It receives as input the enriched representation $\mathcal{R}$ as a one-dimensional vector.
+It receives as input the augmented representation $\mathcal{R}$ as a one-dimensional vector.
 $\mathcal{R}$ is assumed to contain all the relevant information, simplifying the learning process of the agent.
-The Policy Learning network is a small fully-connected neural network that takes as input t$\mathcal{R}$ and outputs the probability distribution over the possible actions or the value function.
+The Policy Learning network is a small fully-connected neural network that takes as input $\mathcal{R}$ and outputs the probability distribution over the possible actions or the value function.
 The network generally is composed of just one layer with a small number of neurons.
-Eventually, the size of this network can be increased to improve the performance of the agent by increasing the number of layers and adding non-linearity.
+Eventually, the size of this network can be increased to capture more complex dynamics and to improve the performance of the agent by increasing the number of layers and adding non-linearity functions between them.
