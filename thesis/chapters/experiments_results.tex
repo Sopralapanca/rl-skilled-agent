@@ -494,14 +494,14 @@ The frames depict also the current frame of the game and the chosen action by th
     \begin{subfigure}[b]{1\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/744}
-        \caption{First scenario.}
+        \caption{The first scenario depicts the early stages of the game. The agent assigns more weight to SR and VOS.}
         \label{fig:breakout_weights1}
     \end{subfigure}
     \hfill
     \begin{subfigure}[b]{1\textwidth}
         \centering
         \includegraphics[width=\textwidth]{images/1524}
-        \caption{Second scenario.}
+        \caption{The second scenario shows the late stages of the game. SR becomes less relevant and the agent assigns more weight to OKK and VOS.}
         \label{fig:breakout_weights2}
     \end{subfigure}
     \caption{Figure shows the attention weights assigned by the WSA module to each pre-trained model during the evaluation phase of the agent on \textit{Breakout}. It is possible to appreciate different weights combinations in two separate game situations.}
@@ -554,7 +554,7 @@ Since we run multiple environments in parallel, we computed the mean entropy acr
 We then added the entropy term to the loss function of PPO. %with a coefficient of \texttt{0.01}.
 
 \begin{equation}
-    H = -\sum_{i=1}^{N} w_i \log(w_i + \epsilon)
+    H = -\sum_{i=1}^{N} w_i \log(w_i) %+ \epsilon)
     \label{eq:entropy}
 \end{equation}
 
@@ -562,7 +562,7 @@ We then added the entropy term to the loss function of PPO. %with a coefficient 
 As for the results, in \textit{Pong} weights still collapse on the same model, while in \textit{Ms. Pacman} the weights are uniformly distributed at each step and agents were not able to learn as without the entropy term. \\ \\
 
 
-This problem may suggest that the FMs are already too informative for these two games.
+The fact that regularization techniques did not solve the problem may suggest that the FMs are already too informative for these two games.
 Each pre-trained model learns the environment well, and the agent does not need to use all of them to make decisions.
 It does not matter which model the agent uses, the agent will perform well anyway.
 
@@ -588,7 +588,7 @@ We also restricted to test only the games of \textit{Breakout} and \textit{Ms. P
 
 Figure~\ref{fig:dqn_experiments} shows that WSA works very well in comparison to the standard DQL agent, and the one with an embedding size of \texttt{256} results in the best performance.
 In \textit{Ms. Pacman} the average cumulative reward is higher than DQL for all the training, meaning that the agent learns faster and better.
-While in \textit{Breakout} it is faster to learn on the first part of the training, and at the end DQL results a little bit better.
+While in \textit{Breakout} it is faster to learn on the first part of the training, and in the end DQL results a little bit better.
 This is a behavior similar to the one observed with PPO agents in Section~\ref{sec:breakout_study}.
 
 
@@ -609,7 +609,7 @@ This is a behavior similar to the one observed with PPO agents in Section~\ref{s
         \caption{\texttt{Breakout}}
         \label{fig:breakout_dqn}
     \end{subfigure}
-    \caption{Cumulative reward during training of different agents, comparing WSA and DQN. Each subfigure shows the mean score, with shaded areas indicating the standard deviations, across multiple agents.}
+    \caption{Cumulative reward during training of different agents, comparing WSA and DQL. Each subfigure shows the mean score, with shaded areas indicating the standard deviations, across multiple agents.}
     \label{fig:dqn_experiments}
 \end{figure}
 
@@ -618,7 +618,7 @@ This is a behavior similar to the one observed with PPO agents in Section~\ref{s
 We selected for evaluation the agent with \texttt{256} as embedding size since it is the best performing during training.
 This time to evaluate the agents, instead of selecting the best model between the \texttt{4} runs during training, we tested all the models across \texttt{5} random seeds for \texttt{50} episodes.
 Table~\ref{tab:dqn_results} reports the averaged results during evaluation.
-We notice how WSA results in a higher score in both games and in particular in \textit{Breakout} the agent scores \texttt{213} compared to \texttt{166} of DQL\@.
+We notice how WSA results in a higher score in both games, and in particular in \textit{Breakout} the agent scores \texttt{213} compared to \texttt{166} of DQL\@.
 Please note that PPO agents reached a higher score in \textit{Breakout} and these results are not directly comparable as the two algorithms have different learning dynamics and different ways to interact with the environment.
 Lastly, we can conclude that WSA works well regardless of the RL algorithm used, and it can be a valuable tool to improve the performance of agents in different scenarios.
 
@@ -683,8 +683,9 @@ We notice that we considered only the models with \textit{Fully-Connected Networ
 
         \end{tabular}
     \end{center}
-    \caption{The table shows the number of parameters of the whole model from the little configuration to the biggest.}
+    \caption{The table shows the number of trainable parameters of the whole model, from the smallest configuration to the biggest one.}
     \label{tab:parameters}
 \end{table}
 
-%Write some conclusions
+We notice how for some agents the number of parameters is higher than an end-to-end PPO.
+The aim of our work is to provide a more general and effective solution to RL problems, and we did not consider the number of parameters as a constraint.
