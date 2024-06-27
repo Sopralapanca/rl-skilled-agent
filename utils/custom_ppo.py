@@ -271,7 +271,7 @@ class PPO(OnPolicyAlgorithm):
                     weights_e = 1e-8
                     weights_entropy = -torch.sum(weights * torch.log(weights + weights_e), dim=1)
                     weights_entropy = torch.mean(weights_entropy)
-                    entropy_penalty = 0.01
+                    entropy_penalty = 0.001
 
                     loss = policy_loss + self.ent_coef * entropy_loss + self.vf_coef * value_loss + entropy_penalty * weights_entropy
                 else:

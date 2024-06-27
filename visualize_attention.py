@@ -25,9 +25,9 @@ args = parser.parse_args()
 N_ENVS = 1
 FRAME_STACK = 4
 ENV_NAME = args.env  # "Pong"
-model_path = "x630ad7h"  # ATTENZIONE CAMBIA MODELLO
+model_path = "3mo21eg2"  # ATTENZIONE CAMBIA MODELLO
 device = "cuda:2"
-info = "_entropy0-01"
+info = "_entropy0-001"
 feature_dim = 1024 if "Pong" in ENV_NAME else 256
 net_arch = [256]
 custom_object = load_policy_kwargs(expert=False, device=device, env=ENV_NAME,
