@@ -44,6 +44,9 @@ if os.path.isfile(path):
 else:
     df = pd.DataFrame(columns=["env", "agent", "seed", "mean_reward", "std_reward"])
 
+
+
+# TODO: change the code below using utilis/load_custom_policykwargs.py instead
 d = {
     # "Pong":
     #      {"PPO": "k24cn512",

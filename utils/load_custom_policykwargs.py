@@ -9,9 +9,22 @@ import torch as th
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 
+
 def load_policy_kwargs(expert: bool, device: str, env: str,
                        net_arch: List[int], agent: str,
                        features_dim: int, num_conv_layers: int) -> dict:
+    """
+    Load the policy kwargs for the given environment and change the device to the given device.
+    :param expert: bool: If True, loads saved skills trained on expert data
+    :param device: str: Device to use
+    :param env: str: Environment name like Pong, Breakout, Ms_Pacman, etc.
+    :param net_arch: List[int]: List of integers representing the number of units in each layer of the policy network
+    :param agent: str: Name of the agent to use like wsharing_attention_ext, reservoir_concat_ext, etc.
+    :param features_dim int: Dimension of the features extracted by the feature extractor
+    :param num_conv_layers: int: Number of convolutional layers to use in cnn_concat_ext
+
+    :return: dict: Custom objects to be used in the model
+    """
 
     env_name = env.split("-")[0]
     if "_" in env_name:
@@ -45,7 +58,6 @@ def load_policy_kwargs(expert: bool, device: str, env: str,
     if agent == "wsharing_attention_ext":
         config["f_ext_class"] = WeightSharingAttentionExtractor
         config["game"] = vec_env_name
-
 
     elif agent == "reservoir_concat_ext":
         config["f_ext_class"] = ReservoirConcatExtractor

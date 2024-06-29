@@ -24,6 +24,9 @@ class FeaturesExtractor(BaseFeaturesExtractor):
         super().__init__(observation_space, features_dim)
 
         self.skills = skills
+
+        #TODO: change spatial adapters
+
         # [hardcoded] adapters using 1x1 conv
         self.__vobj_seg_adapter = nn.Sequential(
             nn.Conv2d(20, 16, 1),

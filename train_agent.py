@@ -26,8 +26,10 @@ import tensorflow as tf
 # utility imports
 from utils.args import parse_args
 
-from stable_baselines3 import DQN #PPO
-from utils.custom_ppo import PPO
+from stable_baselines3 import DQN, PPO
+
+# use this instead of classical PPO in case you want to use the custom PPO implementation with attention weights entropy loss, eventually change the coefficient
+#from utils.custom_ppo import PPO
 
 # ---------------------------------- MAIN ----------------------------------
 
@@ -73,7 +75,7 @@ config["net_arch_vf"] = args.vf
 
 expert = args.use_expert == "True"
 
-version = "3-5 entropy"
+version = "3-5 entropy"     # change for future experiments
 
 tags = [f'game:{config["game"]}', f'version:{version}', f'seed:{seed}', f'alg:{alg}']
 
@@ -107,7 +109,7 @@ skills.append(get_object_keypoints_encoder(env_name, device, load_only_model=Tru
 skills.append(get_object_keypoints_keynet(env_name, device, load_only_model=True, expert=expert))
 skills.append(get_video_object_segmentation(env_name, device, load_only_model=True, expert=expert))
 
-# skills.append(get_autoencoder(env_name, device, expert=expert))
+# skills.append(get_autoencoder(env_name, device, expert=expert))   # autoencoder skill used also in attention mechanism extractors as context
 # skills.append(get_image_completion(env_name, device, expert=expert))
 # skills.append(get_frame_prediction(env_name, device, expert=expert))
 
@@ -168,7 +170,7 @@ if skilled_agent:
         config["f_ext_name"] = "wsharing_attention_ext"
         config["f_ext_class"] = WeightSharingAttentionExtractor
         features_dim = args.fd
-        tb_log_name += "_dpae"
+        tb_log_name += "_wsae"
         f_ext_kwargs["game"] = env_name
         f_ext_kwargs["expert"] = expert
         tags.append(f"fixed_dim:{features_dim}")
@@ -200,7 +202,7 @@ if skilled_agent:
                 'pi': config["net_arch_pi"],
                 'vf': config["net_arch_vf"]
             },
-            #activation_fn=th.nn.ReLU,
+            #activation_fn=th.nn.ReLU,  # use ReLU in case of multiple layers for the policy learning network
 
         )
     if alg == "DQN":
@@ -270,21 +272,6 @@ else:
     vec_eval_env = VecFrameStack(vec_eval_env, n_stack=config["n_stacks"])
     vec_eval_env = VecTransposeImage(vec_eval_env)
 
-    # model = PPO("CnnPolicy",
-    #             vec_env,
-    #             learning_rate=linear_schedule(config["learning_rate"]),
-    #             n_steps=config["n_steps"],
-    #             n_epochs=config["n_epochs"],
-    #             batch_size=config["batch_size"],
-    #             clip_range=linear_schedule(config["clip_range"]),
-    #             normalize_advantage=config["normalize"],
-    #             ent_coef=config["ent_coef"],
-    #             vf_coef=config["vf_coef"],
-    #             tensorboard_log=gamelogs,
-    #             policy_kwargs=policy_kwargs,
-    #             verbose=0,
-    #             device=device,
-    #             )
 
     if alg == "PPO":
         model = PPO("CnnPolicy",
@@ -392,12 +379,16 @@ else:
     )
     run.finish()
 
-if hasattr(model.policy.features_extractor, "training_weights"):
-    training_weights = model.policy.features_extractor.training_weights
 
-    with open(f'{env}_attention_weights.pkl', 'wb') as f:
-        pickle.dump(training_weights, f)
+# in case you want to save the attention training weights in order to visualize them
+# if hasattr(model.policy.features_extractor, "training_weights"):
+#     training_weights = model.policy.features_extractor.training_weights
+#
+#     with open(f'{env}_attention_weights.pkl', 'wb') as f:
+#         pickle.dump(training_weights, f)
 
+
+# in case you want to print some information about the model like the number of parameters
 # print("net_arch:", model.policy.net_arch)
 # print("share_feature_extractor:", model.policy.share_features_extractor)
 # print("feature_extractor:", model.policy.features_extractor)

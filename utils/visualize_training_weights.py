@@ -3,7 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-env = "pong"
+# load saved attention weights in a pickle file and visualize their evolution over TRAINING time
+
+env = "pong" #change with the name of the environment you want to visualize
 weights = pickle.load(open(f"../{env}_attention_weights.pkl", "rb"))
 weights_8 = []
 weights_256 = []

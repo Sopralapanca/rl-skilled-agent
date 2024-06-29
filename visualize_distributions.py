@@ -1,26 +1,19 @@
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack, VecTransposeImage
 import matplotlib.pyplot as plt
-import argparse
 import atari_py
 import os
 from stable_baselines3 import PPO
 import moviepy.video.io.ImageSequenceClip
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("--env", help="Name of the environment to use i.e. Pong, Breakoout, etc.",
-#                     type=str, required=True, choices=["Breakout", "Pong", "CartPole-v1",
-#                                                       'Ms_Pacman', 'Seaquest', 'Qbert', 'Asteroids',
-#                                                       'Enduro', 'Space_Invaders', 'Road_Runner', 'Beam_Rider'])
-#
-# args = parser.parse_args()
+
 
 N_ENVS = 1
 FRAME_STACK = 4
-ENV_NAME = "Pong"
-model_path = "u428hnd3"  # ATTENZIONE CAMBIA MODELLO
+ENV_NAME = "Pong"  # change name of the environment like "Pong", "Breakout", "Ms_Pacman", etc.
+model_path = "u428hnd3"  # eventually change model
 device = "cuda:3"
-info = "_dropout_0.1"
+info = "_dropout_0.1"  # name of the directory to store the data, eventually change info
 
 # Create the environment
 if ENV_NAME.lower() in atari_py.list_games():
@@ -35,12 +28,10 @@ if ENV_NAME.lower() in atari_py.list_games():
 else:
     raise NotImplementedError(ENV_NAME + " not implemented yet, try CartPole-v1 or one atari game")
 
-
 SAVE_DIR = "./distributions_data/" + ENV_NAME + info
 # Create a directory data with subdirectory "breakout" using os to store the frames
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR)
-
 
 obs = vec_env.reset()
 
@@ -49,16 +40,7 @@ if ENV_NAME.lower() in atari_py.list_games():
 
 model = PPO.load(f"./models/{model_path}/best_model.zip", device=device)
 
-
-# Define the min and max values for the x-axis
-#x_min, x_max = -10, 10  # Adjust these values based on your data range
-
-
-
-
 bins = 30
-
-
 
 done = False
 i = 0
@@ -92,7 +74,6 @@ while not done:
         spatial_emb[j] = sp.flatten().cpu().numpy()
         linear_emb[j] = lin.flatten().cpu().numpy()
 
-
     fig, ax = plt.subplots(nrows=1, ncols=5, figsize=(40, 6))
 
     fig.suptitle(f"WSA Visualization - Step: {i}", fontsize=17)
@@ -103,7 +84,6 @@ while not done:
     ax[1].bar(weights_label, values)
     ax[1].set_title('Attention Weights', fontsize=15)
     ax[1].set_ylim([0, 1])
-
 
     ax[2].hist(embeddings, bins=bins, label=weights_label)
     ax[2].set_title("embeddings")
@@ -130,18 +110,18 @@ while not done:
         action)  # we need to pass an array of actions in step, one action for each environment
     obs = new_obs
 
-    #done = episode_terminated(infos)
-    #done = dones[0]
+    if "Pong" in ENV_NAME:
+        done = dones[0]
+        print(f"Step:{i}")
+    else:
+        print(f"Step:{i} lives:{infos[0].get('lives')}")
+        if infos[0].get("lives") == 0:
+            break
 
-    if infos[0].get("lives") == 0:
-        break
-    print("Step:", i)
     i = i + 1
-
 
 obs = vec_env.reset()
 vec_env.close()
-
 
 # ------------------ VIDEO ------------------ #
 
