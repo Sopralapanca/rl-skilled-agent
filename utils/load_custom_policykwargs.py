@@ -96,7 +96,8 @@ def load_policy_kwargs(expert: bool, device: str, env: str,
     f_ext_kwargs["skills"] = skills
     f_ext_kwargs["features_dim"] = features_dim
 
-    if "Policy" in env:
+    if len(net_arch) > 1:
+        print("ci sono")
         policy_kwargs = dict(
             features_extractor_class=config["f_ext_class"],
             features_extractor_kwargs=f_ext_kwargs,
